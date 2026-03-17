@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>בדיקת תווים מיוחדים — מדריך + סקריפט</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      padding: 28px 20px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    h1 { text-align: center; font-size: 1.85rem; color: #1a3c6e; margin-bottom: 6px; }
+    .subtitle { text-align: center; color: #666; font-size: .93rem; margin-bottom: 32px; }
+
+    h2 {
+      font-size: 1.2rem; color: #1a3c6e;
+      border-right: 5px solid #1a3c6e;
+      padding-right: 12px; margin: 34px 0 14px;
+    }
+    h3 { font-size: 1rem; color: #333; margin: 18px 0 8px; }
+
+    /* ── כרטיסי סיכום ── */
+    .cards { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; }
+    .card {
+      flex: 1; min-width: 160px; border-radius: 12px;
+      padding: 20px 18px; text-align: center; color: #fff;
+      box-shadow: 0 3px 10px rgba(0,0,0,.12);
+    }
+    .card .num { font-size: 2.4rem; font-weight: 700; line-height: 1; }
+    .card .lbl { font-size: .85rem; margin-top: 5px; opacity: .88; }
+    .card.blue  { background: #1a3c6e; }
+    .card.green { background: #2e7d32; }
+    .card.red   { background: #c62828; }
+    .card.orange{ background: #e65100; }
+
+    /* ── קוד ── */
+    pre, code {
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: .86rem;
+      direction: ltr;
+      unicode-bidi: embed;
+      display: inline-block;
+    }
+    .code-block {
+      background: #1e1e1e; color: #d4d4d4;
+      border-radius: 10px; padding: 20px 22px 20px 22px;
+      overflow-x: auto; line-height: 1.7; margin: 10px 0;
+      position: relative;
+      direction: ltr;        /* קוד תמיד שמאל לימין */
+      text-align: left;
+      unicode-bidi: plaintext;
+    }
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px; /* ימין בתוך LTR = פינה ימנית */
+      background: #0066cc; color: #fff; border: none;
+      padding: 5px 14px; border-radius: 6px; cursor: pointer;
+      font-size: .8rem; font-family: 'Segoe UI', Arial, sans-serif;
+      transition: background .2s;
+      direction: rtl; /* הכפתור עצמו בעברית */
+    }
+    .copy-btn:hover { background: #004a99; }
+    .copy-btn.copied { background: #2e7d32; }
+
+    .hl-g { color: #4ec9b0; }   /* teal */
+    .hl-y { color: #dcdcaa; }   /* yellow */
+    .hl-r { color: #f44747; }   /* red */
+    .hl-o { color: #ce9178; }   /* orange string */
+    .hl-b { color: #9cdcfe; }   /* blue var */
+    .hl-c { color: #6a9955; }   /* green comment */
+    .hl-p { color: #c586c0; }   /* purple keyword */
+
+    /* ── צעדים ── */
+    .steps { counter-reset: s; list-style: none; padding: 0; }
+    .steps li {
+      counter-increment: s; display: flex; gap: 14px;
+      align-items: flex-start; margin-bottom: 12px;
+      background: #fff; border-radius: 10px;
+      padding: 15px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    }
+    .steps li::before {
+      content: counter(s);
+      background: #1a3c6e; color: #fff;
+      border-radius: 50%; min-width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .9rem; flex-shrink: 0;
+    }
+    .steps .t { font-weight: 600; margin-bottom: 3px; }
+    .steps .b { font-size: .9rem; color: #444; line-height: 1.6; }
+
+    /* ── תיבות ── */
+    .info  { background:#e3f2fd; border-right:4px solid #1565c0; border-radius:8px; padding:13px 16px; font-size:.9rem; line-height:1.6; color:#1a3c6e; margin:12px 0; }
+    .warn  { background:#fff3e0; border-right:4px solid #e65100; border-radius:8px; padding:13px 16px; font-size:.9rem; line-height:1.6; color:#bf360c; margin:12px 0; }
+    .good  { background:#e8f5e9; border-right:4px solid #2e7d32; border-radius:8px; padding:13px 16px; font-size:.9rem; line-height:1.6; color:#1b5e20; margin:12px 0; }
+
+    /* ── טבלת תוצאות צפויות ── */
+    table { width:100%; border-collapse:collapse; font-size:.88rem; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.08); margin:12px 0; }
+    th { background:#1a3c6e; color:#fff; padding:10px 12px; text-align:right; }
+    td { padding:9px 12px; border-bottom:1px solid #eee; }
+    tr:last-child td { border-bottom:none; }
+    .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.78rem; font-weight:600; }
+    .b-pass { background:#e8f5e9; color:#2e7d32; }
+    .b-fail { background:#ffebee; color:#c62828; }
+    .b-warn { background:#fff3e0; color:#e65100; }
+
+    /* ── הסבר הזרימה ── */
+    .flow {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin: 14px 0;
+    }
+    .flow-box {
+      background: #fff; border: 2px solid #1a3c6e;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: .85rem; text-align: center; min-width: 100px;
+    }
+    .flow-arrow { font-size: 1.3rem; color: #1a3c6e; }
+    .flow-box.highlight { background: #e3f2fd; border-color: #0066cc; }
+    .flow-box.danger    { background: #fff3e0; border-color: #e65100; }
+
+    footer { text-align:center; margin-top:44px; color:#aaa; font-size:.8rem; }
+  </style>
+</head>
+<body>
+
+<h1>🔍 בדיקת תווים מיוחדים — מדריך מלא</h1>
+<p class="subtitle">למה % גורם ל"משהו השתבש" למרות שהUI אומר תקין? — וסקריפט לבדיקה</p>
+
+<!-- ── כרטיסים ── -->
+<div class="cards">
+  <div class="card blue">  <div class="num">6</div>  <div class="lbl">תווים לבדיקה<br>! @ # $ % *</div></div>
+  <div class="card orange"><div class="num">2</div>  <div class="lbl">שלבי הסקריפט<br>יירוט → בדיקה</div></div>
+  <div class="card green"> <div class="num">?</div>  <div class="lbl">תווים שיעברו<br>(תלוי שרת)</div></div>
+  <div class="card red">   <div class="num">?</div>  <div class="lbl">תווים שייחסמו<br>(תלוי שרת)</div></div>
+</div>
+
+<!-- ── הבעיה ── -->
+<h2>1. מה הבעיה?</h2>
+
+<p style="font-size:.92rem;color:#444;line-height:1.7;margin-bottom:12px;">
+  הUI (הצד הלקוחי) מאשר סיסמא עם כל אחד מ-<strong>! @ # $ % *</strong> — כל הV מירוקים.
+  אבל כשלוחצים שמירה, השרת מחזיר "משהו השתבש" במקום הצלחה.
+  זה אומר שהשרת חוסם תווים מסוימים שה-UI לא יודע עליהם.
+</p>
+
+<div class="flow">
+  <div class="flow-box">משתמשת מקלידה<br><code>A9709yes%hae2e</code></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box highlight">UI אומר: ✅ כל הכללים עומדים</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box danger">⚠️ לחיצת שמירה<br>→ "משהו השתבש"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box" style="border-color:#c62828;background:#ffebee">השרת חסם את %<br>ללא הסבר למשתמש</div>
+</div>
+
+<h3>למה % בפרט חשוד?</h3>
+<div class="warn">
+  <strong>% הוא תו ה-URL encoding.</strong> בכתובות URL ובנתוני טופס,
+  <code>%XX</code> פירושו "תו עם קוד הקסדצימלי XX".<br>
+  אם השרת מנסה לפענח את הסיסמא כ-URL ו-<code>%ha</code> אינו קוד hex תקין
+  — השרת קורס בשגיאת parsing ומחזיר 500 במקום הודעת שגיאה ברורה.
+</div>
+
+<table>
+  <thead><tr><th>תו</th><th>שם</th><th>מדוע עלול להיחסם בשרת</th><th>סיכון</th></tr></thead>
+  <tbody>
+    <tr><td><code>!</code></td><td>סימן קריאה</td><td>בטוח ברוב הפורמטים</td><td><span class="badge b-pass">נמוך</span></td></tr>
+    <tr><td><code>@</code></td><td>כרוכית</td><td>בטוח ברוב הפורמטים</td><td><span class="badge b-pass">נמוך</span></td></tr>
+    <tr><td><code>#</code></td><td>סולמית</td><td>ב-URL — סמן עוגן (fragment). עלול לקטוע את הנתיב.</td><td><span class="badge b-warn">בינוני</span></td></tr>
+    <tr><td><code>$</code></td><td>דולר</td><td>בטוח ברוב הפורמטים</td><td><span class="badge b-pass">נמוך</span></td></tr>
+    <tr><td><code>%</code></td><td>אחוז</td><td>URL encoding prefix — <code>%xx</code> לא תקין שובר parsing</td><td><span class="badge b-fail">גבוה ⚠️</span></td></tr>
+    <tr><td><code>*</code></td><td>כוכבית</td><td>wildcard בחלק מהשרתים, עלול לגרום ל-regex injection</td><td><span class="badge b-warn">בינוני</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ── איך הסקריפט עובד ── -->
+<h2>2. איך הסקריפט עובד?</h2>
+<ul class="steps">
+  <li>
+    <div>
+      <div class="t">יירוט (Intercept)</div>
+      <div class="b">
+        הסקריפט "עוטף" את פונקציות <code>fetch</code> ו-<code>XMLHttpRequest</code> של הדפדפן.
+        כשאת לוחצת שמירה, הבקשה עוברת דרכו — והוא שומר את כל הפרטים:
+        כתובת ה-API, headers (כולל authentication token), וגוף הבקשה עם הסיסמא.
+      </div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="t">החלפת הסיסמא</div>
+      <div class="b">
+        הסקריפט לוקח את הבקשה שנלכדה ומחליף <strong>רק את הסיסמא</strong> בסיסמא חדשה לכל בדיקה.
+        כל שאר הנתונים (token, user ID וכו') נשארים זהים — כך הבקשה תקינה לחלוטין.
+      </div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="t">שליחה ישירה ל-API</div>
+      <div class="b">
+        הסקריפט שולח כל בקשה ישירות לשרת (bypass מה-UI לגמרי) ומקבל את תגובת ה-HTTP:
+        <code>200</code> = עבר, <code>400</code> = נדחה ב-validation, <code>500</code> = שגיאת שרת (תו שבור).
+      </div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="t">דו"ח תוצאות</div>
+      <div class="b">
+        בסיום — טבלת תוצאות עם כל תו, ה-status code שקיבלנו, ואם עבר או נחסם.
+      </div>
+    </div>
+  </li>
+</ul>
+
+<div class="warn">
+  <strong>⚠️ שים לב:</strong> הסקריפט שולח בקשות אמיתיות לשרת. אם תו מסוים עובר —
+  הסיסמא שלך <em>תשתנה</em> לסיסמא של הבדיקה האחרונה שעברה.
+  <br>שמרי בצד את הסיסמאות האפשריות לפני הריצה, או החליפי ידנית לאחר סיום הבדיקות.
+</div>
+
+<!-- ── הוראות שימוש ── -->
+<h2>3. הוראות שימוש שלב אחר שלב</h2>
+<ul class="steps">
+  <li><div><div class="t">הגיעי לדף "הגדרת הסיסמה שלך"</div><div class="b">כנסי לזרימה של שכחתי סיסמא עד שמגיעות לשדות "סיסמה חדשה" ו"אימות סיסמה".</div></div></li>
+  <li><div><div class="t">פתחי DevTools — F12 → Console</div><div class="b">הקפידי שהלשונית Console פעילה.</div></div></li>
+  <li>
+    <div>
+      <div class="t">הדביקי את הסקריפט כולו ← Enter</div>
+      <div class="b">
+        אם Chrome חוסם הדבקה: הקלידי <code>allow pasting</code> ← Enter, אחר כך הדביקי.
+        תקבלי הודעה ירוקה: <strong>"סקריפט בדיקת תווים מיוחדים — מוכן!"</strong>
+      </div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="t">מלאי ידנית סיסמא תקינה ולחצי שמירה</div>
+      <div class="b">
+        לדוגמה: <code>Abc1!defgh</code><br>
+        הסקריפט ילכוד את הבקשה ויציג: <strong>"📡 Fetch נלכד!"</strong><br>
+        לא חשוב אם הסיסמא עוברת או לא — העיקר שהבקשה נשלחת.
+      </div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="t">הריצי: <code>testChars()</code></div>
+      <div class="b">
+        הקלידי בconsole: <code>testChars()</code> ← Enter<br>
+        הסקריפט ישלח 6 בקשות (כ-4 שניות) ויציג טבלת תוצאות.
+      </div>
+    </div>
+  </li>
+</ul>
+
+<!-- ── הסקריפט ── -->
+<h2>4. הסקריפט — להעתקה</h2>
+<div class="info">
+  <strong>הדביקי את הכל בבת אחת</strong> — הסקריפט מפעיל את היירוט אוטומטית מיד עם ההדבקה.
+  לאחר מכן רצי <code>testChars()</code> בלבד.
+</div>
+
+<div class="code-block" id="script-block">
+<button class="copy-btn" onclick="copyScript()">📋 העתק</button>
+<span class="hl-c">// ============================================================</span><br>
+<span class="hl-c">// Special Characters Server Tester  —  ! @ # $ % *</span><br>
+<span class="hl-c">// שלב א: הדבקי → שלב ב: שמרי פעם אחת → שלב ג: הריצי testChars()</span><br>
+<span class="hl-c">// ============================================================</span><br>
+<br>
+<span class="hl-p">const</span> <span class="hl-b">SPECIAL_CHARS</span> = [<br>
+&nbsp;&nbsp;{ char: <span class="hl-o">'!'</span>, name: <span class="hl-o">'סימן קריאה  !'</span> },<br>
+&nbsp;&nbsp;{ char: <span class="hl-o">'@'</span>, name: <span class="hl-o">'כרוכית      @'</span> },<br>
+&nbsp;&nbsp;{ char: <span class="hl-o">'#'</span>, name: <span class="hl-o">'סולמית      #'</span> },<br>
+&nbsp;&nbsp;{ char: <span class="hl-o">'$'</span>, name: <span class="hl-o">'דולר        $'</span> },<br>
+&nbsp;&nbsp;{ char: <span class="hl-o">'%'</span>, name: <span class="hl-o">'אחוז        %'</span> },<br>
+&nbsp;&nbsp;{ char: <span class="hl-o">'*'</span>, name: <span class="hl-o">'כוכבית      *'</span> },<br>
+];<br>
+<span class="hl-p">const</span> <span class="hl-b">makePassword</span> = (<span class="hl-b">c</span>) =&gt; <span class="hl-o">`Abc1${c}defgh`</span>;<br>
+<span class="hl-p">let</span> <span class="hl-b">_captured</span> = <span class="hl-p">null</span>;<br>
+<br>
+<span class="hl-c">// — יירוט fetch —</span><br>
+<span class="hl-p">const</span> <span class="hl-b">_origFetch</span> = <span class="hl-b">window</span>.<span class="hl-y">fetch</span>;<br>
+<span class="hl-b">window</span>.<span class="hl-y">fetch</span> = <span class="hl-p">async function</span>(<span class="hl-b">input</span>, <span class="hl-b">init</span> = {}) {<br>
+&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">url</span>  = <span class="hl-p">typeof</span> <span class="hl-b">input</span> === <span class="hl-o">'string'</span> ? <span class="hl-b">input</span> : <span class="hl-b">input</span>?.<span class="hl-b">url</span>;<br>
+&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">body</span> = <span class="hl-b">init</span>?.<span class="hl-b">body</span> ?? <span class="hl-b">input</span>?.<span class="hl-b">body</span>;<br>
+&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">m</span>    = (<span class="hl-b">init</span>?.<span class="hl-b">method</span> ?? <span class="hl-o">'GET'</span>).<span class="hl-y">toUpperCase</span>();<br>
+&nbsp;&nbsp;<span class="hl-p">if</span> (<span class="hl-b">body</span> &amp;&amp; [<span class="hl-o">'POST'</span>,<span class="hl-o">'PUT'</span>,<span class="hl-o">'PATCH'</span>].<span class="hl-y">includes</span>(<span class="hl-b">m</span>)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">try</span> { <span class="hl-b">_captured</span> = { type:<span class="hl-o">'fetch'</span>, url, init: JSON.<span class="hl-y">parse</span>(JSON.<span class="hl-y">stringify</span>(<span class="hl-b">init</span>)), bodyRaw: <span class="hl-p">typeof</span> <span class="hl-b">body</span>===<span class="hl-o">'string'</span>?<span class="hl-b">body</span>:<span class="hl-p">null</span> }; } <span class="hl-p">catch</span>{};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">'%c📡 נלכד! '</span>, <span class="hl-o">'color:#0066cc;font-weight:bold'</span>, <span class="hl-b">url</span>);<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="hl-p">return</span> <span class="hl-b">_origFetch</span>.<span class="hl-y">apply</span>(<span class="hl-p">this</span>, <span class="hl-b">arguments</span>);<br>
+};<br>
+<br>
+<span class="hl-c">// — יירוט XHR —</span><br>
+<span class="hl-p">const</span> [<span class="hl-b">_xO</span>,<span class="hl-b">_xH</span>,<span class="hl-b">_xS</span>] = [<span class="hl-b">XMLHttpRequest</span>.<span class="hl-b">prototype</span>.<span class="hl-b">open</span>, <span class="hl-b">XMLHttpRequest</span>.<span class="hl-b">prototype</span>.<span class="hl-b">setRequestHeader</span>, <span class="hl-b">XMLHttpRequest</span>.<span class="hl-b">prototype</span>.<span class="hl-b">send</span>];<br>
+<span class="hl-b">XMLHttpRequest</span>.<span class="hl-b">prototype</span>.<span class="hl-b">open</span> = <span class="hl-p">function</span>(<span class="hl-b">m</span>,<span class="hl-b">u</span>){<span class="hl-p">this</span>.<span class="hl-b">_m</span>=<span class="hl-b">m</span>.<span class="hl-y">toUpperCase</span>(); <span class="hl-p">this</span>.<span class="hl-b">_u</span>=<span class="hl-b">u</span>; <span class="hl-p">this</span>.<span class="hl-b">_h</span>={}; <span class="hl-p">return</span> <span class="hl-b">_xO</span>.<span class="hl-y">apply</span>(<span class="hl-p">this</span>,<span class="hl-b">arguments</span>);};<br>
+<span class="hl-b">XMLHttpRequest</span>.<span class="hl-b">prototype</span>.<span class="hl-b">setRequestHeader</span> = <span class="hl-p">function</span>(<span class="hl-b">n</span>,<span class="hl-b">v</span>){<span class="hl-p">this</span>.<span class="hl-b">_h</span>[<span class="hl-b">n</span>]=<span class="hl-b">v</span>; <span class="hl-p">return</span> <span class="hl-b">_xH</span>.<span class="hl-y">apply</span>(<span class="hl-p">this</span>,<span class="hl-b">arguments</span>);};<br>
+<span class="hl-b">XMLHttpRequest</span>.<span class="hl-b">prototype</span>.<span class="hl-b">send</span> = <span class="hl-p">function</span>(<span class="hl-b">body</span>){<br>
+&nbsp;&nbsp;<span class="hl-p">if</span>(<span class="hl-b">body</span> &amp;&amp; [<span class="hl-o">'POST'</span>,<span class="hl-o">'PUT'</span>,<span class="hl-o">'PATCH'</span>].<span class="hl-y">includes</span>(<span class="hl-p">this</span>.<span class="hl-b">_m</span>)){<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">_captured</span>={type:<span class="hl-o">'xhr'</span>,url:<span class="hl-p">this</span>.<span class="hl-b">_u</span>,method:<span class="hl-p">this</span>.<span class="hl-b">_m</span>,headers:{...<span class="hl-p">this</span>.<span class="hl-b">_h</span>},bodyRaw:<span class="hl-p">typeof</span> <span class="hl-b">body</span>===<span class="hl-o">'string'</span>?<span class="hl-b">body</span>:<span class="hl-p">null</span>};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">'%c📡 XHR נלכד!'</span>,<span class="hl-o">'color:#0066cc;font-weight:bold'</span>,<span class="hl-p">this</span>.<span class="hl-b">_u</span>);<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="hl-p">return</span> <span class="hl-b">_xS</span>.<span class="hl-y">apply</span>(<span class="hl-p">this</span>,<span class="hl-b">arguments</span>);<br>
+};<br>
+<br>
+<span class="hl-c">// — החלפת סיסמא בגוף הבקשה —</span><br>
+<span class="hl-p">function</span> <span class="hl-y">_replacePw</span>(<span class="hl-b">body</span>, <span class="hl-b">pw</span>) {<br>
+&nbsp;&nbsp;<span class="hl-p">if</span>(!<span class="hl-b">body</span>) <span class="hl-p">return</span> <span class="hl-b">body</span>;<br>
+&nbsp;&nbsp;<span class="hl-p">try</span> {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">fix</span> = (<span class="hl-b">o</span>) =&gt; {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">if</span>(<span class="hl-p">typeof</span> <span class="hl-b">o</span> !== <span class="hl-o">'object'</span> || !<span class="hl-b">o</span>) <span class="hl-p">return</span> <span class="hl-b">o</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">r</span> = <span class="hl-b">Array</span>.<span class="hl-y">isArray</span>(<span class="hl-b">o</span>)?[]:{};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">for</span>(<span class="hl-p">const</span> <span class="hl-b">k</span> <span class="hl-p">of</span> <span class="hl-b">Object</span>.<span class="hl-y">keys</span>(<span class="hl-b">o</span>)) <span class="hl-b">r</span>[<span class="hl-b">k</span>] = /<span class="hl-o">password|pass|pwd|newPass/i</span>.<span class="hl-y">test</span>(<span class="hl-b">k</span>) &amp;&amp; <span class="hl-p">typeof</span> <span class="hl-b">o</span>[<span class="hl-b">k</span>]===<span class="hl-o">'string'</span> ? <span class="hl-b">pw</span> : <span class="hl-y">fix</span>(<span class="hl-b">o</span>[<span class="hl-b">k</span>]);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">return</span> <span class="hl-b">r</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">return</span> JSON.<span class="hl-y">stringify</span>(<span class="hl-y">fix</span>(JSON.<span class="hl-y">parse</span>(<span class="hl-b">body</span>)));<br>
+&nbsp;&nbsp;} <span class="hl-p">catch</span> {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">return</span> <span class="hl-b">body</span>.<span class="hl-y">replace</span>(/<span class="hl-o">([&amp;?]?(?:password|pass|pwd)[^&amp;=]*)=([^&amp;]*)/gi</span>, (<span class="hl-b">_</span>,<span class="hl-b">k</span>) =&gt; <span class="hl-o">`${k}=${encodeURIComponent(pw)}`</span>);<br>
+&nbsp;&nbsp;}<br>
+}<br>
+<br>
+<span class="hl-c">// — הפונקציה הראשית —</span><br>
+<span class="hl-p">async function</span> <span class="hl-y">testChars</span>() {<br>
+&nbsp;&nbsp;<span class="hl-p">if</span>(!<span class="hl-b">_captured</span>){<span class="hl-b">console</span>.<span class="hl-y">error</span>(<span class="hl-o">'❌ לא נלכדה בקשה. לחצי שמירה קודם!'</span>); <span class="hl-p">return</span>;}<br>
+&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">'%c🚀 בודק 6 תווים...'</span>,<span class="hl-o">'color:#0066cc;font-weight:bold'</span>);<br>
+&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">res</span> = [];<br>
+&nbsp;&nbsp;<span class="hl-p">for</span> (<span class="hl-p">const</span> {char, name} <span class="hl-p">of</span> <span class="hl-b">SPECIAL_CHARS</span>) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">pw</span> = <span class="hl-y">makePassword</span>(<span class="hl-b">char</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">`⏳ ${char} → ${pw}`</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">try</span> {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">let</span> <span class="hl-b">r</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">if</span>(<span class="hl-b">_captured</span>.<span class="hl-b">type</span>===<span class="hl-o">'fetch'</span>) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">i</span> = JSON.<span class="hl-y">parse</span>(JSON.<span class="hl-y">stringify</span>(<span class="hl-b">_captured</span>.<span class="hl-b">init</span>));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">i</span>.<span class="hl-b">body</span> = <span class="hl-y">_replacePw</span>(<span class="hl-b">_captured</span>.<span class="hl-b">bodyRaw</span>, <span class="hl-b">pw</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">f</span> = <span class="hl-p">await</span> <span class="hl-b">_origFetch</span>(<span class="hl-b">_captured</span>.<span class="hl-b">url</span>, <span class="hl-b">i</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">r</span> = {ok:<span class="hl-b">f</span>.<span class="hl-b">ok</span>, status:<span class="hl-b">f</span>.<span class="hl-b">status</span>, body: <span class="hl-p">await</span> <span class="hl-b">f</span>.<span class="hl-y">text</span>().<span class="hl-y">catch</span>(()=&gt;<span class="hl-o">''</span>)};<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} <span class="hl-p">else</span> {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">r</span> = <span class="hl-p">await new</span> <span class="hl-g">Promise</span>((<span class="hl-b">resolve</span>,<span class="hl-b">reject</span>)=&gt;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">x</span>=<span class="hl-p">new</span> <span class="hl-g">XMLHttpRequest</span>(); <span class="hl-b">x</span>.<span class="hl-y">open</span>(<span class="hl-b">_captured</span>.<span class="hl-b">method</span>,<span class="hl-b">_captured</span>.<span class="hl-b">url</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-g">Object</span>.<span class="hl-y">entries</span>(<span class="hl-b">_captured</span>.<span class="hl-b">headers</span>).<span class="hl-y">forEach</span>(([<span class="hl-b">n</span>,<span class="hl-b">v</span>])=&gt;{<span class="hl-p">try</span>{<span class="hl-b">x</span>.<span class="hl-y">setRequestHeader</span>(<span class="hl-b">n</span>,<span class="hl-b">v</span>)}catch{}});<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">x</span>.<span class="hl-b">onload</span>=()=&gt;<span class="hl-b">resolve</span>({ok:<span class="hl-b">x</span>.<span class="hl-b">status</span>&lt;400, status:<span class="hl-b">x</span>.<span class="hl-b">status</span>, body:<span class="hl-b">x</span>.<span class="hl-b">responseText</span>});<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">x</span>.<span class="hl-b">onerror</span>=()=&gt;<span class="hl-b">reject</span>(<span class="hl-p">new</span> <span class="hl-g">Error</span>(<span class="hl-o">'XHR error'</span>)); <span class="hl-b">x</span>.<span class="hl-b">timeout</span>=8000;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">x</span>.<span class="hl-y">send</span>(<span class="hl-y">_replacePw</span>(<span class="hl-b">_captured</span>.<span class="hl-b">bodyRaw</span>,<span class="hl-b">pw</span>));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">result</span> = <span class="hl-b">r</span>.<span class="hl-b">ok</span>?<span class="hl-o">'✅ עובד'</span>:<span class="hl-b">r</span>.<span class="hl-b">status</span>===500?<span class="hl-o">'❌ שגיאת שרת 500'</span>:<span class="hl-b">r</span>.<span class="hl-b">status</span>===400?<span class="hl-o">'❌ נדחה (400)'</span>:<span class="hl-o">`⚠️ ${r.status}`</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">res</span>.<span class="hl-y">push</span>({תו:<span class="hl-b">char</span>, שם:<span class="hl-b">name</span>, סיסמא:<span class="hl-b">pw</span>, status:<span class="hl-b">r</span>.<span class="hl-b">status</span>, תוצאה:<span class="hl-b">result</span>});<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">`  → ${result} (${r.status})`</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;} <span class="hl-p">catch</span>(<span class="hl-b">e</span>) { <span class="hl-b">res</span>.<span class="hl-y">push</span>({תו:<span class="hl-b">char</span>,שם:<span class="hl-b">name</span>,סיסמא:<span class="hl-b">pw</span>,status:<span class="hl-o">'ERR'</span>,תוצאה:<span class="hl-o">'❌ '+</span><span class="hl-b">e</span>.<span class="hl-b">message</span>}); }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-p">await new</span> <span class="hl-g">Promise</span>(<span class="hl-b">r</span>=&gt;<span class="hl-y">setTimeout</span>(<span class="hl-b">r</span>,600));<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">table</span>(<span class="hl-b">res</span>);<br>
+&nbsp;&nbsp;<span class="hl-p">const</span> <span class="hl-b">ok</span>=<span class="hl-b">res</span>.<span class="hl-y">filter</span>(<span class="hl-b">r</span>=&gt;<span class="hl-b">r</span>.<span class="hl-b">תוצאה</span>.<span class="hl-y">includes</span>(<span class="hl-o">'✅'</span>)), <span class="hl-b">bad</span>=<span class="hl-b">res</span>.<span class="hl-y">filter</span>(<span class="hl-b">r</span>=&gt;!<span class="hl-b">r</span>.<span class="hl-b">תוצאה</span>.<span class="hl-y">includes</span>(<span class="hl-o">'✅'</span>));<br>
+&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">`%c✅ עובדים (${ok.length}): ${ok.map(r=>r.תו).join(' ')}`</span>,<span class="hl-o">'color:green;font-weight:bold'</span>);<br>
+&nbsp;&nbsp;<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">`%c❌ נחסמים (${bad.length}): ${bad.map(r=>r.תו).join(' ')}`</span>,<span class="hl-o">'color:red;font-weight:bold'</span>);<br>
+}<br>
+<br>
+<span class="hl-b">console</span>.<span class="hl-y">log</span>(<span class="hl-o">'%c✅ מוכן! מלאי סיסמא → לחצי שמירה → הריצי: testChars()'</span>,<span class="hl-o">'color:green;font-weight:bold;font-size:13px'</span>);
+</div>
+
+<!-- ── קריאת תוצאות ── -->
+<h2>5. איך לקרוא את התוצאות</h2>
+<table>
+  <thead><tr><th>תוצאה</th><th>status HTTP</th><th>משמעות</th><th>מה לעשות</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge b-pass">✅ עובד</span></td><td>200 / 201</td><td>התו התקבל בשרת — הסיסמא שונתה</td><td>התו מותר — אין בעיה</td></tr>
+    <tr><td><span class="badge b-fail">❌ נדחה (400)</span></td><td>400</td><td>השרת דחה את הסיסמא עם הסבר — validation</td><td>בדקי את הודעת השגיאה של השרת</td></tr>
+    <tr><td><span class="badge b-fail">❌ שגיאת שרת 500</span></td><td>500</td><td>התו <em>שבר</em> את השרת — parsing error. כנראה % או #</td><td>זהו הבאג! עדכני הUI לאסור תו זה</td></tr>
+    <tr><td><span class="badge b-warn">⚠️ 401/403</span></td><td>401/403</td><td>ה-token פג בין הבדיקות</td><td>רענני דף, חזרי על הזרימה ותריצי מחדש</td></tr>
+  </tbody>
+</table>
+
+<div class="good">
+  <strong>💡 מה עושים עם הממצא?</strong><br>
+  אם % מחזיר 500 — פתחי באג: "תו % גורם לשגיאת 500 בשרת למרות שה-UI מציג אותו כמותר.
+  יש לעדכן validation בשרת ו/או להוסיף הודעת שגיאה ברורה בUI."
+</div>
+
+<footer>
+  מדריך בדיקות QA &nbsp;|&nbsp; מערכת ההזדהות של משרד הבריאות &nbsp;|&nbsp; 2026
+</footer>
+
+<script>
+function copyScript() {
+  // קריאת הסקריפט מהקובץ .js
+  const scriptText = `// ============================================================
+// Special Characters Server Tester  —  ! @ # $ % *
+// הדביקי הכל → שמרי פעם אחת → הריצי testChars()
+// ============================================================
+
+const SPECIAL_CHARS = [
+  { char: '!', name: 'סימן קריאה  !' },
+  { char: '@', name: 'כרוכית      @' },
+  { char: '#', name: 'סולמית      #' },
+  { char: '$', name: 'דולר        $' },
+  { char: '%', name: 'אחוז        %' },
+  { char: '*', name: 'כוכבית      *' },
+];
+const makePassword = (c) => \`Abc1\${c}defgh\`;
+let _captured = null;
+
+// יירוט fetch
+const _origFetch = window.fetch;
+window.fetch = async function(input, init = {}) {
+  const url  = typeof input === 'string' ? input : input?.url;
+  const body = init?.body ?? input?.body;
+  const m    = (init?.method ?? 'GET').toUpperCase();
+  if (body && ['POST','PUT','PATCH'].includes(m)) {
+    try { _captured = { type:'fetch', url, init: JSON.parse(JSON.stringify(init)), bodyRaw: typeof body==='string'?body:null }; } catch{};
+    console.log('%c📡 נלכד! ', 'color:#0066cc;font-weight:bold', url);
+  }
+  return _origFetch.apply(this, arguments);
+};
+
+// יירוט XHR
+const [_xO,_xH,_xS] = [XMLHttpRequest.prototype.open, XMLHttpRequest.prototype.setRequestHeader, XMLHttpRequest.prototype.send];
+XMLHttpRequest.prototype.open = function(m,u){this._m=m.toUpperCase(); this._u=u; this._h={}; return _xO.apply(this,arguments);};
+XMLHttpRequest.prototype.setRequestHeader = function(n,v){this._h[n]=v; return _xH.apply(this,arguments);};
+XMLHttpRequest.prototype.send = function(body){
+  if(body && ['POST','PUT','PATCH'].includes(this._m)){
+    _captured={type:'xhr',url:this._u,method:this._m,headers:{...this._h},bodyRaw:typeof body==='string'?body:null};
+    console.log('%c📡 XHR נלכד!','color:#0066cc;font-weight:bold',this._u);
+  }
+  return _xS.apply(this,arguments);
+};
+
+// החלפת סיסמא בגוף הבקשה
+function _replacePw(body, pw) {
+  if(!body) return body;
+  try {
+    const fix = (o) => {
+      if(typeof o !== 'object' || !o) return o;
+      const r = Array.isArray(o)?[]:{};
+      for(const k of Object.keys(o)) r[k] = /password|pass|pwd|newPass/i.test(k) && typeof o[k]==='string' ? pw : fix(o[k]);
+      return r;
+    };
+    return JSON.stringify(fix(JSON.parse(body)));
+  } catch {
+    return body.replace(/([&?]?(?:password|pass|pwd)[^&=]*)=([^&]*)/gi, (_,k) => \`\${k}=\${encodeURIComponent(pw)}\`);
+  }
+}
+
+// הפונקציה הראשית
+async function testChars() {
+  if(!_captured){console.error('❌ לא נלכדה בקשה. לחצי שמירה קודם!'); return;}
+  console.log('%c🚀 בודק 6 תווים...','color:#0066cc;font-weight:bold');
+  const res = [];
+  for (const {char, name} of SPECIAL_CHARS) {
+    const pw = makePassword(char);
+    console.log(\`⏳ \${char} → \${pw}\`);
+    try {
+      let r;
+      if(_captured.type==='fetch') {
+        const i = JSON.parse(JSON.stringify(_captured.init));
+        i.body = _replacePw(_captured.bodyRaw, pw);
+        const f = await _origFetch(_captured.url, i);
+        r = {ok:f.ok, status:f.status, body: await f.text().catch(()=>'')};
+      } else {
+        r = await new Promise((resolve,reject)=>{
+          const x=new XMLHttpRequest(); x.open(_captured.method,_captured.url);
+          Object.entries(_captured.headers).forEach(([n,v])=>{try{x.setRequestHeader(n,v)}catch{}});
+          x.onload=()=>resolve({ok:x.status<400, status:x.status, body:x.responseText});
+          x.onerror=()=>reject(new Error('XHR error')); x.timeout=8000;
+          x.send(_replacePw(_captured.bodyRaw,pw));
+        });
+      }
+      const result = r.ok?'✅ עובד':r.status===500?'❌ שגיאת שרת 500':r.status===400?'❌ נדחה (400)':\`⚠️ \${r.status}\`;
+      res.push({תו:char, שם:name, סיסמא:pw, status:r.status, תוצאה:result});
+      console.log(\`  → \${result} (\${r.status})\`);
+    } catch(e) { res.push({תו:char,שם:name,סיסמא:pw,status:'ERR',תוצאה:'❌ '+e.message}); }
+    await new Promise(r=>setTimeout(r,600));
+  }
+  console.table(res);
+  const ok=res.filter(r=>r.תוצאה.includes('✅')), bad=res.filter(r=>!r.תוצאה.includes('✅'));
+  console.log(\`%c✅ עובדים (\${ok.length}): \${ok.map(r=>r.תו).join(' ')}\`,'color:green;font-weight:bold');
+  console.log(\`%c❌ נחסמים (\${bad.length}): \${bad.map(r=>r.תו).join(' ')}\`,'color:red;font-weight:bold');
+}
+
+console.log('%c✅ מוכן! מלאי סיסמא → לחצי שמירה → הריצי: testChars()','color:green;font-weight:bold;font-size:13px');`;
+
+  navigator.clipboard.writeText(scriptText).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅ הועתק!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 העתק'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    alert('לא הצלחתי להעתיק. נסי לבחור ידנית את הטקסט בתוך תיבת הקוד.');
+  });
+}
+</script>
+  <!-- back-to-index -->
+  <style>
+    #back-to-index {
+      position: fixed; bottom: 22px; left: 22px; z-index: 9999;
+      background: #1a3c6e; color: #fff;
+      border: none; border-radius: 28px;
+      padding: 10px 18px 10px 14px;
+      font-size: .85rem; font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      display: flex; align-items: center; gap: 7px;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    #back-to-index:hover { background: #1565c0; transform: translateY(-2px); }
+  </style>
+  <a id='back-to-index' href='index.html'>&#127968; כל המסמכים</a>
+</body>
+</html>

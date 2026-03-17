@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הסבר תוצאות בדיקות סיסמא</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      padding: 30px 20px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.9rem;
+      color: #1a3c6e;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 36px;
+    }
+
+    /* ===== כרטיסי סיכום ===== */
+    .summary-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+    .card {
+      flex: 1;
+      min-width: 180px;
+      border-radius: 12px;
+      padding: 22px 20px;
+      text-align: center;
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(0,0,0,.12);
+    }
+    .card .num  { font-size: 2.6rem; font-weight: 700; line-height: 1; }
+    .card .lbl  { font-size: 0.9rem; margin-top: 6px; opacity: .88; }
+    .card.total { background: #1a3c6e; }
+    .card.pass  { background: #2e7d32; }
+    .card.fail  { background: #c62828; }
+    .card.bug   { background: #e65100; }
+
+    /* ===== כותרות סעיף ===== */
+    h2 {
+      font-size: 1.25rem;
+      color: #1a3c6e;
+      border-right: 5px solid #1a3c6e;
+      padding-right: 12px;
+      margin: 36px 0 16px;
+    }
+    h3 { font-size: 1.05rem; color: #333; margin: 20px 0 10px; }
+
+    /* ===== טבלת תוצאות ===== */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+    .results-table th {
+      background: #1a3c6e;
+      color: #fff;
+      padding: 11px 10px;
+      text-align: right;
+    }
+    .results-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table tr.pass-row { background: #f1f8f1; }
+    .results-table tr.fail-row { background: #fff3f3; }
+    .results-table tr.bug-row  { background: #fff3e0; border: 2px solid #e65100; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge.pass { background: #e8f5e9; color: #2e7d32; }
+    .badge.fail { background: #ffebee; color: #c62828; }
+    .badge.ok   { background: #e8f5e9; color: #2e7d32; }
+    .badge.bug  { background: #fff3e0; color: #e65100; }
+
+    /* ===== קוד / regex ===== */
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 10px;
+      padding: 20px 22px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    .hl-green  { color: #4ec9b0; }
+    .hl-yellow { color: #dcdcaa; }
+    .hl-red    { color: #f44747; }
+    .hl-orange { color: #ce9178; }
+    .hl-blue   { color: #9cdcfe; }
+    .hl-gray   { color: #6a9955; }
+
+    /* ===== הסבר שלב-שלב ===== */
+    .steps { counter-reset: step; list-style: none; padding: 0; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    }
+    .steps li::before {
+      content: counter(step);
+      background: #1a3c6e;
+      color: #fff;
+      border-radius: 50%;
+      min-width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .steps li .step-title { font-weight: 600; margin-bottom: 4px; }
+    .steps li .step-body  { font-size: 0.9rem; color: #444; line-height: 1.6; }
+
+    /* ===== תיבת "מה ציפינו vs מה קרה" ===== */
+    .compare {
+      display: flex;
+      gap: 16px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .compare-box {
+      flex: 1;
+      min-width: 220px;
+      border-radius: 10px;
+      padding: 18px 20px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .compare-box.expected { background: #e3f2fd; border: 2px solid #1565c0; }
+    .compare-box.actual   { background: #fff3e0; border: 2px solid #e65100; }
+    .compare-box h4 { font-size: 1rem; margin-bottom: 10px; }
+
+    /* ===== תיבת "הפתרון" ===== */
+    .fix-box {
+      background: #e8f5e9;
+      border: 2px solid #2e7d32;
+      border-radius: 10px;
+      padding: 20px 22px;
+      margin: 16px 0;
+    }
+    .fix-box h4 { color: #2e7d32; margin-bottom: 12px; font-size: 1rem; }
+
+    /* ===== regex visualizer ===== */
+    .regex-parts { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+    .regex-part {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      font-size: 0.88rem;
+    }
+    .regex-part .part-code {
+      font-family: 'Courier New', monospace;
+      background: #1e1e1e;
+      color: #4ec9b0;
+      padding: 4px 10px;
+      border-radius: 5px;
+      white-space: nowrap;
+      font-size: 0.85rem;
+    }
+    .regex-part .part-desc { flex: 1; color: #333; line-height: 1.5; }
+    .regex-part .part-icon { font-size: 1.3rem; }
+    .regex-part.missing { background: #fff3e0; border: 2px solid #e65100; }
+    .regex-part.missing .part-code { color: #f44747; }
+
+    /* ===== טבלת השוואה לוגי ===== */
+    .logic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      margin: 12px 0;
+    }
+    .logic-table th {
+      background: #37474f;
+      color: #fff;
+      padding: 10px 12px;
+      text-align: right;
+    }
+    .logic-table td { padding: 9px 12px; border-bottom: 1px solid #eee; }
+    .logic-table tr:last-child td { border-bottom: none; }
+    .logic-table .yes { color: #2e7d32; font-weight: 600; }
+    .logic-table .no  { color: #c62828; font-weight: 600; }
+
+    /* ===== info box ===== */
+    .info-box {
+      background: #e3f2fd;
+      border-right: 4px solid #1565c0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin: 14px 0;
+      color: #1a3c6e;
+    }
+
+    .warn-box {
+      background: #fff3e0;
+      border-right: 4px solid #e65100;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin: 14px 0;
+      color: #bf360c;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      color: #999;
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📋 הסבר תוצאות בדיקות סיסמא</h1>
+<p class="subtitle">ניתוח מלא של 20 בדיקות — מה רץ, מה עבר, מה נכשל ולמה</p>
+
+<!-- ===== סיכום מספרי ===== -->
+<div class="summary-row">
+  <div class="card total"><div class="num">20</div><div class="lbl">סך הכל בדיקות</div></div>
+  <div class="card pass"> <div class="num">19</div><div class="lbl">עברו בהצלחה ✅</div></div>
+  <div class="card fail"> <div class="num">1</div> <div class="lbl">נכשלו ❌</div></div>
+  <div class="card bug">  <div class="num">1</div> <div class="lbl">באג ברגקס 🐛</div></div>
+</div>
+
+<!-- ===== איך הסקריפט עבד ===== -->
+<h2>1. איך הסקריפט עבד?</h2>
+<p style="font-size:.92rem;color:#444;line-height:1.7;margin-bottom:14px;">
+  הסקריפט ביצע שני סוגי בדיקות <strong>במקביל</strong> לכל סיסמא:
+</p>
+<ul class="steps">
+  <li>
+    <div>
+      <div class="step-title">הזנה לשדה הסיסמא בדף</div>
+      <div class="step-body">הסקריפט הכניס כל סיסמא לשדה הסיסמא האמיתי באתר, המתין 300ms, וקרא את הודעת השגיאה שהדף הציג — זה בדק את הלוגיקה של <strong>האתר עצמו</strong>.</div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="step-title">בדיקת רגקס מקומית</div>
+      <div class="step-body">בנוסף, הסקריפט הריץ את הסיסמא על <strong>רגקס שכתבנו</strong> בתוך הסקריפט — כדי לוודא שהרגקס שלנו מתנהג בדיוק כמו האתר.</div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="step-title">השוואת תוצאות</div>
+      <div class="step-body">לכל בדיקה הגדרנו מראש מה אנחנו <strong>מצפים</strong> לקבל (PASS/FAIL). הסקריפט השווה בין הציפייה לבין מה שהרגקס החזיר — ✅ אם התאים, ❌ אם לא.</div>
+    </div>
+  </li>
+</ul>
+
+<!-- ===== טבלת כל התוצאות ===== -->
+<h2>2. טבלת כל 20 הבדיקות</h2>
+<p style="font-size:.9rem;color:#666;margin-bottom:12px;">שורה כתומה = הבדיקה שחשפה את הבאג</p>
+
+<table class="results-table">
+  <thead>
+    <tr>
+      <th>מזהה</th>
+      <th>תיאור</th>
+      <th>סיסמא שנבדקה</th>
+      <th>ציפינו</th>
+      <th>רגקס נתן</th>
+      <th>תוצאה</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="pass-row"><td>TC01</td><td>מינימום תקין — 10 תווים</td><td><code>Abcdef1!gh</code></td><td><span class="badge pass">PASS</span></td><td><span class="badge pass">PASS</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC02</td><td>כולל כל הדרישות</td><td><code>Hello@World9</code></td><td><span class="badge pass">PASS</span></td><td><span class="badge pass">PASS</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC03</td><td>13 תווים תקינים</td><td><code>Test#1234abcd</code></td><td><span class="badge pass">PASS</span></td><td><span class="badge pass">PASS</span></td><td>✅ עבר</td></tr>
+
+    <tr class="bug-row">
+      <td><strong>TC04</strong></td>
+      <td><strong>חסר אות גדולה 🐛</strong></td>
+      <td><code>abcdef1!gh</code></td>
+      <td><span class="badge fail">FAIL</span></td>
+      <td><span class="badge pass">PASS</span></td>
+      <td>❌ <strong>נכשל — באג!</strong></td>
+    </tr>
+
+    <tr class="pass-row"><td>TC05</td><td>חסר אות קטנה</td><td><code>ABCDEF1!GH</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC06</td><td>חסר ספרה</td><td><code>Abcdefgh!!</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC07</td><td>חסר תו מיוחד</td><td><code>Abcdefgh12</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC08</td><td>מכיל _ (אסור)</td><td><code>Abcde1!f_gh</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC09</td><td>מכיל + (אסור)</td><td><code>Abcde1!f+gh</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC10</td><td>מכיל = (אסור)</td><td><code>Abcde1!f=gh</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC11</td><td>מכיל - (אסור)</td><td><code>Abcde1!f-gh</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC12</td><td>מכיל רווח (אסור)</td><td><code>Abcde1!f gh</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC13</td><td>מכיל ? (אסור)</td><td><code>Abcde1!f?gh</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC14</td><td>מכיל () (אסור)</td><td><code>Abcde1!f(gh)</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC15</td><td>מכיל ~ (אסור)</td><td><code>Abcde1!f~gh</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC16</td><td>מכיל עברית</td><td><code>Abcde1!fשלום</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC17</td><td>9 תווים (קצר מדי)</td><td><code>Ab1!efghi</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC18</td><td>10 תווים (מינימום)</td><td><code>Ab1!efghij</code></td><td><span class="badge pass">PASS</span></td><td><span class="badge pass">PASS</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC19</td><td>50 תווים (מקסימום)</td><td><code>Ab1!aaa...×46</code></td><td><span class="badge pass">PASS</span></td><td><span class="badge pass">PASS</span></td><td>✅ עבר</td></tr>
+    <tr class="pass-row"><td>TC20</td><td>51 תווים (ארוך מדי)</td><td><code>Ab1!aaa...×47</code></td><td><span class="badge fail">FAIL</span></td><td><span class="badge fail">FAIL</span></td><td>✅ עבר</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== ניתוח TC04 ===== -->
+<h2>3. ניתוח TC04 — הבאג שנמצא</h2>
+
+<div class="warn-box">
+  ⚠️ <strong>TC04</strong> הוא הבדיקה שחשפה בעיה: ציפינו ש-<code>abcdef1!gh</code> תיכשל (כי חסרה אות גדולה), אבל הרגקס שלנו אמר שהיא תקינה. האתר עצמו צדק — הוא דחה את הסיסמא.
+</div>
+
+<h3>מה בדיוק הסיסמא <code>abcdef1!gh</code> מכילה?</h3>
+<table class="logic-table">
+  <thead>
+    <tr>
+      <th>דרישה</th>
+      <th>האם יש בסיסמא?</th>
+      <th>דוגמה מהסיסמא</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>אות קטנה (a-z)</td><td class="yes">✅ כן</td><td><code>a,b,c,d,e,f,g,h</code></td></tr>
+    <tr><td>ספרה (0-9)</td><td class="yes">✅ כן</td><td><code>1</code></td></tr>
+    <tr><td>תו מיוחד (!@#$%*)</td><td class="yes">✅ כן</td><td><code>!</code></td></tr>
+    <tr><td>אורך 10-50</td><td class="yes">✅ כן</td><td>10 תווים</td></tr>
+    <tr><td>ללא תווים אסורים</td><td class="yes">✅ כן</td><td>—</td></tr>
+    <tr><td>ללא עברית</td><td class="yes">✅ כן</td><td>—</td></tr>
+    <tr style="background:#fff3e0"><td><strong>אות גדולה (A-Z)</strong></td><td class="no">❌ <strong>אין!</strong></td><td>כל האותיות קטנות</td></tr>
+  </tbody>
+</table>
+
+<div class="compare">
+  <div class="compare-box expected">
+    <h4>🎯 מה ציפינו</h4>
+    <strong>FAIL</strong> — כי חסרה אות גדולה.<br>
+    הסיסמא לא עומדת בכלל שדורש לפחות אות גדולה אחת (A-Z).
+  </div>
+  <div class="compare-box actual">
+    <h4>🐛 מה קיבלנו</h4>
+    <strong>PASS</strong> — הרגקס שלנו אישר אותה!<br>
+    הרגקס לא בדק אות גדולה בנפרד, אז הסיסמא עברה.
+  </div>
+</div>
+
+<!-- ===== הסבר הרגקס ===== -->
+<h2>4. הבעיה ברגקס — הסבר ויזואלי</h2>
+
+<p style="font-size:.92rem;color:#444;margin-bottom:14px;">
+  רגקס הוא "מפה" שמתארת דפוס טקסט. כל חלק ב-<code>(?=...)</code> הוא <strong>תנאי שחייב להתקיים</strong>. אם כל התנאים מתקיימים — הסיסמא תקינה.
+</p>
+
+<h3>הרגקס הנוכחי (עם הבאג):</h3>
+<div class="code-block">
+<span class="hl-gray">// הרגקס שנכתב בסקריפט הבדיקה:</span><br>
+/^<br>
+&nbsp;&nbsp;<span class="hl-red">(?=.*[A-Za-z])</span>&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ⚠️ דורש אות כלשהי (גדולה OR קטנה)</span><br>
+&nbsp;&nbsp;<span class="hl-green">(?=.*[!@#$%*])</span>&nbsp;&nbsp;<span class="hl-gray">← ✅ דורש תו מיוחד</span><br>
+&nbsp;&nbsp;<span class="hl-green">(?=.*[0-9])</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ דורש ספרה</span><br>
+&nbsp;&nbsp;<span class="hl-green">(?=.*[a-z])</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ דורש אות קטנה</span><br>
+&nbsp;&nbsp;<span class="hl-blue">(?!.*[ ~`:^()_+=\-?])</span>&nbsp;<span class="hl-gray">← ✅ אוסר תווים מסוימים</span><br>
+&nbsp;&nbsp;<span class="hl-blue">(?!.*[\u05D0-\u05EA])</span>&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ אוסר עברית</span><br>
+&nbsp;&nbsp;<span class="hl-green">.{10,50}</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ אורך 10-50 תווים</span><br>
+$/
+</div>
+
+<div class="regex-parts">
+  <div class="regex-part missing">
+    <div class="part-icon">❌</div>
+    <div class="part-code">(?=.*[A-Za-z])</div>
+    <div class="part-desc">
+      <strong>זה החלק הבעייתי.</strong><br>
+      <code>[A-Za-z]</code> אומר: "תו שהוא אות — גדולה או קטנה".<br>
+      מכיוון שיש כבר דרישה לאות קטנה (<code>(?=.*[a-z])</code>), החלק הזה תמיד מתקיים גם ללא אות גדולה.<br>
+      <strong>אין כאן שום דרישה לאות גדולה!</strong>
+    </div>
+  </div>
+  <div class="regex-part">
+    <div class="part-icon">✅</div>
+    <div class="part-code">(?=.*[a-z])</div>
+    <div class="part-desc">דורש לפחות אות קטנה אחת (a עד z) — נכון.</div>
+  </div>
+  <div class="regex-part" style="background:#ffebee;border:2px dashed #c62828;">
+    <div class="part-icon">🚫</div>
+    <div class="part-code">(?=.*[A-Z])</div>
+    <div class="part-desc">
+      <strong>זה החלק שחסר!</strong><br>
+      דורש לפחות אות גדולה אחת (A עד Z).<br>
+      ללא זה — סיסמא עם אותיות קטנות בלבד תעבור.
+    </div>
+  </div>
+</div>
+
+<h3>אנלוגיה פשוטה:</h3>
+<div class="info-box">
+  דמייני שיש לך רשימת קניות: "צריך פרי". אמרת גם "קני תפוח" — שניהם מתקיימים בו זמנית עם תפוח.
+  אבל שכחת לכתוב "קני גם אגס". בלי הסעיף הנפרד לאגס — לא תקני אגס.<br><br>
+  כך גם כאן: <code>(?=.*[A-Za-z])</code> = "צריך פרי", <code>(?=.*[a-z])</code> = "צריך תפוח".
+  לא כתבנו "צריך <strong>גם</strong> אגס" = <code>(?=.*[A-Z])</code>.
+</div>
+
+<!-- ===== הפתרון ===== -->
+<h2>5. הפתרון — איך מתקנים?</h2>
+
+<div class="fix-box">
+  <h4>✅ הרגקס המתוקן:</h4>
+  <div class="code-block" style="margin:0">
+/^<br>
+&nbsp;&nbsp;<span class="hl-green">(?=.*[A-Z])</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ נוסף! דורש אות גדולה (A-Z)</span><br>
+&nbsp;&nbsp;<span class="hl-green">(?=.*[a-z])</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ דורש אות קטנה (a-z)</span><br>
+&nbsp;&nbsp;<span class="hl-green">(?=.*[!@#$%*])</span>&nbsp;&nbsp;<span class="hl-gray">← ✅ דורש תו מיוחד</span><br>
+&nbsp;&nbsp;<span class="hl-green">(?=.*[0-9])</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ דורש ספרה</span><br>
+&nbsp;&nbsp;<span class="hl-blue">(?!.*[ ~`:^()_+=\-?])</span>&nbsp;<span class="hl-gray">← ✅ אוסר תווים מסוימים</span><br>
+&nbsp;&nbsp;<span class="hl-blue">(?!.*[\u05D0-\u05EA])</span>&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ אוסר עברית</span><br>
+&nbsp;&nbsp;<span class="hl-green">.{10,50}</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl-gray">← ✅ אורך 10-50 תווים</span><br>
+$/
+  </div>
+</div>
+
+<p style="font-size:.9rem;color:#444;margin-top:12px;">
+  <strong>מה השתנה?</strong> הוחלף <code>(?=.*[A-Za-z])</code> ב-<code>(?=.*[A-Z])</code>.<br>
+  עכשיו הרגקס דורש <strong>בנפרד</strong>: אות גדולה אחת לפחות (<code>[A-Z]</code>) ואות קטנה אחת לפחות (<code>[a-z]</code>).
+</p>
+
+<!-- ===== מסקנות ===== -->
+<h2>6. מסקנות</h2>
+
+<ul class="steps">
+  <li>
+    <div>
+      <div class="step-title">האתר עצמו עובד נכון</div>
+      <div class="step-body">הלוגיקה של מערכת הבריאות <strong>כן</strong> דורשת אות גדולה. כשהוזנה <code>abcdef1!gh</code>, האתר הציג "סיסמה לא תקינה". הבאג הוא בסקריפט הבדיקה — לא באתר.</div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="step-title">הרגקס בסקריפט היה שגוי</div>
+      <div class="step-body">הרגקס שכתבנו לא בדק אות גדולה בנפרד. כתוצאה מכך, מקרה הבדיקה TC04 נכשל — הרגקס אמר PASS כשהיה צריך לומר FAIL.</div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="step-title">19/20 תוצאות נכונות</div>
+      <div class="step-body">כל שאר הבדיקות (תווים אסורים, עברית, ספרה, תו מיוחד, גבולות אורך) עבדו כהלכה. הרגקס כמעט מושלם — חסרה רק הדרישה לאות גדולה.</div>
+    </div>
+  </li>
+  <li>
+    <div>
+      <div class="step-title">לאחר התיקון — צפויים 20/20</div>
+      <div class="step-body">עם הרגקס המתוקן (<code>(?=.*[A-Z])</code> במקום <code>(?=.*[A-Za-z])</code>), כל 20 הבדיקות יעברו בהצלחה.</div>
+    </div>
+  </li>
+</ul>
+
+<footer>
+  תוצאות ריצת בדיקות QA &nbsp;|&nbsp; מערכת ההזדהות של משרד הבריאות &nbsp;|&nbsp; 2026
+</footer>
+
+  <!-- back-to-index -->
+  <style>
+    #back-to-index {
+      position: fixed; bottom: 22px; left: 22px; z-index: 9999;
+      background: #1a3c6e; color: #fff;
+      border: none; border-radius: 28px;
+      padding: 10px 18px 10px 14px;
+      font-size: .85rem; font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      display: flex; align-items: center; gap: 7px;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    #back-to-index:hover { background: #1565c0; transform: translateY(-2px); }
+  </style>
+  <a id='back-to-index' href='index.html'>&#127968; כל המסמכים</a>
+</body>
+</html>

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מרכז בדיקות QA — מערכת הזדהות משרד הבריאות</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #1a3c6e;
+      --blue:   #1565c0;
+      --green:  #2e7d32;
+      --orange: #e65100;
+      --red:    #c62828;
+      --gray:   #f0f2f5;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--gray);
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d2644 0%, var(--navy) 60%, #1565c0 100%);
+      color: #fff;
+      padding: 36px 32px 28px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.9rem; margin-bottom: 8px; letter-spacing: -.3px; }
+    header .sub { font-size: .95rem; opacity: .8; margin-bottom: 20px; }
+    .header-badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .hb {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: .82rem;
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy);
+      border-right: 4px solid var(--navy);
+      padding-right: 12px;
+      margin: 36px 0 16px;
+    }
+
+    /* ── Timeline ── */
+    .timeline { position: relative; padding-right: 32px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      right: 11px; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--navy), #90caf9);
+    }
+
+    .tl-item {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .tl-dot {
+      position: absolute;
+      right: -32px;
+      top: 18px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 700; color: #fff;
+      z-index: 1;
+    }
+    .tl-dot.green  { background: var(--green);  box-shadow: 0 0 0 2px var(--green); }
+    .tl-dot.orange { background: var(--orange); box-shadow: 0 0 0 2px var(--orange); }
+    .tl-dot.red    { background: var(--red);    box-shadow: 0 0 0 2px var(--red); }
+
+    /* ── Doc card ── */
+    .doc-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      overflow: hidden;
+      transition: box-shadow .2s, transform .15s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .doc-card:hover {
+      box-shadow: 0 6px 24px rgba(0,0,0,.13);
+      transform: translateY(-2px);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid #eee;
+    }
+    .card-number {
+      background: var(--navy);
+      color: #fff;
+      min-width: 54px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .card-number.green  { background: var(--green); }
+    .card-number.orange { background: var(--orange); }
+    .card-number.red    { background: var(--red); }
+
+    .card-header {
+      padding: 14px 18px;
+      flex: 1;
+    }
+    .card-header h2 { font-size: 1.05rem; color: var(--navy); margin-bottom: 4px; }
+    .card-header .card-sub { font-size: .85rem; color: #666; }
+
+    .card-body {
+      padding: 14px 18px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .card-desc { flex: 1; font-size: .9rem; color: #444; line-height: 1.65; }
+
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge.type-guide   { background: #e3f2fd; color: #1565c0; }
+    .badge.type-results { background: #e8f5e9; color: var(--green); }
+    .badge.type-script  { background: #f3e5f5; color: #6a1b9a; }
+    .badge.type-bug     { background: #ffebee; color: var(--red); }
+    .badge.type-rules   { background: #fff8e1; color: #e65100; }
+    .badge.date         { background: #f5f5f5; color: #666; }
+
+    .card-footer {
+      padding: 10px 18px;
+      background: #fafafa;
+      border-top: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: .82rem;
+      color: #888;
+    }
+    .card-footer .sections { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sec-tag {
+      background: #eef2f7;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: .75rem;
+      color: #555;
+    }
+    .open-link {
+      background: var(--navy);
+      color: #fff;
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-size: .82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background .2s;
+    }
+    .doc-card:hover .open-link { background: var(--blue); }
+
+    /* ── Flow diagram ── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+      margin-bottom: 32px;
+    }
+    .flow-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 90px;
+      text-align: center;
+    }
+    .flow-icon {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .flow-icon.green  { background: var(--green); }
+    .flow-icon.orange { background: var(--orange); }
+    .flow-icon.red    { background: var(--red); }
+    .flow-icon.purple { background: #6a1b9a; }
+
+    .flow-label { font-size: .72rem; color: #555; line-height: 1.3; max-width: 85px; }
+    .flow-arrow { font-size: 1.2rem; color: #aaa; padding: 0 4px; flex-shrink: 0; margin-bottom: 20px; }
+
+    /* ── Stats row ── */
+    .stats {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      flex: 1; min-width: 140px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 18px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+      border-top: 3px solid var(--navy);
+    }
+    .stat-card .sn { font-size: 2rem; font-weight: 700; color: var(--navy); line-height: 1; }
+    .stat-card .sl { font-size: .8rem; color: #666; margin-top: 4px; }
+    .stat-card.green { border-color: var(--green); }
+    .stat-card.green .sn { color: var(--green); }
+    .stat-card.orange { border-color: var(--orange); }
+    .stat-card.orange .sn { color: var(--orange); }
+    .stat-card.red { border-color: var(--red); }
+    .stat-card.red .sn { color: var(--red); }
+
+    /* ── Info box ── */
+    .info-box {
+      background: #e3f2fd;
+      border-right: 4px solid var(--blue);
+      border-radius: 8px;
+      padding: 13px 16px;
+      font-size: .88rem;
+      line-height: 1.65;
+      color: #0d47a1;
+      margin-bottom: 24px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #aaa;
+      font-size: .8rem;
+      border-top: 1px solid #e0e0e0;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>מרכז בדיקות QA</h1>
+  <p class="sub">מערכת ההזדהות של משרד הבריאות — תיעוד מלא של תהליך הבדיקה</p>
+  <div class="header-badges">
+    <span class="hb">📁 7 מסמכים</span>
+    <span class="hb">🗓 מרץ 2026</span>
+    <span class="hb">🔐 בדיקות סיסמא</span>
+    <span class="hb">🐛 2 ממצאים</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Stats -->
+  <div class="stats" style="margin-top:28px">
+    <div class="stat-card"><div class="sn">7</div><div class="sl">מסמכי תיעוד</div></div>
+    <div class="stat-card green"><div class="sn">20</div><div class="sl">מקרי בדיקה</div></div>
+    <div class="stat-card orange"><div class="sn">2</div><div class="sl">ממצאים / באגים</div></div>
+    <div class="stat-card red"><div class="sn">1</div><div class="sl">באג UX פתוח</div></div>
+  </div>
+
+  <!-- Flow -->
+  <div class="section-title">מפת הדרך — סדר הבדיקות</div>
+  <div class="flow-row">
+    <div class="flow-node">
+      <div class="flow-icon">1</div>
+      <div class="flow-label">הבנת<br>הכללים</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon">2</div>
+      <div class="flow-label">כתיבת<br>מקרי בדיקה</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon orange">3</div>
+      <div class="flow-label">ריצת<br>הסקריפט</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon red">4</div>
+      <div class="flow-label">ממצא:<br>באג רגקס</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon">5</div>
+      <div class="flow-label">בדיקת<br>תווים מיוחדים</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon purple">6</div>
+      <div class="flow-label">הסבר<br>הסקריפט</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon">7</div>
+      <div class="flow-label">חלופה:<br>Postman</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <div class="flow-icon green">8</div>
+      <div class="flow-label">תוצאות<br>וממצאים</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    💡 <strong>איך לקרוא את הדף:</strong> המסמכים מסודרים לפי <strong>סדר הגיוני</strong> — כל מסמך בנוי על הקודם לו.
+    לחצי על כל כרטיס לפתיחת המסמך. בכל מסמך יש כפתור "חזרה לאינדקס" לחזרה לכאן.
+  </div>
+
+  <!-- ── Phase 1: Foundation ── -->
+  <div class="section-title">שלב א — הבסיס: הבנת הכללים וכתיבת בדיקות</div>
+  <div class="timeline">
+
+    <!-- 1 -->
+    <div class="tl-item">
+      <div class="tl-dot">1</div>
+      <a class="doc-card" href="password-rules-explained.html">
+        <div class="card-top">
+          <div class="card-number">1</div>
+          <div class="card-header">
+            <h2>כללי אימות סיסמא חדשה</h2>
+            <div class="card-sub">password-rules-explained.html &nbsp;·&nbsp; 13 מרץ</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            נקודת ההתחלה — הסבר מלא של 7 כללי האימות לסיסמא חדשה. כולל ניתוח הרגקס תו אחר תו,
+            טבלת כל הכללים עם דוגמאות, ורשימת התווים המותרים והאסורים.
+            <br><br><strong>למה להתחיל כאן:</strong> כל הבדיקות שבאו אחריו מבוססות על הבנת הכללים האלה.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-rules">כללים</span>
+            <span class="badge date">📅 13 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">7 כללים</span>
+            <span class="sec-tag">ניתוח רגקס</span>
+            <span class="sec-tag">תווים אסורים</span>
+            <span class="sec-tag">סקריפט DevTools</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ── Phase 2: First test run ── -->
+  <div class="section-title">שלב ב — ריצת 20 מקרי בדיקה וממצא הרגקס</div>
+  <div class="timeline">
+
+    <!-- 2 -->
+    <div class="tl-item">
+      <div class="tl-dot red">2</div>
+      <a class="doc-card" href="test-results-explained.html">
+        <div class="card-top">
+          <div class="card-number red">2</div>
+          <div class="card-header">
+            <h2>הסבר תוצאות בדיקות סיסמא — ממצא TC04</h2>
+            <div class="card-sub">test-results-explained.html &nbsp;·&nbsp; 15 מרץ</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            הרצת 20 מקרי בדיקה באמצעות סקריפט DevTools — 19/20 עברו.
+            הבדיקה שנכשלה (TC04) חשפה <strong>באג ברגקס</strong>:
+            הרגקס לא בדק אות גדולה בנפרד — <code dir="ltr" style="direction:ltr">(?=.*[A-Za-z])</code>
+            במקום <code dir="ltr" style="direction:ltr">(?=.*[A-Z])</code>.
+            האתר עצמו עובד נכון; הבאג היה בסקריפט הבדיקה.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-results">תוצאות</span>
+            <span class="badge type-bug">באג רגקס</span>
+            <span class="badge date">📅 15 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">19/20 עברו</span>
+            <span class="sec-tag">TC04 נכשל</span>
+            <span class="sec-tag">תיקון רגקס</span>
+            <span class="sec-tag">השוואת UI vs שרת</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3 -->
+    <div class="tl-item">
+      <div class="tl-dot red">3</div>
+      <a class="doc-card" href="bug-report.html">
+        <div class="card-top">
+          <div class="card-number red">3</div>
+          <div class="card-header">
+            <h2>דוח באג — שאלות אבטחה</h2>
+            <div class="card-sub">bug-report.html &nbsp;·&nbsp; 12 מרץ</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            דוח באג רשמי שנכתב במהלך הבדיקות — בעיה שנמצאה בשאלות האבטחה של המערכת.
+            כולל שלבי שחזור, תוצאה צפויה לעומת בפועל, ורמת חומרה.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-bug">דוח באג</span>
+            <span class="badge date">📅 12 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">שאלות אבטחה</span>
+            <span class="sec-tag">שלבי שחזור</span>
+            <span class="sec-tag">חומרה</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ── Phase 3: Special chars ── -->
+  <div class="section-title">שלב ג — חקירת תווים מיוחדים: למה % גורם ל"משהו השתבש"?</div>
+  <div class="timeline">
+
+    <!-- 4 -->
+    <div class="tl-item">
+      <div class="tl-dot orange">4</div>
+      <a class="doc-card" href="special-chars-guide.html">
+        <div class="card-top">
+          <div class="card-number orange">4</div>
+          <div class="card-header">
+            <h2>מדריך בדיקת תווים מיוחדים + סקריפט</h2>
+            <div class="card-sub">special-chars-guide.html &nbsp;·&nbsp; 16 מרץ 09:42</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            לאחר שהתגלה ש-<code dir="ltr" style="direction:ltr">A9709yes%hae2e</code> גורמת ל"משהו השתבש"
+            למרות שה-UI מציג הכל תקין — נכתב סקריפט לבדיקה שיטתית של כל 6 התווים המיוחדים.
+            הסקריפט יורט את בקשת ה-API ומשחזר אותה עם כל תו בנפרד.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-guide">מדריך</span>
+            <span class="badge type-script">סקריפט</span>
+            <span class="badge date">📅 16 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">יירוט fetch/XHR</span>
+            <span class="sec-tag">6 תווים מיוחדים</span>
+            <span class="sec-tag">הוראות שימוש</span>
+            <span class="sec-tag">סקריפט מוכן</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 5 -->
+    <div class="tl-item">
+      <div class="tl-dot" style="background:#6a1b9a;box-shadow:0 0 0 2px #6a1b9a">5</div>
+      <a class="doc-card" href="script-explained.html">
+        <div class="card-top">
+          <div class="card-number" style="background:#6a1b9a">5</div>
+          <div class="card-header">
+            <h2>הסבר מפורט לסקריפט</h2>
+            <div class="card-sub">script-explained.html &nbsp;·&nbsp; 16 מרץ 10:07</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            הסבר שלב אחר שלב של כל 8 חלקי הסקריפט — מה כל פונקציה עושה ולמה,
+            עם אנלוגיות פשוטות: Monkey Patching (דוור שמצלם מכתבים), deep copy (צילום PDF),
+            ו-Promise wrapper. מיועד לבודקת QA שרוצה להבין את הקוד לעומק.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-script">הסבר קוד</span>
+            <span class="badge date">📅 16 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">8 חלקי קוד</span>
+            <span class="sec-tag">Monkey Patching</span>
+            <span class="sec-tag">fetch vs XHR</span>
+            <span class="sec-tag">HTTP status codes</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 6 -->
+    <div class="tl-item">
+      <div class="tl-dot">6</div>
+      <a class="doc-card" href="postman-guide.html">
+        <div class="card-top">
+          <div class="card-number">6</div>
+          <div class="card-header">
+            <h2>חלופה: בדיקה עם Postman</h2>
+            <div class="card-sub">postman-guide.html &nbsp;·&nbsp; 16 מרץ 10:19</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            מדריך מלא לביצוע אותה הבדיקה באמצעות Postman — ללא כתיבת קוד.
+            כולל: לכידת הבקשה מ-Network tab, ייבוא כ-cURL, הבנת מבנה הבקשה,
+            בדיקה ידנית של 6 תווים, שימוש ב-Collection Runner לאוטומציה, וטבלת תוצאות להדפסה.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-guide">מדריך Postman</span>
+            <span class="badge date">📅 16 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">Copy as cURL</span>
+            <span class="sec-tag">Import לPostman</span>
+            <span class="sec-tag">Collection Runner</span>
+            <span class="sec-tag">טבלה להדפסה</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ── Phase 4: Results ── -->
+  <div class="section-title">שלב ד — תוצאות וממצאים סופיים</div>
+  <div class="timeline">
+
+    <!-- 7 -->
+    <div class="tl-item">
+      <div class="tl-dot green">7</div>
+      <a class="doc-card" href="special-chars-results.html">
+        <div class="card-top">
+          <div class="card-number green">7</div>
+          <div class="card-header">
+            <h2>תוצאות בדיקת תווים מיוחדים — ניתוח מלא</h2>
+            <div class="card-sub">special-chars-results.html &nbsp;·&nbsp; 16 מרץ 10:50</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            <strong>ממצא מפתיע:</strong> כל 6 התווים מיוחדים החזירו HTTP 200 — אף אחד לא נחסם.
+            הסיבה האמיתית ל"משהו השתבש" היא <strong>כלל מספר הזהות</strong>:
+            הסיסמא המקורית הכילה ספרות מהזהות האישית — הכלל נבדק בשרת בלבד, ה-UI לא מציג הודעה ברורה.
+            <br><br>
+            <strong>באג UX פתוח:</strong> יש להחליף "משהו השתבש" בהודעה: "הסיסמא מכילה מידע אישי".
+          </div>
+          <div class="card-meta">
+            <span class="badge type-results">תוצאות סופיות</span>
+            <span class="badge type-bug">באג UX</span>
+            <span class="badge date">📅 16 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">6/6 תווים עובדים</span>
+            <span class="sec-tag">כלל מספר זהות</span>
+            <span class="sec-tag">SetPasswordAndActivate</span>
+            <span class="sec-tag">המלצות המשך</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ── Summary ── -->
+  <div class="section-title">סיכום ממצאים</div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap">
+
+    <div style="flex:1;min-width:260px;background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-top:4px solid var(--green)">
+      <div style="font-weight:700;color:var(--green);margin-bottom:10px;font-size:1rem">✅ ממצא 1 — נסגר</div>
+      <div style="font-size:.88rem;color:#444;line-height:1.65">
+        <strong>תווים מיוחדים:</strong> כל 6 התווים (!@#$%*) מתקבלים בשרת.<br>
+        אין צורך בתיקון. הבדיקה הושלמה.
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:260px;background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-top:4px solid var(--red)">
+      <div style="font-weight:700;color:var(--red);margin-bottom:10px;font-size:1rem">🐛 ממצא 2 — פתוח</div>
+      <div style="font-size:.88rem;color:#444;line-height:1.65">
+        <strong>הודעת שגיאה לא ברורה:</strong> כשסיסמא מכילה מספר זהות, השרת מחזיר שגיאה גנרית.<br>
+        <strong>נדרש:</strong> הודעה ברורה למשתמש.
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:260px;background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-top:4px solid var(--orange)">
+      <div style="font-weight:700;color:var(--orange);margin-bottom:10px;font-size:1rem">📋 המשך נדרש</div>
+      <div style="font-size:.88rem;color:#444;line-height:1.65">
+        בדיקת כלל מספר הזהות לעומק:<br>
+        האם הבדיקה היא על ספרות רצופות? כמה ספרות? האם סדר ה רלוונטי?
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  מרכז בדיקות QA &nbsp;·&nbsp; מערכת ההזדהות של משרד הבריאות &nbsp;·&nbsp; מרץ 2026
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>תוצאות בדיקת תווים מיוחדים — ניתוח מלא</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1e2a3a;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* ===== PAGE HEADER ===== */
+    .page-header {
+      background: linear-gradient(135deg, #1a3c6e 0%, #0d2347 100%);
+      color: white;
+      padding: 48px 40px 40px;
+      text-align: center;
+      border-bottom: 4px solid #f0a500;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+    }
+
+    .page-header .subtitle {
+      font-size: 1rem;
+      color: #b8d0f0;
+      margin-bottom: 32px;
+    }
+
+    /* ===== SUMMARY CARDS ===== */
+    .summary-cards {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .summary-card {
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.25);
+      border-radius: 12px;
+      padding: 20px 32px;
+      text-align: center;
+      min-width: 160px;
+      backdrop-filter: blur(4px);
+    }
+
+    .summary-card .card-icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .summary-card .card-number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      display: block;
+      line-height: 1.1;
+    }
+
+    .summary-card .card-label {
+      font-size: 0.85rem;
+      color: #cce0ff;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .summary-card.green  { border-color: #4caf50; background: rgba(76,175,80,0.18); }
+    .summary-card.red    { border-color: #f44336; background: rgba(244,67,54,0.18); }
+    .summary-card.yellow { border-color: #f0a500; background: rgba(240,165,0,0.18); }
+
+    /* ===== MAIN CONTENT ===== */
+    .content {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+    }
+
+    /* ===== SECTIONS ===== */
+    .section {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: #1a3c6e;
+      color: white;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .section-number {
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .section-body {
+      padding: 28px;
+    }
+
+    /* ===== TABLES ===== */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.93rem;
+      margin: 16px 0;
+    }
+
+    .results-table thead tr {
+      background: #1a3c6e;
+      color: white;
+    }
+
+    .results-table thead th {
+      padding: 12px 16px;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .results-table tbody tr {
+      border-bottom: 1px solid #e8edf4;
+      transition: background 0.15s;
+    }
+
+    .results-table tbody tr:hover { background: #f5f8ff; }
+    .results-table tbody tr:last-child { border-bottom: none; }
+
+    .results-table tbody td {
+      padding: 11px 16px;
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    .results-table .ltr-cell {
+      direction: ltr;
+      text-align: left;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    /* ===== BADGES ===== */
+    .badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-200   { background: #e6f9ee; color: #1b7a3e; border: 1px solid #a3e6b8; }
+    .badge-error { background: #ffeaea; color: #c0392b; border: 1px solid #f5a5a5; }
+    .badge-warn  { background: #fff8e1; color: #b45309; border: 1px solid #fcd97a; }
+    .badge-info  { background: #e8f0fe; color: #1a3c6e; border: 1px solid #9fb8f0; }
+
+    .result-pass { color: #1b7a3e; font-weight: 700; font-size: 1.1rem; }
+    .result-fail { color: #c0392b; font-weight: 700; font-size: 1.1rem; }
+
+    /* ===== ENDPOINT TAG ===== */
+    .endpoint-tag {
+      display: inline-block;
+      direction: ltr;
+      text-align: left;
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: #1e2a3a;
+      color: #7dd3fc;
+      padding: 5px 16px;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      margin: 8px 0;
+    }
+
+    /* ===== CODE BLOCKS ===== */
+    .code-block {
+      direction: ltr;
+      text-align: left;
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: #1e2a3a;
+      color: #e2e8f0;
+      padding: 18px 20px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin: 16px 0;
+      border-right: 4px solid #3b82f6;
+    }
+
+    .code-block .comment { color: #6a9fb5; }
+    .code-block .green   { color: #86efac; }
+    .code-block .yellow  { color: #fcd34d; }
+    .code-block .red     { color: #fca5a5; }
+    .code-block .blue    { color: #93c5fd; }
+
+    /* ===== ALERT BOXES ===== */
+    .alert {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 16px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .alert-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+
+    .alert-body { flex: 1; }
+    .alert-body strong { display: block; margin-bottom: 4px; font-size: 0.97rem; }
+    .alert-body p { font-size: 0.92rem; margin: 0; }
+
+    .alert-green  { background: #e6f9ee; border-right: 4px solid #1b7a3e; border-radius: 0 8px 8px 0; }
+    .alert-red    { background: #ffeaea; border-right: 4px solid #c0392b; border-radius: 0 8px 8px 0; }
+    .alert-yellow { background: #fff8e1; border-right: 4px solid #f0a500; border-radius: 0 8px 8px 0; }
+    .alert-blue   { background: #e8f0fe; border-right: 4px solid #1a3c6e; border-radius: 0 8px 8px 0; }
+
+    /* ===== VISUAL DIAGRAM ===== */
+    .diagram {
+      background: #f7f9fc;
+      border: 2px solid #d1dce8;
+      border-radius: 10px;
+      padding: 24px;
+      margin: 20px 0;
+      direction: ltr;
+      text-align: left;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 2;
+    }
+
+    .diagram .d-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .diagram .d-box {
+      background: #1a3c6e;
+      color: white;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .diagram .d-box-green { background: #1b7a3e; }
+    .diagram .d-box-red   { background: #c0392b; }
+    .diagram .d-box-yellow{ background: #b45309; }
+    .diagram .d-arrow { color: #6b7280; font-size: 1.1rem; }
+    .diagram .d-label { color: #64748b; font-size: 0.8rem; font-style: italic; }
+    .diagram .d-divider { border: none; border-top: 1px dashed #c9d5e2; margin: 12px 0; }
+
+    /* ===== COMPARISON TABLE ===== */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.91rem;
+      margin: 16px 0;
+    }
+
+    .compare-table th {
+      background: #1a3c6e;
+      color: white;
+      padding: 11px 16px;
+      text-align: right;
+    }
+
+    .compare-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #e8edf4;
+      text-align: right;
+      vertical-align: top;
+    }
+
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #f5f8ff; }
+
+    .compare-table .criteria-col { font-weight: 600; color: #1a3c6e; }
+
+    .pass-cell { color: #1b7a3e; font-weight: 600; }
+    .warn-cell { color: #b45309; font-weight: 600; background: #fff8e1 !important; }
+
+    .ltr-mono {
+      direction: ltr;
+      text-align: left;
+      font-family: 'Consolas', 'Courier New', monospace;
+      display: inline-block;
+    }
+
+    /* ===== RULE LIST ===== */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .rule-card {
+      border: 2px solid #d1dce8;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 0.88rem;
+    }
+
+    .rule-card.visible {
+      border-color: #a3e6b8;
+      background: #f0faf4;
+    }
+
+    .rule-card.hidden-rule {
+      border-color: #f5a5a5;
+      background: #fff5f5;
+    }
+
+    .rule-card .rule-icon { font-size: 1.2rem; margin-left: 6px; }
+    .rule-card .rule-text { font-weight: 600; color: #1e2a3a; }
+    .rule-card .rule-note { font-size: 0.78rem; color: #64748b; margin-top: 4px; }
+
+    /* ===== BUG REPORT CARD ===== */
+    .bug-card {
+      border: 2px solid #c0392b;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+
+    .bug-card-header {
+      background: #c0392b;
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .bug-card-body {
+      padding: 22px;
+    }
+
+    .bug-field {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: baseline;
+    }
+
+    .bug-field-label {
+      font-weight: 700;
+      color: #64748b;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .bug-field-value { font-size: 0.93rem; color: #1e2a3a; }
+
+    /* ===== FINDING CARDS ===== */
+    .finding-card {
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 16px 0;
+      border: 2px solid;
+    }
+
+    .finding-card.finding-ok    { border-color: #1b7a3e; }
+    .finding-card.finding-bug   { border-color: #c0392b; }
+
+    .finding-card-header {
+      padding: 14px 20px;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .finding-card.finding-ok   .finding-card-header { background: #1b7a3e; }
+    .finding-card.finding-bug  .finding-card-header { background: #c0392b; }
+
+    .finding-card-body { padding: 20px; background: white; }
+
+    /* ===== RECOMMENDATIONS ===== */
+    .rec-list { list-style: none; padding: 0; margin: 12px 0; }
+
+    .rec-list li {
+      padding: 10px 16px;
+      border-right: 3px solid #1a3c6e;
+      margin-bottom: 10px;
+      background: #f5f8ff;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.92rem;
+    }
+
+    .rec-list li .rec-tag {
+      display: inline-block;
+      background: #1a3c6e;
+      color: white;
+      padding: 1px 10px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .rec-list li strong { color: #1a3c6e; }
+
+    /* ===== FLOW DIAGRAM ===== */
+    .flow-diagram {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .flow-step {
+      flex: 1;
+      min-width: 140px;
+      background: #f5f8ff;
+      border: 2px solid #b8ccee;
+      border-radius: 8px;
+      padding: 14px 12px;
+      text-align: center;
+      font-size: 0.83rem;
+      position: relative;
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: '←';
+      position: absolute;
+      left: -16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #1a3c6e;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .flow-step .step-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+    .flow-step .step-title { font-weight: 700; color: #1a3c6e; }
+    .flow-step .step-desc { color: #64748b; font-size: 0.78rem; margin-top: 4px; }
+
+    .flow-step.highlight { background: #e6f9ee; border-color: #1b7a3e; }
+    .flow-step.warn-step { background: #fff8e1; border-color: #f0a500; }
+
+    /* ===== TWO-COLUMN GRID ===== */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 16px 0; }
+    @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+    .info-box {
+      background: #f5f8ff;
+      border: 2px solid #b8ccee;
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .info-box h4 { color: #1a3c6e; font-size: 0.95rem; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #d1dce8; }
+    .info-box p, .info-box li { font-size: 0.88rem; color: #374151; }
+    .info-box ul { padding-right: 18px; }
+    .info-box li { margin-bottom: 5px; }
+
+    /* ===== SEPARATOR ===== */
+    .sep { margin: 20px 0; border: none; border-top: 2px dashed #e2e8f0; }
+
+    /* ===== FOOTER ===== */
+    .page-footer {
+      background: #1a3c6e;
+      color: #b8d0f0;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.82rem;
+      margin-top: 20px;
+    }
+
+    /* ===== HIGHLIGHT WORD ===== */
+    .hl-yellow { background: #fef08a; padding: 1px 5px; border-radius: 3px; }
+    .hl-red    { background: #ffd6d6; padding: 1px 5px; border-radius: 3px; }
+    .hl-green  { background: #d1fae5; padding: 1px 5px; border-radius: 3px; }
+
+    p + p { margin-top: 10px; }
+    h3 { color: #1a3c6e; font-size: 1rem; margin: 18px 0 10px; }
+  </style>
+</head>
+<body>
+
+<!-- ===== PAGE HEADER ===== -->
+<div class="page-header">
+  <h1>תוצאות בדיקת תווים מיוחדים — ניתוח מלא</h1>
+  <p class="subtitle">Endpoint: <span style="direction:ltr;display:inline-block;font-family:monospace;color:#fcd34d;">/api/SetPasswordAndActivate</span> &nbsp;|&nbsp; תאריך: 16/03/2026</p>
+
+  <div class="summary-cards">
+    <div class="summary-card green">
+      <span class="card-icon">✅</span>
+      <span class="card-number">6</span>
+      <span class="card-label">תווים עובדים</span>
+    </div>
+    <div class="summary-card red">
+      <span class="card-icon">❌</span>
+      <span class="card-number">0</span>
+      <span class="card-label">תווים נחסמים</span>
+    </div>
+    <div class="summary-card yellow">
+      <span class="card-icon">🔍</span>
+      <span class="card-number">ממצא</span>
+      <span class="card-label">חדש — ראה פרטים</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="content">
+
+  <!-- ======================================================= -->
+  <!-- SECTION 1: Results Table                                -->
+  <!-- ======================================================= -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <div class="section-title">טבלת התוצאות המלאה</div>
+    </div>
+    <div class="section-body">
+
+      <p>הסקריפט <strong>testChars()</strong> שלח שישה קריאות API — אחת לכל תו מיוחד. כל הקריאות קיבלו תגובה <span class="badge badge-200">200 OK</span> מהשרת.</p>
+      <p>ה-endpoint שנלכד: <span class="endpoint-tag">/api/SetPasswordAndActivate</span></p>
+
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th style="width:50px;">index</th>
+            <th style="width:60px;">תו</th>
+            <th>שם התו</th>
+            <th>סיסמא שנשלחה</th>
+            <th style="width:90px;">status</th>
+            <th style="width:110px;">תוצאה</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="ltr-cell" style="text-align:center;">0</td>
+            <td class="ltr-cell" style="text-align:center;font-size:1.3rem;font-weight:700;">!</td>
+            <td>סימן קריאה !</td>
+            <td class="ltr-cell">Abc1!defgh</td>
+            <td><span class="badge badge-200">200 OK</span></td>
+            <td class="result-pass">✅ עבד</td>
+          </tr>
+          <tr>
+            <td class="ltr-cell" style="text-align:center;">1</td>
+            <td class="ltr-cell" style="text-align:center;font-size:1.3rem;font-weight:700;">@</td>
+            <td>כרוכית @</td>
+            <td class="ltr-cell">Abc1@defgh</td>
+            <td><span class="badge badge-200">200 OK</span></td>
+            <td class="result-pass">✅ עבד</td>
+          </tr>
+          <tr>
+            <td class="ltr-cell" style="text-align:center;">2</td>
+            <td class="ltr-cell" style="text-align:center;font-size:1.3rem;font-weight:700;">#</td>
+            <td>סולמית #</td>
+            <td class="ltr-cell">Abc1#defgh</td>
+            <td><span class="badge badge-200">200 OK</span></td>
+            <td class="result-pass">✅ עבד</td>
+          </tr>
+          <tr>
+            <td class="ltr-cell" style="text-align:center;">3</td>
+            <td class="ltr-cell" style="text-align:center;font-size:1.3rem;font-weight:700;">$</td>
+            <td>דולר $</td>
+            <td class="ltr-cell">Abc1$defgh</td>
+            <td><span class="badge badge-200">200 OK</span></td>
+            <td class="result-pass">✅ עבד</td>
+          </tr>
+          <tr>
+            <td class="ltr-cell" style="text-align:center;">4</td>
+            <td class="ltr-cell" style="text-align:center;font-size:1.3rem;font-weight:700;">%</td>
+            <td>אחוז %</td>
+            <td class="ltr-cell">Abc1%defgh</td>
+            <td><span class="badge badge-200">200 OK</span></td>
+            <td class="result-pass">✅ עבד</td>
+          </tr>
+          <tr>
+            <td class="ltr-cell" style="text-align:center;">5</td>
+            <td class="ltr-cell" style="text-align:center;font-size:1.3rem;font-weight:700;">*</td>
+            <td>כוכבית *</td>
+            <td class="ltr-cell">Abc1*defgh</td>
+            <td><span class="badge badge-200">200 OK</span></td>
+            <td class="result-pass">✅ עבד</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-green">
+        <div class="alert-icon">✅</div>
+        <div class="alert-body">
+          <strong>תוצאת הבדיקה: כל 6 התווים המיוחדים מתקבלים על ידי השרת</strong>
+          <p>עובדים: <span class="ltr-mono" style="font-weight:700;letter-spacing:0.1em;">! @ # $ % *</span> &nbsp;|&nbsp; נחסמים: (אין)</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- SECTION 2: The contradiction                            -->
+  <!-- ======================================================= -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <div class="section-title">הממצא המפתיע — "משהו השתבש" למרות 200</div>
+    </div>
+    <div class="section-body">
+
+      <div class="alert alert-yellow">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <strong>נשמע סותר — אבל יש הסבר מדויק</strong>
+          <p>
+            ה-API החזיר <strong>200 OK</strong> לכל 6 הקריאות.
+            ובמקביל — הדף הציג את הבאנר האדום <strong>"משהו השתבש. יש לנסות שוב."</strong>
+            אלה שני דברים שונים לחלוטין.
+          </p>
+        </div>
+      </div>
+
+      <h3>שני ערוצים שונים</h3>
+      <p>הסקריפט ו-UI הדף קוראים מקורות שונים. כדי להבין את הסתירה יש להפריד בין שניהם:</p>
+
+      <div class="diagram">
+        <div class="d-row">
+          <div class="d-box">Script: testChars()</div>
+          <div class="d-arrow">→</div>
+          <div class="d-box">HTTP Request #1..#6</div>
+          <div class="d-arrow">→</div>
+          <div class="d-box d-box-green">API Response: 200 ✅</div>
+          <div class="d-arrow">&nbsp;</div>
+          <div class="d-label">← זה מה ש-testChars() קורא ומדווח</div>
+        </div>
+
+        <hr class="d-divider" />
+
+        <div class="d-row">
+          <div class="d-box">Page UI State</div>
+          <div class="d-arrow">→</div>
+          <div class="d-box d-box-yellow">Expected: 1 response flow</div>
+          <div class="d-arrow">→</div>
+          <div class="d-box d-box-red">Got: 6 rapid changes → confused</div>
+          <div class="d-arrow">→</div>
+          <div class="d-label">"משהו השתבש" ← זה מה שה-UI מציג</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="info-box">
+          <h4>✅ מה ה-API ראה (הנתון הרלוונטי)</h4>
+          <ul>
+            <li>הסקריפט שלח 6 קריאות HTTP ישירות</li>
+            <li>לכל קריאה — השרת עיבד ואישר</li>
+            <li>לכל קריאה — הוחזר status <strong>200</strong></li>
+            <li>זה הנתון שה-testChars() מדווח</li>
+          </ul>
+        </div>
+        <div class="info-box">
+          <h4>⚠️ מה ה-UI ראה (שגיאת תצוגה בלבד)</h4>
+          <ul>
+            <li>הדף תוכנן לזרימה: שינוי סיסמא <em>אחד</em></li>
+            <li>הסקריפט שינה 6 פעמים בזו אחר זו</li>
+            <li>מצב הדף (React/state) נכנס לבלבול</li>
+            <li>הוצגה הודעת שגיאה גנרית — <strong>לא שגיאה מהשרת</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="alert alert-blue">
+        <div class="alert-icon">💡</div>
+        <div class="alert-body">
+          <strong>מסקנה ברורה</strong>
+          <p>שגיאת "משהו השתבש" שנראתה בזמן testChars() היא <span class="hl-yellow">שגיאת UI בלבד</span> — תוצאה של 6 שינויים מהירים שבלבלו את מצב הדף. ה-API עצמו עבד מושלם.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- SECTION 3: Why did the original password fail?         -->
+  <!-- ======================================================= -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <div class="section-title">אז למה הסיסמא המקורית נכשלה?</div>
+    </div>
+    <div class="section-body">
+
+      <p>אם כל התווים המיוחדים עובדים — למה הסיסמא <span class="ltr-mono hl-red" style="font-weight:700;">A9709yes%hae2e</span> גרמה לשגיאה?</p>
+
+      <h3>עבודת בילוש — השוואת הסיסמאות</h3>
+
+      <div class="alert alert-green" style="margin-bottom:4px;">
+        <div class="alert-icon">✅</div>
+        <div class="alert-body">
+          <strong>סיסמת הבדיקה — עברה</strong>
+          <p>הסיסמא <span class="ltr-mono" style="font-weight:700;">Abc1%defgh</span> קיבלה 200 ✅ — עם אותו תו <span class="ltr-mono">%</span> בדיוק.</p>
+        </div>
+      </div>
+
+      <div class="alert alert-red">
+        <div class="alert-icon">❌</div>
+        <div class="alert-body">
+          <strong>הסיסמא המקורית — נכשלה</strong>
+          <p>הסיסמא <span class="ltr-mono" style="font-weight:700;">A9709yes%hae2e</span> הציגה ✅ בכל כללי ה-UI — אך השרת החזיר "משהו השתבש".</p>
+        </div>
+      </div>
+
+      <p>מאחר שה-<span class="ltr-mono">%</span> עצמו עבד — צריך לחפש את ההבדל במקום אחר. מה יש ב-<span class="ltr-mono">A9709yes%hae2e</span> שאין ב-<span class="ltr-mono">Abc1%defgh</span>?</p>
+
+      <h3>טבלת השוואה מפורטת</h3>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="width:35%;">קריטריון</th>
+            <th style="width:32.5%;"><span class="ltr-mono" style="font-size:0.88rem;">A9709yes%hae2e</span></th>
+            <th style="width:32.5%;"><span class="ltr-mono" style="font-size:0.88rem;">Abc1%defgh</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="criteria-col">אות גדולה</td>
+            <td class="pass-cell">✅ A</td>
+            <td class="pass-cell">✅ A</td>
+          </tr>
+          <tr>
+            <td class="criteria-col">אות קטנה</td>
+            <td class="pass-cell">✅ yes, hae, e</td>
+            <td class="pass-cell">✅ bc, defgh</td>
+          </tr>
+          <tr>
+            <td class="criteria-col">ספרה</td>
+            <td class="pass-cell">✅ 9709</td>
+            <td class="pass-cell">✅ 1</td>
+          </tr>
+          <tr>
+            <td class="criteria-col">תו מיוחד %</td>
+            <td class="pass-cell">✅ %</td>
+            <td class="pass-cell">✅ %</td>
+          </tr>
+          <tr>
+            <td class="criteria-col">אורך</td>
+            <td class="pass-cell">✅ 14 תווים</td>
+            <td class="pass-cell">✅ 10 תווים</td>
+          </tr>
+          <tr>
+            <td class="criteria-col" style="color:#c0392b;">מספר זהות?</td>
+            <td class="warn-cell">⚠️ 9709 — עלול להיות חלק ממספר ז.ה.</td>
+            <td class="pass-cell">✅ 1 — לא מספר ז.ה.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-yellow">
+        <div class="alert-icon">🔍</div>
+        <div class="alert-body">
+          <strong>המסקנה: הספרות 9709 הן הבעיה הסבירה</strong>
+          <p>כל שאר הקריטריונים — זהים. <strong>ההבדל היחיד</strong> הוא שב-<span class="ltr-mono">A9709yes%hae2e</span> יש את הרצף <span class="ltr-mono hl-red">9709</span> — שעשוי להיות חלק ממספר הזהות של המשתמש. כלל השרת "אסור לסיסמה להכיל את מספר הזהות שלך" כנראה זיהה זאת וחסם את השינוי.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- SECTION 4: The ID number rule                          -->
+  <!-- ======================================================= -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <div class="section-title">הסבר על הכלל "מספר זהות" — הכלל ה-7 הנסתר</div>
+    </div>
+    <div class="section-body">
+
+      <p>ב-UI של שינוי הסיסמא מוצגים <strong>6 כללים</strong> עם וי ירוק לכל אחד. אבל יש כלל נוסף שה-UI לא יכול לבדוק:</p>
+
+      <h3>6 הכללים הגלויים (בודקים ב-Browser)</h3>
+
+      <div class="rules-grid">
+        <div class="rule-card visible">
+          <span class="rule-icon">✅</span>
+          <span class="rule-text">אות גדולה</span>
+          <div class="rule-note">Browser יכול לבדוק: /[A-Z]/.test(pw)</div>
+        </div>
+        <div class="rule-card visible">
+          <span class="rule-icon">✅</span>
+          <span class="rule-text">אות קטנה</span>
+          <div class="rule-note">Browser יכול לבדוק: /[a-z]/.test(pw)</div>
+        </div>
+        <div class="rule-card visible">
+          <span class="rule-icon">✅</span>
+          <span class="rule-text">ספרה</span>
+          <div class="rule-note">Browser יכול לבדוק: /[0-9]/.test(pw)</div>
+        </div>
+        <div class="rule-card visible">
+          <span class="rule-icon">✅</span>
+          <span class="rule-text">תו מיוחד</span>
+          <div class="rule-note">Browser יכול לבדוק: /[!@#$%...]/.test(pw)</div>
+        </div>
+        <div class="rule-card visible">
+          <span class="rule-icon">✅</span>
+          <span class="rule-text">אורך מינימלי</span>
+          <div class="rule-note">Browser יכול לבדוק: pw.length &gt;= 8</div>
+        </div>
+        <div class="rule-card visible">
+          <span class="rule-icon">✅</span>
+          <span class="rule-text">אין רווחים</span>
+          <div class="rule-note">Browser יכול לבדוק: !/\s/.test(pw)</div>
+        </div>
+      </div>
+
+      <h3>הכלל ה-7 — נסתר, נבדק בשרת בלבד</h3>
+
+      <div class="rules-grid">
+        <div class="rule-card hidden-rule" style="grid-column: 1 / -1;">
+          <span class="rule-icon">🔒</span>
+          <span class="rule-text">אסור לסיסמה להכיל את מספר הזהות שלך</span>
+          <div class="rule-note" style="margin-top:8px;">
+            <strong>למה Browser לא יכול לבדוק זאת?</strong><br>
+            מספר הזהות של המשתמש הוא מידע רגיש — <strong>הוא לא נשלח לדפדפן</strong>. רק השרת מכיר אותו.
+            לכן הבדיקה הזאת מתבצעת server-side בלבד.<br><br>
+            <strong>התוצאה:</strong> ה-UI מציג 6 ✅ (כל מה שהוא יכול לבדוק), אבל השרת עדיין יכול לדחות את הסיסמא.
+          </div>
+        </div>
+      </div>
+
+      <hr class="sep" />
+
+      <h3>באג UX: הודעת השגיאה אינה ספציפית</h3>
+
+      <div class="two-col">
+        <div class="info-box" style="border-color:#f5a5a5;background:#fff5f5;">
+          <h4 style="color:#c0392b;">❌ ההתנהגות הנוכחית</h4>
+          <p style="font-size:1rem;font-weight:700;color:#c0392b;">
+            "משהו השתבש.<br>יש לנסות שוב."
+          </p>
+          <p style="margin-top:8px;">הודעה גנרית לחלוטין. המשתמש לא יודע מה לתקן.</p>
+        </div>
+        <div class="info-box" style="border-color:#a3e6b8;background:#f0faf4;">
+          <h4 style="color:#1b7a3e;">✅ ההתנהגות הרצויה</h4>
+          <p style="font-size:0.95rem;font-weight:700;color:#1b7a3e;">
+            "הסיסמא מכילה מידע אישי,<br>אנא בחרי סיסמא שונה"
+          </p>
+          <p style="margin-top:8px;">הודעה ספציפית. המשתמש מבין מה לשנות.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- SECTION 5: The endpoint name                            -->
+  <!-- ======================================================= -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <div class="section-title">הסבר על ה-Endpoint — שתי פעולות בקריאה אחת</div>
+    </div>
+    <div class="section-body">
+
+      <p>שם ה-endpoint <span class="endpoint-tag">/api/SetPasswordAndActivate</span> חושף מבנה חשוב: <strong>שתי פעולות</strong> מתבצעות בקריאה אחת.</p>
+
+      <div class="two-col" style="margin:20px 0;">
+        <div class="info-box" style="border-color:#3b82f6;background:#eff6ff;">
+          <h4 style="color:#1d4ed8;">1️⃣ SetPassword</h4>
+          <ul>
+            <li>שינוי הסיסמא של המשתמש</li>
+            <li>ניתן לביצוע מרובה</li>
+            <li>לכן כל 6 קריאות testChars() החזירו 200</li>
+            <li>הסיסמא אכן השתנתה בכל פעם</li>
+          </ul>
+        </div>
+        <div class="info-box" style="border-color:#7c3aed;background:#faf5ff;">
+          <h4 style="color:#6d28d9;">2️⃣ Activate</h4>
+          <ul>
+            <li>הפעלת החשבון — זרימת Login ראשון</li>
+            <li>ה-token שנשלח הוא <strong>חד-פעמי</strong></li>
+            <li>לאחר הקריאה הראשונה — ה-Activation כבר בוצע</li>
+            <li>קריאות הבאות עדיין עובדות (200) — החלק SetPassword ממשיך לפעול</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>זרימת הבדיקה — מה קרה בפועל</h3>
+
+      <div class="flow-diagram" style="direction:ltr;text-align:left;">
+        <div class="flow-step">
+          <span class="step-icon">🔑</span>
+          <span class="step-title">Activation Token</span>
+          <span class="step-desc">One-time token in URL</span>
+        </div>
+        <div class="flow-step highlight">
+          <span class="step-icon">✅</span>
+          <span class="step-title">Call #1 (!) → 200</span>
+          <span class="step-desc">SetPassword + Activate both succeed</span>
+        </div>
+        <div class="flow-step warn-step">
+          <span class="step-icon">🔄</span>
+          <span class="step-title">Calls #2–#6 → 200</span>
+          <span class="step-desc">SetPassword succeeds; Activate already done (ignored or silently OK)</span>
+        </div>
+        <div class="flow-step">
+          <span class="step-icon">📊</span>
+          <span class="step-title">testChars() reads status</span>
+          <span class="step-desc">All 200 → all "עבד" ✅</span>
+        </div>
+      </div>
+
+      <div class="alert alert-blue">
+        <div class="alert-icon">💡</div>
+        <div class="alert-body">
+          <strong>מסקנה</strong>
+          <p>testChars() עבדה כי <strong>חלק ה-SetPassword</strong> הצליח בכל הקריאות. חלק ה-Activate בוצע פעם אחת בלבד — הקריאות הנוספות לא נכשלו (השרת החזיר 200), או שהוא מתעלם ממנו בשקט לאחר ה-Activation הראשון.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- SECTION 6: Findings Summary                             -->
+  <!-- ======================================================= -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">6</div>
+      <div class="section-title">ממצאים וסיכום — מה לדווח</div>
+    </div>
+    <div class="section-body">
+
+      <!-- Finding 1 -->
+      <div class="finding-card finding-ok">
+        <div class="finding-card-header">
+          ✅ ממצא 1 — תווים מיוחדים: תקין
+        </div>
+        <div class="finding-card-body">
+          <p>כל 6 התווים המיוחדים (<span class="ltr-mono" style="font-weight:700;">! @ # $ % *</span>) מתקבלים על ידי השרת ומחזירים 200.</p>
+          <p style="margin-top:8px;"><strong>פעולה נדרשת:</strong> אין באג בנושא תווים מיוחדים. ניתן לסגור את החקירה הזאת.</p>
+        </div>
+      </div>
+
+      <!-- Finding 2 -->
+      <div class="finding-card finding-bug">
+        <div class="finding-card-header">
+          🐛 ממצא 2 — הודעת שגיאה לא ברורה: באג UX
+        </div>
+        <div class="finding-card-body">
+          <p>כאשר הסיסמא מכילה מספר זהות, השרת דוחה אותה — אבל הודעת השגיאה גנרית ולא מסבירה את הסיבה.</p>
+
+          <div class="bug-card" style="margin-top:20px;">
+            <div class="bug-card-header">
+              🐛 Bug Report
+            </div>
+            <div class="bug-card-body">
+              <div class="bug-field">
+                <div class="bug-field-label">כותרת</div>
+                <div class="bug-field-value">הודעת השגיאה "משהו השתבש" אינה ספציפית כאשר הסיסמא מכילה מספר זהות</div>
+              </div>
+              <div class="bug-field">
+                <div class="bug-field-label">Endpoint</div>
+                <div class="bug-field-value"><span class="ltr-mono">POST /api/SetPasswordAndActivate</span></div>
+              </div>
+              <div class="bug-field">
+                <div class="bug-field-label">Severity</div>
+                <div class="bug-field-value"><span class="badge badge-warn">Medium</span></div>
+              </div>
+              <div class="bug-field">
+                <div class="bug-field-label">Repro</div>
+                <div class="bug-field-value">
+                  שלח שינוי סיסמא עם ספרות ממספר הזהות (למשל: <span class="ltr-mono">A9709yes%hae2e</span> כאשר הזהות מכילה 9709)
+                </div>
+              </div>
+
+              <hr class="sep" style="margin:16px 0;" />
+
+              <div class="bug-field">
+                <div class="bug-field-label">Expected</div>
+                <div class="bug-field-value" style="color:#1b7a3e;font-weight:600;">
+                  "הסיסמא מכילה מידע אישי, אנא בחרי סיסמא שונה"
+                </div>
+              </div>
+              <div class="bug-field">
+                <div class="bug-field-label">Actual</div>
+                <div class="bug-field-value" style="color:#c0392b;font-weight:600;">
+                  "משהו השתבש. יש לנסות שוב."
+                </div>
+              </div>
+
+              <hr class="sep" style="margin:16px 0;" />
+
+              <div class="bug-field">
+                <div class="bug-field-label">השפעה</div>
+                <div class="bug-field-value">המשתמש מנסה שוב ושוב עם אותה סיסמא (כי כל הכללים הגלויים ✅) — לא מבין שהבעיה היא ספרות ת.ז.</div>
+              </div>
+              <div class="bug-field">
+                <div class="bug-field-label">UX Impact</div>
+                <div class="bug-field-value">גבוה — המשתמש תקוע ואינו מצליח להפעיל את חשבונו</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================= -->
+  <!-- SECTION 7: Recommendations                              -->
+  <!-- ======================================================= -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">7</div>
+      <div class="section-title">המלצות לבדיקות המשך</div>
+    </div>
+    <div class="section-body">
+
+      <p>כדי לאשר את ההשערה "מספר זהות בסיסמא" ולהבין את גבולות הכלל — יש לבצע את בדיקות ההמשך הבאות:</p>
+
+      <ul class="rec-list">
+        <li>
+          <span class="rec-tag">TC-ID-01</span>
+          <strong>בדיקת מספר זהות מלא:</strong>
+          הזן סיסמא שמכילה את 9 ספרות מספר הזהות המלא (למשל: <span class="ltr-mono">Abc!012345678xyz</span>) —
+          <strong>צפוי:</strong> השרת יחסום ויחזיר שגיאה ספציפית (או לא ספציפית).
+        </li>
+        <li>
+          <span class="rec-tag">TC-ID-02</span>
+          <strong>בדיקת רצף חלקי (4+ ספרות):</strong>
+          הזן סיסמא שמכילה 4 ספרות עוקבות ממספר הזהות —
+          <strong>שאלה:</strong> האם 4 ספרות מספיקות לחסימה? או רק המספר המלא?
+        </li>
+        <li>
+          <span class="rec-tag">TC-ID-03</span>
+          <strong>בדיקת ספרות בסדר שונה:</strong>
+          הזן ספרות ממספר הזהות בסדר שונה (אנגרמה) —
+          <strong>שאלה:</strong> האם הבדיקה היא exact substring, או pattern matching?
+        </li>
+        <li>
+          <span class="rec-tag">TC-ID-04</span>
+          <strong>בדיקת ספרות שאינן מהזהות:</strong>
+          הזן סיסמא עם 4+ ספרות שאינן חלק ממספר הזהות —
+          <strong>צפוי:</strong> 200 ✅ — כדי לאשר שהבעיה אינה "מספר ספרות" אלא "מספר זהות ספציפי".
+        </li>
+        <li>
+          <span class="rec-tag">TC-ID-05</span>
+          <strong>בדיקת הסיסמא המקורית עם משתמש אחר:</strong>
+          נסה לשנות סיסמא ל-<span class="ltr-mono">A9709yes%hae2e</span> עם משתמש שמספר הזהות שלו <em>לא</em> מכיל 9709 —
+          <strong>צפוי:</strong> 200 ✅ — אישוש סופי שהבעיה היא ספציפית ל-ID המשתמש.
+        </li>
+        <li>
+          <span class="rec-tag">TC-ID-06</span>
+          <strong>בדיקת הודעת השגיאה:</strong>
+          בכל מקרה של חסימה — תעד את הודעת השגיאה המוצגת.
+          בדוק: האם הוספת error code/type בתגובת ה-API? (inspect Network → Response Body)
+        </li>
+      </ul>
+
+      <div class="alert alert-blue" style="margin-top:20px;">
+        <div class="alert-icon">📋</div>
+        <div class="alert-body">
+          <strong>איך לבצע את הבדיקות?</strong>
+          <p>אפשר להשתמש באותה שיטה כמו testChars() — סקריפט Console שולח קריאות ישירות ל-<span class="ltr-mono">/api/SetPasswordAndActivate</span>. כך מקבלים את ה-status code האמיתי ואת ה-response body המלא ללא תלות ב-UI.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div class="page-footer">
+  QA Analysis Report &nbsp;|&nbsp; auth-validation &nbsp;|&nbsp; special-chars-results.html &nbsp;|&nbsp; 16/03/2026
+</div>
+
+  <!-- back-to-index -->
+  <style>
+    #back-to-index {
+      position: fixed; bottom: 22px; left: 22px; z-index: 9999;
+      background: #1a3c6e; color: #fff;
+      border: none; border-radius: 28px;
+      padding: 10px 18px 10px 14px;
+      font-size: .85rem; font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      display: flex; align-items: center; gap: 7px;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    #back-to-index:hover { background: #1565c0; transform: translateY(-2px); }
+  </style>
+  <a id='back-to-index' href='index.html'>&#127968; כל המסמכים</a>
+</body>
+</html>

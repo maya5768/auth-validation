@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הסבר סקריפט — special-chars-tester.js</title>
+  <style>
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Arial Hebrew', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1e2a3a;
+      line-height: 1.7;
+      direction: rtl;
+    }
+
+    /* ─── Page Header ─── */
+    .page-header {
+      background: linear-gradient(135deg, #1a3c6e 0%, #0d2444 100%);
+      color: #fff;
+      padding: 48px 40px 36px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .page-header .subtitle {
+      font-size: 1rem;
+      opacity: 0.78;
+      margin-bottom: 6px;
+    }
+    .page-header .filename {
+      display: inline-block;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 6px;
+      padding: 4px 16px;
+      font-size: 0.92rem;
+      direction: ltr;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    /* ─── Flow Diagram ─── */
+    .flow-section {
+      background: #fff;
+      border-bottom: 3px solid #e2e8f0;
+      padding: 28px 40px;
+    }
+    .flow-section h2 {
+      color: #1a3c6e;
+      font-size: 1.1rem;
+      margin-bottom: 18px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+      direction: ltr;
+    }
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .flow-box {
+      background: #1a3c6e;
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-align: center;
+      min-width: 90px;
+      box-shadow: 0 2px 8px rgba(26,60,110,0.25);
+      direction: rtl;
+    }
+    .flow-box .section-num {
+      display: block;
+      font-size: 0.7rem;
+      opacity: 0.7;
+      font-weight: 400;
+      margin-bottom: 2px;
+    }
+    .flow-arrow {
+      font-size: 1.4rem;
+      color: #4a7cc9;
+      padding: 0 6px;
+      line-height: 1;
+    }
+    .flow-step .step-label {
+      font-size: 0.72rem;
+      color: #4a7cc9;
+      font-weight: 600;
+      direction: rtl;
+    }
+
+    /* ─── Main Content ─── */
+    .content {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+    }
+
+    /* ─── Section Cards ─── */
+    .section-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(26,60,110,0.09);
+      margin-bottom: 36px;
+      overflow: hidden;
+      border: 1px solid #dde6f0;
+    }
+    .section-header {
+      background: linear-gradient(90deg, #1a3c6e 0%, #1e4d8c 100%);
+      color: #fff;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .section-number {
+      background: rgba(255,255,255,0.18);
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .section-title-block h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+    .section-title-block .section-tag {
+      font-size: 0.78rem;
+      opacity: 0.7;
+      font-family: 'Consolas', monospace;
+      direction: ltr;
+      display: inline-block;
+    }
+    .section-body {
+      padding: 0;
+    }
+
+    /* ─── Code Block ─── */
+    .code-block-wrapper {
+      background: #0d1b2e;
+      padding: 0;
+    }
+    .code-block-label {
+      background: #162840;
+      color: #7db9e8;
+      padding: 6px 18px;
+      font-size: 0.75rem;
+      font-family: 'Consolas', monospace;
+      direction: ltr;
+      text-align: left;
+      border-bottom: 1px solid #1e3a5a;
+      letter-spacing: 0.5px;
+    }
+    .code-block {
+      direction: ltr;
+      text-align: left;
+      padding: 20px 24px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.65;
+      overflow-x: auto;
+      color: #cdd9e5;
+      white-space: pre;
+    }
+
+    /* ─── Syntax Highlighting ─── */
+    .kw  { color: #ff7b72; }   /* keyword: const, let, function, return, async, await */
+    .fn  { color: #d2a8ff; }   /* function names */
+    .str { color: #a5d6ff; }   /* strings / template literals */
+    .cm  { color: #6a737d; font-style: italic; } /* comments */
+    .num { color: #f0883e; }   /* numbers */
+    .prop{ color: #79c0ff; }   /* properties */
+    .op  { color: #ff7b72; }   /* operators */
+    .reg { color: #a5d6ff; }   /* regex */
+    .val { color: #f0883e; }   /* special values: true, false, null */
+    .var { color: #ffa657; }   /* variables */
+    .punc{ color: #cdd9e5; }   /* punctuation */
+
+    /* ─── Explanation Area ─── */
+    .explanation {
+      padding: 24px 28px;
+      direction: rtl;
+    }
+    .explanation h3 {
+      color: #1a3c6e;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+      border-right: 4px solid #1a3c6e;
+      padding-right: 10px;
+    }
+    .explanation p {
+      color: #2d3e52;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+    .explanation ul {
+      margin: 10px 0 14px 0;
+      padding-right: 22px;
+    }
+    .explanation li {
+      margin-bottom: 6px;
+      font-size: 0.93rem;
+      color: #2d3e52;
+    }
+
+    /* ─── Info Boxes ─── */
+    .info-box {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 0.9rem;
+      direction: rtl;
+    }
+    .info-box.analogy {
+      background: #f0f7ff;
+      border-right: 4px solid #4a7cc9;
+      border-left: none;
+    }
+    .info-box.why {
+      background: #f0fff4;
+      border-right: 4px solid #2da44e;
+      border-left: none;
+    }
+    .info-box.warn {
+      background: #fff8e1;
+      border-right: 4px solid #f0a020;
+      border-left: none;
+    }
+    .info-box.tech {
+      background: #fdf4ff;
+      border-right: 4px solid #8a4fff;
+      border-left: none;
+    }
+    .info-box-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-box.analogy .info-box-title { color: #1a3c6e; }
+    .info-box.why     .info-box-title { color: #1a6e3c; }
+    .info-box.warn    .info-box-title { color: #8a5700; }
+    .info-box.tech    .info-box-title { color: #5a1a8a; }
+
+    /* ─── Inline Code ─── */
+    code {
+      direction: ltr;
+      display: inline-block;
+      background: #e8eef5;
+      color: #1a3c6e;
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+
+    /* ─── Divider inside explanation ─── */
+    .exp-divider {
+      border: none;
+      border-top: 1px solid #e8eef5;
+      margin: 18px 0;
+    }
+
+    /* ─── Status Codes Table ─── */
+    .status-section {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(26,60,110,0.09);
+      border: 1px solid #dde6f0;
+      overflow: hidden;
+      margin-bottom: 36px;
+    }
+    .status-section .section-header {
+      background: linear-gradient(90deg, #0d2444 0%, #1a3c6e 100%);
+    }
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      direction: rtl;
+    }
+    .status-table thead th {
+      background: #1a3c6e;
+      color: #fff;
+      padding: 12px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: right;
+    }
+    .status-table thead th:last-child {
+      text-align: left;
+      direction: ltr;
+    }
+    .status-table tbody tr:nth-child(even) { background: #f6f9fc; }
+    .status-table tbody tr:hover { background: #eef3fa; }
+    .status-table tbody td {
+      padding: 12px 18px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #e8eef5;
+      vertical-align: top;
+    }
+    .status-badge {
+      display: inline-block;
+      border-radius: 6px;
+      padding: 3px 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      font-family: 'Consolas', monospace;
+      direction: ltr;
+    }
+    .s200 { background: #d4edda; color: #155724; }
+    .s201 { background: #cce5ff; color: #004085; }
+    .s400 { background: #fff3cd; color: #856404; }
+    .s401 { background: #ffe0cc; color: #7a3000; }
+    .s403 { background: #f8d7da; color: #721c24; }
+    .s500 { background: #e2d9f3; color: #432874; }
+
+    .result-icon { font-size: 1.1rem; }
+
+    /* ─── Footer ─── */
+    .page-footer {
+      text-align: center;
+      padding: 24px;
+      color: #7a94b0;
+      font-size: 0.82rem;
+      border-top: 1px solid #dde6f0;
+      background: #f0f4f8;
+      direction: rtl;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 700px) {
+      .page-header { padding: 28px 16px; }
+      .content { padding: 20px 10px 40px; }
+      .explanation { padding: 16px; }
+      .flow-box { min-width: 70px; font-size: 0.78rem; padding: 8px 10px; }
+      .flow-arrow { font-size: 1.1rem; padding: 0 3px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE HEADER
+══════════════════════════════════════════════════════════ -->
+<header class="page-header">
+  <h1>הסבר מפורט לסקריפט בדיקת תווים מיוחדים</h1>
+  <p class="subtitle">מסמך QA — הסבר סקשן לפי סקשן לבודקים שיודעים קצת JavaScript</p>
+  <span class="filename">special-chars-tester.js</span>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     FLOW DIAGRAM
+══════════════════════════════════════════════════════════ -->
+<div class="flow-section">
+  <h2>זרימת הסקריפט — מבט על</h2>
+  <div class="flow-diagram">
+
+    <div class="flow-step">
+      <div class="flow-box">
+        <span class="section-num">סקשן 1</span>
+        הגדרות
+      </div>
+      <span class="step-label">SECTION 1</span>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box">
+        <span class="section-num">סקשנים 2–3</span>
+        יירוט
+      </div>
+      <span class="step-label">INTERCEPT</span>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box">
+        <span class="section-num">אוטומטי</span>
+        לכידה
+      </div>
+      <span class="step-label">CAPTURE</span>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box">
+        <span class="section-num">סקשנים 4–5</span>
+        שכפול
+      </div>
+      <span class="step-label">CLONE &amp; REPLACE</span>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box">
+        <span class="section-num">סקשנים 6–7</span>
+        שליחה
+      </div>
+      <span class="step-label">REPLAY</span>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <div class="flow-step">
+      <div class="flow-box">
+        <span class="section-num">סקשן 8</span>
+        תוצאות
+      </div>
+      <span class="step-label">RESULTS</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════════════════ -->
+<main class="content">
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 1: DEFINITIONS
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <div class="section-title-block">
+        <h2>הגדרות — מה הסקריפט צריך לדעת מראש</h2>
+        <span class="section-tag">// SECTION 1: DEFINITIONS</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 1</div>
+        <div class="code-block"><span class="cm">// SECTION 1: DEFINITIONS</span>
+<span class="kw">const</span> <span class="var">SPECIAL_CHARS</span> <span class="op">=</span> <span class="punc">[</span>
+  <span class="punc">{</span> <span class="prop">char</span><span class="punc">:</span> <span class="str">'!'</span><span class="punc">,</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'סימן קריאה  !'</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="prop">char</span><span class="punc">:</span> <span class="str">'@'</span><span class="punc">,</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'כרוכית      @'</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="prop">char</span><span class="punc">:</span> <span class="str">'#'</span><span class="punc">,</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'סולמית      #'</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="prop">char</span><span class="punc">:</span> <span class="str">'$'</span><span class="punc">,</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'דולר        $'</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="prop">char</span><span class="punc">:</span> <span class="str">'%'</span><span class="punc">,</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'אחוז        %'</span> <span class="punc">},</span>
+  <span class="punc">{</span> <span class="prop">char</span><span class="punc">:</span> <span class="str">'*'</span><span class="punc">,</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'כוכבית      *'</span> <span class="punc">},</span>
+<span class="punc">];</span>
+<span class="kw">const</span> <span class="var">PLACEHOLDER</span> <span class="op">=</span> <span class="str">'§'</span><span class="punc">;</span>
+<span class="kw">const</span> <span class="var">BASE_PASSWORD</span> <span class="op">=</span> <span class="str">`Abc1<span class="var">${PLACEHOLDER}</span>defgh`</span><span class="punc">;</span>
+<span class="kw">const</span> <span class="fn">makePassword</span> <span class="op">=</span> <span class="punc">(</span><span class="var">char</span><span class="punc">)</span> <span class="op">=></span> <span class="var">BASE_PASSWORD</span><span class="punc">.</span><span class="fn">replace</span><span class="punc">(</span><span class="var">PLACEHOLDER</span><span class="punc">,</span> <span class="var">char</span><span class="punc">);</span>
+<span class="kw">let</span> <span class="var">_captured</span> <span class="op">=</span> <span class="val">null</span><span class="punc">;</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          זהו ה"הכנה" של הסקריפט — כאן מוגדרות כל הנקודות הקבועות שהסקריפט ישתמש בהן לאורך כל הריצה.
+          ממש כמו שלפני ניסוי במעבדה מכינים את כל הכלים, הכאן מגדירים את רשימת התווים לבדיקה, את מבנה הסיסמה, ואת "הכיס" שישמור את הבקשה שנלכדה.
+        </p>
+
+        <h3>פירוט כל קטע</h3>
+        <ul>
+          <li>
+            <strong>SPECIAL_CHARS</strong> — מערך (רשימה) של אובייקטים. כל אובייקט מייצג תו מיוחד אחד ומכיל שני שדות: <code>char</code> (התו עצמו) ו-<code>name</code> (שמו בעברית לצורך הדוח). הסקריפט יעבור על כל האיברים ברשימה הזו אחד אחד.
+          </li>
+          <li>
+            <strong>PLACEHOLDER</strong> — תו ייחודי (<code>§</code>) שמשמש כסמן מיקום בתבנית הסיסמה. נבחר תו נדיר כדי שלא ייתקל בטעות בשם שדה אחר.
+          </li>
+          <li>
+            <strong>BASE_PASSWORD</strong> — תבנית הסיסמה: <code>Abc1§defgh</code>. הסיסמה עומדת בדרישות נפוצות (אות גדולה, אות קטנה, ספרה) ומשאירה "חור" — ה-§ — שיוחלף בכל פעם בתו מיוחד אחר.
+          </li>
+          <li>
+            <strong>makePassword(char)</strong> — פונקציה קטנה שמקבלת תו ומחזירה סיסמה מוכנה. למשל: <code>makePassword('!')</code> יחזיר <code>Abc1!defgh</code>.
+          </li>
+          <li>
+            <strong>_captured</strong> — משתנה שמתחיל כ-<code>null</code> (ריק). הוא ימולא אוטומטית ברגע שהסקריפט "יתפוס" בקשת רשת שהאפליקציה שולחת. כל שאר הסקריפט מסתמך על המשתנה הזה.
+          </li>
+        </ul>
+
+        <div class="info-box analogy">
+          <div class="info-box-title">אנלוגיה</div>
+          <p>
+            דמיינו שאתם מכינים 6 מעטפות לשליחה, ועל כל מעטפה תכתבו שם שונה. לפני שמתחילים, מכינים:
+            רשימת שמות (SPECIAL_CHARS), תבנית המעטפה (BASE_PASSWORD), ותיבת דואר ריקה שתחכה לקלט (_captured).
+          </p>
+        </div>
+
+        <div class="info-box why">
+          <div class="info-box-title">למה זה נדרש?</div>
+          <p>
+            הגדרת הכל מראש בצורה מסודרת מאפשרת לשנות בקלות את רשימת התווים הנבדקים או את תבנית הסיסמה מבלי לגעת בשאר הלוגיקה.
+            הפרדת "המה" (הנתונים) מה"איך" (הלוגיקה) היא עיקרון מרכזי בכתיבת קוד תחזוקתי.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 2: fetch INTERCEPTOR
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <div class="section-title-block">
+        <h2>יירוט fetch — האזנה שקטה לבקשות הרשת</h2>
+        <span class="section-tag">// SECTION 2: fetch INTERCEPTOR</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 2</div>
+        <div class="code-block"><span class="cm">// SECTION 2: fetch INTERCEPTOR</span>
+<span class="kw">const</span> <span class="var">_originalFetch</span> <span class="op">=</span> <span class="var">window</span><span class="punc">.</span><span class="prop">fetch</span><span class="punc">;</span>
+<span class="var">window</span><span class="punc">.</span><span class="prop">fetch</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">function</span> <span class="punc">(</span><span class="var">input</span><span class="punc">,</span> <span class="var">init</span> <span class="op">=</span> <span class="punc">{})</span> <span class="punc">{</span>
+  <span class="kw">const</span> <span class="var">url</span>    <span class="op">=</span> <span class="kw">typeof</span> <span class="var">input</span> <span class="op">===</span> <span class="str">'string'</span> <span class="op">?</span> <span class="var">input</span> <span class="op">:</span> <span class="var">input</span><span class="op">?.</span><span class="prop">url</span><span class="punc">;</span>
+  <span class="kw">const</span> <span class="var">body</span>   <span class="op">=</span> <span class="var">init</span><span class="op">?.</span><span class="prop">body</span> <span class="op">??</span> <span class="var">input</span><span class="op">?.</span><span class="prop">body</span><span class="punc">;</span>
+  <span class="kw">const</span> <span class="var">method</span> <span class="op">=</span> <span class="punc">(</span><span class="var">init</span><span class="op">?.</span><span class="prop">method</span> <span class="op">??</span> <span class="var">input</span><span class="op">?.</span><span class="prop">method</span> <span class="op">??</span> <span class="str">'GET'</span><span class="punc">).</span><span class="fn">toUpperCase</span><span class="punc">();</span>
+  <span class="kw">if</span> <span class="punc">(</span><span class="var">body</span> <span class="op">&amp;&amp;</span> <span class="punc">[</span><span class="str">'POST'</span><span class="punc">,</span> <span class="str">'PUT'</span><span class="punc">,</span> <span class="str">'PATCH'</span><span class="punc">].</span><span class="fn">includes</span><span class="punc">(</span><span class="var">method</span><span class="punc">))</span> <span class="punc">{</span>
+    <span class="var">_captured</span> <span class="op">=</span> <span class="punc">{</span>
+      <span class="prop">type</span>    <span class="punc">:</span> <span class="str">'fetch'</span><span class="punc">,</span>
+      <span class="var">url</span><span class="punc">,</span>
+      <span class="prop">init</span>    <span class="punc">:</span> <span class="fn">_cloneInit</span><span class="punc">(</span><span class="var">init</span><span class="punc">),</span>
+      <span class="prop">bodyRaw</span> <span class="punc">:</span> <span class="kw">typeof</span> <span class="var">body</span> <span class="op">===</span> <span class="str">'string'</span> <span class="op">?</span> <span class="var">body</span> <span class="op">:</span> <span class="val">null</span><span class="punc">,</span>
+    <span class="punc">};</span>
+    <span class="var">console</span><span class="punc">.</span><span class="fn">log</span><span class="punc">(</span><span class="str">'%c📡 Fetch נלכד!'</span><span class="punc">,</span> <span class="str">'color:#0066cc;font-weight:bold'</span><span class="punc">,</span> <span class="var">url</span><span class="punc">);</span>
+  <span class="punc">}</span>
+  <span class="kw">return</span> <span class="var">_originalFetch</span><span class="punc">.</span><span class="fn">apply</span><span class="punc">(</span><span class="kw">this</span><span class="punc">,</span> <span class="var">arguments</span><span class="punc">);</span>
+<span class="punc">};</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          הסקשן הזה "מחדיר" קוד מרגל לתוך פונקציית הרשת המובנית של הדפדפן. כשהאפליקציה שולחת בקשת <code>fetch</code>
+          (דרך הרשת לשרת), הסקריפט שלנו נכנס לפניה, מצלם את כל הפרטים, ואז מעביר את הבקשה המקורית הלאה — כך שהאפליקציה לא יודעת שמישהו הציץ.
+        </p>
+
+        <h3>שלבי הפעולה</h3>
+        <ul>
+          <li><strong>שמירת המקור:</strong> לפני הכל, שומרים את <code>window.fetch</code> המקורית תחת השם <code>_originalFetch</code>. זה קריטי — בלעדיו לא נוכל לשלוח בקשות בהמשך.</li>
+          <li><strong>החלפת הפונקציה:</strong> <code>window.fetch</code> מוחלפת בגרסה שלנו. מעכשיו כל קריאה ל-fetch תעבור דרכנו.</li>
+          <li><strong>חילוץ מידע:</strong> הקוד מוציא URL, גוף הבקשה (body) ושיטת הבקשה (method).</li>
+          <li><strong>סינון:</strong> לכידה מתבצעת רק עבור <code>POST</code>, <code>PUT</code> או <code>PATCH</code> (שיטות שמכילות נתונים כמו סיסמה). בקשות <code>GET</code> מתעלמות.</li>
+          <li><strong>שמירה ב-_captured:</strong> הפרטים נשמרים כדי שניתן יהיה לשחזר את הבקשה בהמשך.</li>
+          <li><strong>הודעה בקונסול:</strong> הדפסה כחולה מציינת שנלכדה בקשה.</li>
+          <li><strong>העברה למקורי:</strong> בסוף, הבקשה האמיתית ממשיכה לשרת ללא שינוי.</li>
+        </ul>
+
+        <div class="info-box analogy">
+          <div class="info-box-title">אנלוגיה — דוור מצלם מכתבים</div>
+          <p>
+            דמיינו דוור שעובד בבניין משרדים. רגיל, הוא מעביר מכתבים מהשולח לנמען.
+            הסקריפט שלנו הוא כמו דוור חדש שנכנס לעמדה: הוא מצלם כל מכתב שעובר בידיו, ממשיך להעביר אותו לנמען
+            — אבל עכשיו יש לו עותק. מאוחר יותר הוא יוכל לשלוח גרסאות שונות של אותו מכתב.
+          </p>
+        </div>
+
+        <div class="info-box tech">
+          <div class="info-box-title">מושג טכני — Monkey Patching</div>
+          <p>
+            <strong>Monkey Patching</strong> הוא טכניקה שבה מחליפים בזמן ריצה פונקציה מובנית בגרסה מותאמת אישית.
+            השם "קוף" מרמז על שינוי "צעקני" ולא מסודר — אבל בהקשר של DevTools לבדיקות זו שיטה נפוצה ולגיטימית.
+            חשוב: ה-Monkey Patching פועל רק בדף הנוכחי ונמחק ברגע שמרעננים את הדפדפן.
+          </p>
+        </div>
+
+        <div class="info-box why">
+          <div class="info-box-title">למה זה נדרש?</div>
+          <p>
+            לא ניתן "לאסור" על אפליקציה לשלוח בקשות בצורה ישירה מבחוץ — אבל אפשר לשים את עצמנו בתווך.
+            כך אנחנו מקבלים עותק מדויק של הבקשה האמיתית, כולל headers ו-body, בלי להתקין כלים חיצוניים.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 3: XHR INTERCEPTOR
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <div class="section-title-block">
+        <h2>יירוט XHR — כיסוי הטכנולוגיה הישנה</h2>
+        <span class="section-tag">// SECTION 3: XHR INTERCEPTOR</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 3</div>
+        <div class="code-block"><span class="cm">// SECTION 3: XHR INTERCEPTOR</span>
+<span class="kw">const</span> <span class="var">_xhrOpen</span>      <span class="op">=</span> <span class="var">XMLHttpRequest</span><span class="punc">.</span><span class="prop">prototype</span><span class="punc">.</span><span class="prop">open</span><span class="punc">;</span>
+<span class="kw">const</span> <span class="var">_xhrSetHeader</span> <span class="op">=</span> <span class="var">XMLHttpRequest</span><span class="punc">.</span><span class="prop">prototype</span><span class="punc">.</span><span class="prop">setRequestHeader</span><span class="punc">;</span>
+<span class="kw">const</span> <span class="var">_xhrSend</span>      <span class="op">=</span> <span class="var">XMLHttpRequest</span><span class="punc">.</span><span class="prop">prototype</span><span class="punc">.</span><span class="prop">send</span><span class="punc">;</span>
+
+<span class="var">XMLHttpRequest</span><span class="punc">.</span><span class="prop">prototype</span><span class="punc">.</span><span class="prop">open</span> <span class="op">=</span> <span class="kw">function</span> <span class="punc">(</span><span class="var">method</span><span class="punc">,</span> <span class="var">url</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">this</span><span class="punc">.</span><span class="var">_m</span> <span class="op">=</span> <span class="var">method</span><span class="punc">.</span><span class="fn">toUpperCase</span><span class="punc">();</span>
+  <span class="kw">this</span><span class="punc">.</span><span class="var">_u</span> <span class="op">=</span> <span class="var">url</span><span class="punc">;</span>
+  <span class="kw">this</span><span class="punc">.</span><span class="var">_h</span> <span class="op">=</span> <span class="punc">{};</span>
+  <span class="kw">return</span> <span class="var">_xhrOpen</span><span class="punc">.</span><span class="fn">apply</span><span class="punc">(</span><span class="kw">this</span><span class="punc">,</span> <span class="var">arguments</span><span class="punc">);</span>
+<span class="punc">};</span>
+<span class="var">XMLHttpRequest</span><span class="punc">.</span><span class="prop">prototype</span><span class="punc">.</span><span class="prop">setRequestHeader</span> <span class="op">=</span> <span class="kw">function</span> <span class="punc">(</span><span class="var">name</span><span class="punc">,</span> <span class="var">value</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">this</span><span class="punc">.</span><span class="var">_h</span><span class="punc">[</span><span class="var">name</span><span class="punc">]</span> <span class="op">=</span> <span class="var">value</span><span class="punc">;</span>
+  <span class="kw">return</span> <span class="var">_xhrSetHeader</span><span class="punc">.</span><span class="fn">apply</span><span class="punc">(</span><span class="kw">this</span><span class="punc">,</span> <span class="var">arguments</span><span class="punc">);</span>
+<span class="punc">};</span>
+<span class="var">XMLHttpRequest</span><span class="punc">.</span><span class="prop">prototype</span><span class="punc">.</span><span class="prop">send</span> <span class="op">=</span> <span class="kw">function</span> <span class="punc">(</span><span class="var">body</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">if</span> <span class="punc">(</span><span class="var">body</span> <span class="op">&amp;&amp;</span> <span class="punc">[</span><span class="str">'POST'</span><span class="punc">,</span> <span class="str">'PUT'</span><span class="punc">,</span> <span class="str">'PATCH'</span><span class="punc">].</span><span class="fn">includes</span><span class="punc">(</span><span class="kw">this</span><span class="punc">.</span><span class="var">_m</span><span class="punc">))</span> <span class="punc">{</span>
+    <span class="var">_captured</span> <span class="op">=</span> <span class="punc">{</span>
+      <span class="prop">type</span>    <span class="punc">:</span> <span class="str">'xhr'</span><span class="punc">,</span>
+      <span class="prop">url</span>     <span class="punc">:</span> <span class="kw">this</span><span class="punc">.</span><span class="var">_u</span><span class="punc">,</span>
+      <span class="prop">method</span>  <span class="punc">:</span> <span class="kw">this</span><span class="punc">.</span><span class="var">_m</span><span class="punc">,</span>
+      <span class="prop">headers</span> <span class="punc">:</span> <span class="punc">{</span> <span class="op">...</span><span class="kw">this</span><span class="punc">.</span><span class="var">_h</span> <span class="punc">},</span>
+      <span class="prop">bodyRaw</span> <span class="punc">:</span> <span class="kw">typeof</span> <span class="var">body</span> <span class="op">===</span> <span class="str">'string'</span> <span class="op">?</span> <span class="var">body</span> <span class="op">:</span> <span class="val">null</span><span class="punc">,</span>
+    <span class="punc">};</span>
+  <span class="punc">}</span>
+  <span class="kw">return</span> <span class="var">_xhrSend</span><span class="punc">.</span><span class="fn">apply</span><span class="punc">(</span><span class="kw">this</span><span class="punc">,</span> <span class="var">arguments</span><span class="punc">);</span>
+<span class="punc">};</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          בעולם הדפדפנים יש שתי שיטות עיקריות לשליחת בקשות רשת: <code>fetch</code> (מודרנית) ו-<code>XMLHttpRequest</code> (ישנה יותר, מכונה XHR).
+          הסקשן הקודם כיסה את fetch. הסקשן הזה עושה בדיוק אותו דבר — אבל עבור XHR. כך הסקריפט מוכן לתפוס בקשות מכל אפליקציה, ישנה כחדשה.
+        </p>
+
+        <h3>מדוע XHR מורכב יותר לפצל?</h3>
+        <p>
+          ב-fetch פונקציה אחת מטפלת בהכל. ב-XHR קיימות שלוש פונקציות נפרדות שעובדות ברצף:
+        </p>
+        <ul>
+          <li><strong>open(method, url)</strong> — מגדירה את היעד ושיטת הבקשה. הסקריפט שומר את ה-method ב-<code>this._m</code> וה-URL ב-<code>this._u</code> ומאתחל מילון ריק לכותרות (<code>this._h</code>).</li>
+          <li><strong>setRequestHeader(name, value)</strong> — מוסיפה כותרת אחת. הסקריפט מצלם כל כותרת למילון <code>this._h</code> כדי שיוכל לשחזר אותן בהמשך.</li>
+          <li><strong>send(body)</strong> — שולחת את הבקשה עם הגוף. כאן מתבצעת הלכידה: אם השיטה היא POST/PUT/PATCH, כל המידע שנצבר (URL, method, headers, body) נשמר ב-<code>_captured</code>.</li>
+        </ul>
+
+        <div class="info-box analogy">
+          <div class="info-box-title">אנלוגיה — ריגול בשלושה שלבים</div>
+          <p>
+            ב-fetch, הדוור מקבל מכתב ממולא לגמרי. ב-XHR, השולח בונה את המכתב בהדרגה:
+            קודם כותב כתובת יעד (open), אחר כך מדביק בולים (setRequestHeader), ולבסוף שם את התוכן בתוך המעטפה (send).
+            הריגול שלנו צריך "להציץ" בכל שלב ולאסוף את החלקים.
+          </p>
+        </div>
+
+        <div class="info-box why">
+          <div class="info-box-title">למה שני יירוטים?</div>
+          <p>
+            לא ניתן לדעת מראש באיזו שיטה האפליקציה משתמשת. אפליקציות רבות (במיוחד ישנות יותר, או כאלו שמשתמשות בספריות כמו jQuery) עדיין שולחות דרך XHR. אם לא נכסה את שניהם, הסקריפט לא יעבוד חצי הפעמים.
+          </p>
+        </div>
+
+        <div class="info-box tech">
+          <div class="info-box-title">מושג טכני — prototype</div>
+          <p>
+            ב-JavaScript, <code>prototype</code> הוא "תבנית" שממנה יורשות כל המופעים של אובייקט.
+            שינוי <code>XMLHttpRequest.prototype.send</code> אומר: "כל XHR שייווצר בעתיד יפעיל את הגרסה שלי".
+            זה בדיוק כמו לשנות את ה-DNA של כל החרקים מסוג מסוים — כולם שתשקף את השינוי.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 4: _cloneInit
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <div class="section-title-block">
+        <h2>_cloneInit — העתקה בטוחה של הגדרות הבקשה</h2>
+        <span class="section-tag">// SECTION 4: _cloneInit</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 4</div>
+        <div class="code-block"><span class="cm">// SECTION 4: _cloneInit</span>
+<span class="kw">function</span> <span class="fn">_cloneInit</span><span class="punc">(</span><span class="var">init</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">try</span> <span class="punc">{</span>
+    <span class="kw">return</span> <span class="var">JSON</span><span class="punc">.</span><span class="fn">parse</span><span class="punc">(</span><span class="var">JSON</span><span class="punc">.</span><span class="fn">stringify</span><span class="punc">(</span><span class="var">init</span><span class="punc">));</span>
+  <span class="punc">}</span> <span class="kw">catch</span> <span class="punc">{</span>
+    <span class="kw">return</span> <span class="punc">{</span> <span class="op">...</span><span class="var">init</span> <span class="punc">};</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          הפונקציה <code>_cloneInit</code> יוצרת העתק מלא ועצמאי של אובייקט הגדרות הבקשה (<code>init</code>).
+          זה אולי נראה טריוויאלי, אבל זוהי אחת הנקודות הכי עדינות ומסוכנות בתכנות JavaScript.
+        </p>
+
+        <div class="info-box warn">
+          <div class="info-box-title">הבעיה — העתקה שטחית</div>
+          <p>
+            ב-JavaScript, כשכותבים <code>const copy = obj</code>, לא נוצר עותק — שניהם מצביעים לאותו אובייקט בזיכרון.
+            אם לאחר מכן מבצעים <code>copy.body = "new password"</code>, גם <code>obj.body</code> ישתנה!
+            זה אומר שהבקשה המקורית תישלח עם הסיסמה ששונתה — דבר שעלול לשבור את הבדיקה.
+          </p>
+        </div>
+
+        <h3>הפתרון — העתקה עמוקה בשני שלבים</h3>
+        <ul>
+          <li><strong>JSON.stringify(init)</strong> — הופך את האובייקט למחרוזת טקסט. בשלב זה, הקשר לאובייקט המקורי נקטע.</li>
+          <li><strong>JSON.parse(...)</strong> — בונה אובייקט חדש לגמרי מהמחרוזת. הוא עצמאי לחלוטין מהמקור.</li>
+          <li><strong>catch fallback:</strong> אם הסריאליזציה נכשלת (למשל, אם יש בתוך <code>init</code> פונקציות שלא ניתן להמיר ל-JSON), מבוצעת <strong>העתקה שטחית</strong> (<code>{ ...init }</code>) — לא מושלמת, אבל טובה יותר מכלום.</li>
+        </ul>
+
+        <div class="info-box analogy">
+          <div class="info-box-title">אנלוגיה — מסמך נייר לעומת PDF</div>
+          <p>
+            "העתקה שטחית" היא כמו להצביע על נייר ולהגיד "זה העותק שלי". אם מישהו ישנה את הנייר המקורי — העותק שלכם ישתנה גם.
+            <code>JSON.stringify + JSON.parse</code> הוא כמו לצלם את הנייר לPDF ולהדפיס אותו מחדש — כעת יש לכם עמוד עצמאי לחלוטין.
+          </p>
+        </div>
+
+        <div class="info-box why">
+          <div class="info-box-title">למה זה נדרש?</div>
+          <p>
+            הסקריפט שולח 6 בקשות, כל אחת עם סיסמה שונה. אם לא נשכפל את <code>init</code> כראוי, שינוי הסיסמה בבקשה השנייה יגרום לבאג בבקשה הראשונה — ותוצאות הבדיקה יהיו שגויות.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 5: _replacePassword + _deepReplace
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <div class="section-title-block">
+        <h2>_replacePassword ו-_deepReplace — החלפת סיסמה בגוף הבקשה</h2>
+        <span class="section-tag">// SECTION 5: _replacePassword</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 5</div>
+        <div class="code-block"><span class="kw">function</span> <span class="fn">_replacePassword</span><span class="punc">(</span><span class="var">bodyStr</span><span class="punc">,</span> <span class="var">newPassword</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">if</span> <span class="punc">(!</span><span class="var">bodyStr</span><span class="punc">)</span> <span class="kw">return</span> <span class="var">bodyStr</span><span class="punc">;</span>
+  <span class="kw">try</span> <span class="punc">{</span>
+    <span class="kw">const</span> <span class="var">json</span>     <span class="op">=</span> <span class="var">JSON</span><span class="punc">.</span><span class="fn">parse</span><span class="punc">(</span><span class="var">bodyStr</span><span class="punc">);</span>
+    <span class="kw">const</span> <span class="var">replaced</span> <span class="op">=</span> <span class="fn">_deepReplace</span><span class="punc">(</span><span class="var">json</span><span class="punc">,</span> <span class="var">newPassword</span><span class="punc">);</span>
+    <span class="kw">return</span> <span class="var">JSON</span><span class="punc">.</span><span class="fn">stringify</span><span class="punc">(</span><span class="var">replaced</span><span class="punc">);</span>
+  <span class="punc">}</span> <span class="kw">catch</span> <span class="punc">{</span> <span class="punc">}</span>
+  <span class="kw">if</span> <span class="punc">(</span><span class="var">bodyStr</span><span class="punc">.</span><span class="fn">includes</span><span class="punc">(</span><span class="str">'='</span><span class="punc">))</span> <span class="punc">{</span>
+    <span class="kw">return</span> <span class="var">bodyStr</span><span class="punc">.</span><span class="fn">replace</span><span class="punc">(</span>
+      <span class="reg">/([&amp;?]?(?:password|pass|pwd|newPassword|new_password)[^&amp;=]*)=([^&amp;]*)/gi</span><span class="punc">,</span>
+      <span class="punc">(</span><span class="var">_</span><span class="punc">,</span> <span class="var">key</span><span class="punc">)</span> <span class="op">=></span> <span class="str">`<span class="var">${key}</span>=<span class="var">${<span class="fn">encodeURIComponent</span>(newPassword)}</span>`</span>
+    <span class="punc">);</span>
+  <span class="punc">}</span>
+  <span class="kw">return</span> <span class="var">bodyStr</span><span class="punc">;</span>
+<span class="punc">}</span>
+
+<span class="kw">function</span> <span class="fn">_deepReplace</span><span class="punc">(</span><span class="var">obj</span><span class="punc">,</span> <span class="var">newPw</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">if</span> <span class="punc">(</span><span class="kw">typeof</span> <span class="var">obj</span> <span class="op">!==</span> <span class="str">'object'</span> <span class="op">||</span> <span class="var">obj</span> <span class="op">===</span> <span class="val">null</span><span class="punc">)</span> <span class="kw">return</span> <span class="var">obj</span><span class="punc">;</span>
+  <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> <span class="var">Array</span><span class="punc">.</span><span class="fn">isArray</span><span class="punc">(</span><span class="var">obj</span><span class="punc">)</span> <span class="op">?</span> <span class="punc">[]</span> <span class="op">:</span> <span class="punc">{};</span>
+  <span class="kw">for</span> <span class="punc">(</span><span class="kw">const</span> <span class="var">key</span> <span class="kw">of</span> <span class="var">Object</span><span class="punc">.</span><span class="fn">keys</span><span class="punc">(</span><span class="var">obj</span><span class="punc">))</span> <span class="punc">{</span>
+    <span class="kw">if</span> <span class="punc">(</span><span class="reg">/password|pass|pwd|newPass|secret/i</span><span class="punc">.</span><span class="fn">test</span><span class="punc">(</span><span class="var">key</span><span class="punc">)</span> <span class="op">&amp;&amp;</span> <span class="kw">typeof</span> <span class="var">obj</span><span class="punc">[</span><span class="var">key</span><span class="punc">]</span> <span class="op">===</span> <span class="str">'string'</span><span class="punc">)</span> <span class="punc">{</span>
+      <span class="var">result</span><span class="punc">[</span><span class="var">key</span><span class="punc">]</span> <span class="op">=</span> <span class="var">newPw</span><span class="punc">;</span>
+    <span class="punc">}</span> <span class="kw">else</span> <span class="punc">{</span>
+      <span class="var">result</span><span class="punc">[</span><span class="var">key</span><span class="punc">]</span> <span class="op">=</span> <span class="fn">_deepReplace</span><span class="punc">(</span><span class="var">obj</span><span class="punc">[</span><span class="var">key</span><span class="punc">],</span> <span class="var">newPw</span><span class="punc">);</span>
+    <span class="punc">}</span>
+  <span class="punc">}</span>
+  <span class="kw">return</span> <span class="var">result</span><span class="punc">;</span>
+<span class="punc">}</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          זהו "לב" הסקריפט. לאחר שתפסנו את הבקשה המקורית, אנחנו צריכים לשנות רק את שדה הסיסמה — ולהשאיר הכל אחר ללא שינוי.
+          הפונקציות הללו מבצעות חיפוש חכם וגמיש של שדה הסיסמה, ללא תלות בשם המדויק של השדה.
+        </p>
+
+        <h3>_replacePassword — הלוגיקה הראשית</h3>
+        <p>הפונקציה עובדת בסדר עדיפויות:</p>
+        <ul>
+          <li><strong>מקרה 1 — גוף ריק:</strong> אם אין body, מחזירים אותו כמות שהוא.</li>
+          <li><strong>מקרה 2 — JSON:</strong> מנסים לפרסר את ה-body כ-JSON. אם הצלחנו, מפעילים <code>_deepReplace</code> לחיפוש ושינוי רקורסיבי, ואז מחזירים את התוצאה כמחרוזת JSON.</li>
+          <li><strong>מקרה 3 — Form Encoded:</strong> אם ה-JSON נכשל וה-body מכיל <code>=</code>, כנראה שמדובר בפורמט <code>password=abc&amp;username=user</code>. ה-RegEx מחפש מפתחות בשם password/pass/pwd/newPassword/new_password ומחליף את הערך.</li>
+          <li><strong>מקרה 4 — פורמט לא מזוהה:</strong> מחזירים כמות שהוא.</li>
+        </ul>
+
+        <hr class="exp-divider" />
+
+        <h3>_deepReplace — חיפוש רקורסיבי</h3>
+        <p>
+          הפונקציה "צוללת" לתוך אובייקטים מקוננים (nested) ומחפשת שדות שמכילים את המילים <code>password</code>, <code>pass</code>, <code>pwd</code>, <code>newPass</code>, או <code>secret</code> בשמם.
+          כשנמצא שדה כזה — ערכו מוחלף. לאחר מכן ממשיכים רקורסיבית (כלומר, הפונקציה קוראת לעצמה) עבור כל ערך מקונן.
+        </p>
+
+        <div class="info-box analogy">
+          <div class="info-box-title">אנלוגיה — בדיקת רכוש לפני מעבר</div>
+          <p>
+            דמיינו שאתם מועברים לבית חדש ורוצים לוודא שאין בו שום סכין. אתם בודקים כל מגירה, כל ארגז, כל כיס של כל בגד.
+            <code>_deepReplace</code> עושה בדיוק את זה — בודק כל שדה, כל אובייקט מקונן, כדי לוודא שאין סיסמה שנשמרה עמוק בתוך המבנה.
+          </p>
+        </div>
+
+        <div class="info-box tech">
+          <div class="info-box-title">מושג טכני — JSON vs Form Encoded</div>
+          <p>
+            <strong>JSON</strong>: <code>{"username":"user","password":"abc123"}</code> — מבנה נתונים עשיר, תומך בהיררכיה.<br/>
+            <strong>Form Encoded</strong>: <code>username=user&amp;password=abc123</code> — פורמט פשוט, נפוץ בטפסים ישנים.<br/>
+            הסקריפט תומך בשניהם כי כל שרת יכול לדרוש פורמט שונה.
+          </p>
+        </div>
+
+        <div class="info-box tech">
+          <div class="info-box-title">מושג טכני — Recursion (רקורסיה)</div>
+          <p>
+            רקורסיה היא כשפונקציה קוראת לעצמה. ב-<code>_deepReplace</code>, כל ערך שהוא אובייקט מועבר שוב לאותה פונקציה — כך ניתן לטפל במבנים עמוקים כמה רמות שיהיו, ללא צורך לדעת מראש את עומק המבנה.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 6: _sendFetch
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">6</div>
+      <div class="section-title-block">
+        <h2>_sendFetch — שחזור הבקשה דרך fetch</h2>
+        <span class="section-tag">// SECTION 6: _sendFetch</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 6</div>
+        <div class="code-block"><span class="cm">// SECTION 6: _sendFetch</span>
+<span class="kw">async function</span> <span class="fn">_sendFetch</span><span class="punc">(</span><span class="var">password</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">const</span> <span class="var">newInit</span> <span class="op">=</span> <span class="fn">_cloneInit</span><span class="punc">(</span><span class="var">_captured</span><span class="punc">.</span><span class="prop">init</span><span class="punc">);</span>
+  <span class="var">newInit</span><span class="punc">.</span><span class="prop">body</span>  <span class="op">=</span> <span class="fn">_replacePassword</span><span class="punc">(</span><span class="var">_captured</span><span class="punc">.</span><span class="prop">bodyRaw</span><span class="punc">,</span> <span class="var">password</span><span class="punc">);</span>
+  <span class="kw">const</span> <span class="var">res</span>     <span class="op">=</span> <span class="kw">await</span> <span class="var">_originalFetch</span><span class="punc">(</span><span class="var">_captured</span><span class="punc">.</span><span class="prop">url</span><span class="punc">,</span> <span class="var">newInit</span><span class="punc">);</span>
+  <span class="kw">const</span> <span class="var">text</span>    <span class="op">=</span> <span class="kw">await</span> <span class="var">res</span><span class="punc">.</span><span class="fn">text</span><span class="punc">().</span><span class="fn">catch</span><span class="punc">(()</span> <span class="op">=></span> <span class="str">''</span><span class="punc">);</span>
+  <span class="kw">return</span> <span class="punc">{</span> <span class="prop">ok</span><span class="punc">:</span> <span class="var">res</span><span class="punc">.</span><span class="prop">ok</span><span class="punc">,</span> <span class="prop">status</span><span class="punc">:</span> <span class="var">res</span><span class="punc">.</span><span class="prop">status</span><span class="punc">,</span> <span class="prop">body</span><span class="punc">:</span> <span class="var">text</span> <span class="punc">};</span>
+<span class="punc">}</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          <code>_sendFetch</code> לוקחת את הבקשה שנלכדה, מחליפה בה את הסיסמה בסיסמה הנבדקת,
+          ושולחת אותה לשרת — ואז מחכה לתשובה ומחזירה אותה.
+        </p>
+
+        <h3>שלבי הפעולה</h3>
+        <ul>
+          <li><strong>שכפול ה-init:</strong> <code>_cloneInit(_captured.init)</code> — יוצר העתק בטוח שלא ישפיע על הבקשות הבאות.</li>
+          <li><strong>החלפת הסיסמה:</strong> <code>_replacePassword</code> מוכנסת לגוף ה-init המשוכפל.</li>
+          <li><strong>שליחה דרך המקורי:</strong> חשוב מאוד — משתמשים ב-<code>_originalFetch</code> ולא ב-<code>window.fetch</code>. אחרת הסקריפט יתפוס את עצמו בלולאה אינסופית!</li>
+          <li><strong>קריאת תשובה:</strong> <code>res.text()</code> קורא את גוף התשובה כטקסט. ה-<code>.catch(() =&gt; '')</code> מוודא שגם אם הקריאה נכשלת, לא קורסת הפונקציה.</li>
+          <li><strong>החזרת תוצאה:</strong> מחזיר אובייקט עם שלושה שדות: <code>ok</code> (האם הצלחה), <code>status</code> (קוד HTTP), ו-<code>body</code> (תוכן התשובה).</li>
+        </ul>
+
+        <div class="info-box analogy">
+          <div class="info-box-title">אנלוגיה — שליחת מכתב עם כתובת שונה</div>
+          <p>
+            הדוור הצלם כעת שולח גרסאות שונות של אותו מכתב — הכל זהה חוץ מ"שם הנמען" (הסיסמה).
+            הוא שומר עותק של כל תשובה שמגיעה חזרה ומדווח לנו.
+          </p>
+        </div>
+
+        <div class="info-box tech">
+          <div class="info-box-title">מושג טכני — async/await</div>
+          <p>
+            פונקציות רשת לוקחות זמן. <code>async</code> מסמנת פונקציה שיכולה "לחכות" לתוצאה.
+            <code>await</code> אומר "עצור כאן וחכה שהבקשה תחזור — אבל אל תחסום את שאר הדפדפן".
+            בלי <code>async/await</code>, הסקריפט יריץ את כל הלולאה מיד בלי לחכות לתשובות.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 7: _sendXHR
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">7</div>
+      <div class="section-title-block">
+        <h2>_sendXHR — שחזור הבקשה דרך XHR עם Promise</h2>
+        <span class="section-tag">// SECTION 7: _sendXHR</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 7</div>
+        <div class="code-block"><span class="cm">// SECTION 7: _sendXHR</span>
+<span class="kw">function</span> <span class="fn">_sendXHR</span><span class="punc">(</span><span class="var">password</span><span class="punc">)</span> <span class="punc">{</span>
+  <span class="kw">return new</span> <span class="fn">Promise</span><span class="punc">((</span><span class="var">resolve</span><span class="punc">,</span> <span class="var">reject</span><span class="punc">)</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="kw">const</span> <span class="var">xhr</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">XMLHttpRequest</span><span class="punc">();</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="fn">open</span><span class="punc">(</span><span class="var">_captured</span><span class="punc">.</span><span class="prop">method</span><span class="punc">,</span> <span class="var">_captured</span><span class="punc">.</span><span class="prop">url</span><span class="punc">);</span>
+    <span class="kw">for</span> <span class="punc">(</span><span class="kw">const</span> <span class="punc">[</span><span class="var">name</span><span class="punc">,</span> <span class="var">value</span><span class="punc">]</span> <span class="kw">of</span> <span class="var">Object</span><span class="punc">.</span><span class="fn">entries</span><span class="punc">(</span><span class="var">_captured</span><span class="punc">.</span><span class="prop">headers</span><span class="punc">))</span> <span class="punc">{</span>
+      <span class="kw">try</span> <span class="punc">{</span> <span class="var">xhr</span><span class="punc">.</span><span class="fn">setRequestHeader</span><span class="punc">(</span><span class="var">name</span><span class="punc">,</span> <span class="var">value</span><span class="punc">);</span> <span class="punc">}</span> <span class="kw">catch</span> <span class="punc">{}</span>
+    <span class="punc">}</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="prop">onload</span>    <span class="op">=</span> <span class="punc">()</span> <span class="op">=></span> <span class="fn">resolve</span><span class="punc">({</span> <span class="prop">ok</span><span class="punc">:</span> <span class="var">xhr</span><span class="punc">.</span><span class="prop">status</span> <span class="op">&lt;</span> <span class="num">400</span><span class="punc">,</span> <span class="prop">status</span><span class="punc">:</span> <span class="var">xhr</span><span class="punc">.</span><span class="prop">status</span><span class="punc">,</span> <span class="prop">body</span><span class="punc">:</span> <span class="var">xhr</span><span class="punc">.</span><span class="prop">responseText</span> <span class="punc">});</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="prop">onerror</span>   <span class="op">=</span> <span class="punc">()</span> <span class="op">=></span> <span class="fn">reject</span><span class="punc">(</span><span class="kw">new</span> <span class="fn">Error</span><span class="punc">(</span><span class="str">'XHR network error'</span><span class="punc">));</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="prop">ontimeout</span> <span class="op">=</span> <span class="punc">()</span> <span class="op">=></span> <span class="fn">reject</span><span class="punc">(</span><span class="kw">new</span> <span class="fn">Error</span><span class="punc">(</span><span class="str">'XHR timeout'</span><span class="punc">));</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="prop">timeout</span>   <span class="op">=</span> <span class="num">8000</span><span class="punc">;</span>
+    <span class="kw">const</span> <span class="var">newBody</span> <span class="op">=</span> <span class="fn">_replacePassword</span><span class="punc">(</span><span class="var">_captured</span><span class="punc">.</span><span class="prop">bodyRaw</span><span class="punc">,</span> <span class="var">password</span><span class="punc">);</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="fn">send</span><span class="punc">(</span><span class="var">newBody</span><span class="punc">);</span>
+  <span class="punc">});</span>
+<span class="punc">}</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          <code>_sendXHR</code> מבצעת בדיוק את מה שעושה <code>_sendFetch</code> — אך עבור בקשות שנלכדו כ-XHR.
+          ההבדל הטכני המשמעותי הוא שפונקציה זו עוטפת את ה-XHR (שהוא מבוסס-callback) בתוך <strong>Promise</strong>,
+          כך שניתן להשתמש בה עם <code>await</code> בדיוק כמו <code>_sendFetch</code>.
+        </p>
+
+        <h3>שלבי הפעולה</h3>
+        <ul>
+          <li><strong>new Promise(resolve, reject):</strong> יוצר "הבטחה" — אובייקט שמייצג ערך עתידי. <code>resolve</code> מופעל כשהבקשה מסתיימת בהצלחה, <code>reject</code> — כשיש שגיאה.</li>
+          <li><strong>פתיחת חיבור:</strong> <code>xhr.open</code> עם ה-method וה-URL שנלכדו.</li>
+          <li><strong>שחזור headers:</strong> לולאה על כל הכותרות שנשמרו ב-<code>_captured.headers</code>. ה-<code>try/catch</code> מסביב מגן מפני כותרות שהדפדפן לא מרשה לשלוח ידנית.</li>
+          <li><strong>הגדרת handlers:</strong>
+            <ul>
+              <li><code>onload</code> — מופעל כשהתשובה הגיעה (גם אם קוד שגיאה). <code>ok</code> נקבע לפי סטטוס מתחת ל-400.</li>
+              <li><code>onerror</code> — בעיית רשת (אין קישוריות).</li>
+              <li><code>ontimeout</code> — הבקשה לקחה יותר מ-8 שניות.</li>
+            </ul>
+          </li>
+          <li><strong>שליחה:</strong> <code>_replacePassword</code> מחליפה את הסיסמה ואז שולחת את הבקשה.</li>
+        </ul>
+
+        <div class="info-box tech">
+          <div class="info-box-title">מושג טכני — Promise ו-callback</div>
+          <p>
+            XHR עובד ב-<strong>callback style</strong>: "כשתסיים, תקרא לפונקציה הזו".
+            זה לא תואם עם <code>async/await</code> ישירות. ה-<strong>Promise</strong> הוא מעטפת שמתרגמת את ה-callback לסגנון מודרני.
+            פשוט: Promise אומר "אחכה לתשובה ואחזיר אותה כמו ערך רגיל — ולא דרך callback".
+          </p>
+        </div>
+
+        <div class="info-box why">
+          <div class="info-box-title">למה timeout של 8 שניות?</div>
+          <p>
+            אם השרת לא עונה (הפסקת רשת, שרת תקוע), הלולאה הראשית תיתקע לנצח.
+            8 שניות הוא "timeout סביר" — מספיק לשרתים איטיים, אך לא מבזבז זמן על בקשות מתות.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       SECTION 8: testChars — MAIN FUNCTION
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number">8</div>
+      <div class="section-title-block">
+        <h2>testChars — הפונקציה הראשית: הרצת כל הבדיקות</h2>
+        <span class="section-tag">// SECTION 8: testChars — MAIN FUNCTION</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="code-block-wrapper">
+        <div class="code-block-label">javascript — section 8</div>
+        <div class="code-block"><span class="cm">// SECTION 8: testChars — MAIN FUNCTION</span>
+<span class="kw">async function</span> <span class="fn">testChars</span><span class="punc">()</span> <span class="punc">{</span>
+  <span class="kw">if</span> <span class="punc">(!</span><span class="var">_captured</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="var">console</span><span class="punc">.</span><span class="fn">error</span><span class="punc">(</span><span class="str">'❌ לא נלכדה בקשה עדיין!'</span><span class="punc">);</span>
+    <span class="kw">return</span><span class="punc">;</span>
+  <span class="punc">}</span>
+  <span class="kw">const</span> <span class="var">results</span> <span class="op">=</span> <span class="punc">[];</span>
+  <span class="kw">for</span> <span class="punc">(</span><span class="kw">const</span> <span class="punc">{</span> <span class="var">char</span><span class="punc">,</span> <span class="var">name</span> <span class="punc">}</span> <span class="kw">of</span> <span class="var">SPECIAL_CHARS</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="kw">const</span> <span class="var">password</span> <span class="op">=</span> <span class="fn">makePassword</span><span class="punc">(</span><span class="var">char</span><span class="punc">);</span>
+    <span class="kw">let</span> <span class="var">response</span><span class="punc">;</span>
+    <span class="kw">try</span> <span class="punc">{</span>
+      <span class="kw">if</span> <span class="punc">(</span><span class="var">_captured</span><span class="punc">.</span><span class="prop">type</span> <span class="op">===</span> <span class="str">'fetch'</span><span class="punc">)</span> <span class="punc">{</span>
+        <span class="var">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">_sendFetch</span><span class="punc">(</span><span class="var">password</span><span class="punc">);</span>
+      <span class="punc">}</span> <span class="kw">else</span> <span class="punc">{</span>
+        <span class="var">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">_sendXHR</span><span class="punc">(</span><span class="var">password</span><span class="punc">);</span>
+      <span class="punc">}</span>
+      <span class="kw">let</span> <span class="var">result</span><span class="punc">,</span> <span class="var">note</span><span class="punc">;</span>
+      <span class="kw">if</span>      <span class="punc">(</span><span class="var">response</span><span class="punc">.</span><span class="prop">ok</span><span class="punc">)</span>                               <span class="punc">{</span> <span class="var">result</span> <span class="op">=</span> <span class="str">'✅ עובד'</span><span class="punc">;</span>               <span class="var">note</span> <span class="op">=</span> <span class="str">'הסיסמא התקבלה'</span><span class="punc">;</span>     <span class="punc">}</span>
+      <span class="kw">else if</span> <span class="punc">(</span><span class="var">response</span><span class="punc">.</span><span class="prop">status</span> <span class="op">===</span> <span class="num">400</span><span class="punc">)</span>                  <span class="punc">{</span> <span class="var">result</span> <span class="op">=</span> <span class="str">'❌ נחסם — validation'</span><span class="punc">;</span>  <span class="var">note</span> <span class="op">=</span> <span class="str">'השרת דחה (400)'</span><span class="punc">;</span>     <span class="punc">}</span>
+      <span class="kw">else if</span> <span class="punc">(</span><span class="var">response</span><span class="punc">.</span><span class="prop">status</span> <span class="op">===</span> <span class="num">500</span><span class="punc">)</span>                  <span class="punc">{</span> <span class="var">result</span> <span class="op">=</span> <span class="str">'❌ נחסם — שגיאת שרת'</span><span class="punc">;</span> <span class="var">note</span> <span class="op">=</span> <span class="str">'שגיאת שרת (500)'</span><span class="punc">;</span>    <span class="punc">}</span>
+      <span class="kw">else if</span> <span class="punc">([</span><span class="num">401</span><span class="punc">,</span><span class="num">403</span><span class="punc">].</span><span class="fn">includes</span><span class="punc">(</span><span class="var">response</span><span class="punc">.</span><span class="prop">status</span><span class="punc">))</span>      <span class="punc">{</span> <span class="var">result</span> <span class="op">=</span> <span class="str">'⚠️ token פג'</span><span class="punc">;</span>           <span class="var">note</span> <span class="op">=</span> <span class="str">`${response.status}`</span><span class="punc">;</span> <span class="punc">}</span>
+      <span class="kw">else</span>                                                  <span class="punc">{</span> <span class="var">result</span> <span class="op">=</span> <span class="str">`⚠️ ${response.status}`</span><span class="punc">;</span> <span class="var">note</span> <span class="op">=</span> <span class="str">''</span><span class="punc">;</span>               <span class="punc">}</span>
+      <span class="var">results</span><span class="punc">.</span><span class="fn">push</span><span class="punc">({</span> <span class="prop">תו</span><span class="punc">:</span> <span class="var">char</span><span class="punc">,</span> <span class="prop">שם</span><span class="punc">:</span> <span class="var">name</span><span class="punc">,</span> <span class="prop">סיסמא</span><span class="punc">:</span> <span class="var">password</span><span class="punc">,</span> <span class="prop">status</span><span class="punc">:</span> <span class="var">response</span><span class="punc">.</span><span class="prop">status</span><span class="punc">,</span> <span class="prop">תוצאה</span><span class="punc">:</span> <span class="var">result</span><span class="punc">,</span> <span class="prop">הערה</span><span class="punc">:</span> <span class="var">note</span> <span class="punc">});</span>
+    <span class="punc">}</span> <span class="kw">catch</span> <span class="punc">(</span><span class="var">err</span><span class="punc">)</span> <span class="punc">{</span>
+      <span class="var">results</span><span class="punc">.</span><span class="fn">push</span><span class="punc">({</span> <span class="prop">תו</span><span class="punc">:</span> <span class="var">char</span><span class="punc">,</span> <span class="prop">שם</span><span class="punc">:</span> <span class="var">name</span><span class="punc">,</span> <span class="prop">סיסמא</span><span class="punc">:</span> <span class="var">password</span><span class="punc">,</span> <span class="prop">status</span><span class="punc">:</span> <span class="str">'ERR'</span><span class="punc">,</span> <span class="prop">תוצאה</span><span class="punc">:</span> <span class="str">'❌ שגיאת רשת'</span><span class="punc">,</span> <span class="prop">הערה</span><span class="punc">:</span> <span class="var">err</span><span class="punc">.</span><span class="prop">message</span> <span class="punc">});</span>
+    <span class="punc">}</span>
+    <span class="kw">await new</span> <span class="fn">Promise</span><span class="punc">(</span><span class="var">r</span> <span class="op">=></span> <span class="fn">setTimeout</span><span class="punc">(</span><span class="var">r</span><span class="punc">,</span> <span class="num">600</span><span class="punc">));</span>
+  <span class="punc">}</span>
+  <span class="var">console</span><span class="punc">.</span><span class="fn">table</span><span class="punc">(</span><span class="var">results</span><span class="punc">);</span>
+<span class="punc">}</span></div>
+      </div>
+      <div class="explanation">
+        <h3>מה הסקשן הזה עושה?</h3>
+        <p>
+          זוהי הפונקציה שמפעילים ידנית בקונסול (<code>testChars()</code>).
+          היא מרכזת את כל שאר הסקשנים לכדי תהליך בדיקה אחד: עוברת על כל תו מיוחד, שולחת בקשה, מפרשת את התשובה ומדפיסה טבלת תוצאות.
+        </p>
+
+        <h3>שלבי הפעולה</h3>
+        <ul>
+          <li><strong>בדיקת Guard:</strong> אם <code>_captured</code> עדיין <code>null</code> — כלומר עוד לא נלכדה בקשה — הפונקציה עוצרת ומציגה שגיאה. חשוב לא לדלג על שלב הלוגין לפני הרצת הפונקציה.</li>
+          <li><strong>לולאת for...of:</strong> עוברת על כל אחד מ-6 האיברים ב-<code>SPECIAL_CHARS</code>. בכל איטרציה, יוצרת סיסמה, שולחת בקשה ומקבלת תשובה.</li>
+          <li><strong>בחירת שיטת שליחה:</strong> לפי <code>_captured.type</code> — אם "fetch" מפעיל <code>_sendFetch</code>, אחרת <code>_sendXHR</code>.</li>
+          <li><strong>פרשנות התשובה:</strong> על בסיס קוד ה-HTTP, נקבעת תוצאה מילולית לדוח.</li>
+          <li><strong>try/catch:</strong> אם הבקשה קורסת (timeout, רשת נפלה), שגיאת הרשת נשמרת כתוצאה ולא עוצרת את הלולאה.</li>
+          <li><strong>השהייה של 600ms:</strong> מחכה 0.6 שניות בין כל בקשה. מונע Rate Limiting (חסימה של השרת עקב בקשות רבות מהירות) ונותן לשרת זמן נשימה.</li>
+          <li><strong>console.table:</strong> מדפיס את כל התוצאות בפורמט טבלה קריאה בקונסול.</li>
+        </ul>
+
+        <div class="info-box analogy">
+          <div class="info-box-title">אנלוגיה — מנהל QA ששולח בודקים</div>
+          <p>
+            <code>testChars</code> הוא כמו מנהל QA שיש לו רשימת מקרים לבדיקה.
+            הוא שולח בודק אחד בכל פעם, מחכה שיחזור עם דוח, רושם את הממצא, ורק אז שולח את הבא.
+            בסוף — מרכז הכל בטבלה אחת.
+          </p>
+        </div>
+
+        <div class="info-box warn">
+          <div class="info-box-title">נקודת קשב — 401/403 הם לא כשל של התו</div>
+          <p>
+            אם מתקבל 401 או 403, כנראה שה-authentication token פג תוקף בזמן הריצה.
+            יש להתחבר מחדש, להדביק את הסקריפט שוב, ולהריץ <code>testChars()</code> מחדש.
+            זו לא בעיה של התו המיוחד עצמו.
+          </p>
+        </div>
+
+        <div class="info-box tech">
+          <div class="info-box-title">מדוע <code>await new Promise(r => setTimeout(r, 600))</code>?</div>
+          <p>
+            זוהי דרך אלגנטית ל"שינה אסינכרונית". <code>setTimeout</code> הוא callback-based, אז עוטפים אותו ב-Promise.
+            <code>await</code> גורם ללולאה לחכות 600ms לפני המשך — בלי לחסום את הדפדפן.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       HTTP STATUS CODES TABLE
+  ───────────────────────────────────────────── -->
+  <div class="status-section">
+    <div class="section-header">
+      <div class="section-number" style="background:rgba(255,255,255,0.15);">📊</div>
+      <div class="section-title-block">
+        <h2>מדריך קודי HTTP — פרשנות תוצאות הבדיקה</h2>
+        <span class="section-tag">HTTP Status Codes Reference</span>
+      </div>
+    </div>
+    <div style="padding:0 0 4px 0; overflow-x:auto;">
+      <table class="status-table">
+        <thead>
+          <tr>
+            <th>קוד</th>
+            <th>שם רשמי</th>
+            <th>משמעות בהקשר בדיקת הסיסמה</th>
+            <th>מה עושים?</th>
+            <th style="text-align:center; direction:ltr;">תוצאה בסקריפט</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-badge s200">200 OK</span></td>
+            <td>הצלחה</td>
+            <td>השרת קיבל את הבקשה ועיבד אותה בהצלחה. הסיסמה עם התו המיוחד נקלטה.</td>
+            <td>מסמנים כ"עובד". התו המיוחד מותר בסיסמה.</td>
+            <td style="text-align:center; direction:ltr;"><span class="result-icon">✅</span> עובד</td>
+          </tr>
+          <tr>
+            <td><span class="status-badge s201">201 Created</span></td>
+            <td>נוצר בהצלחה</td>
+            <td>דומה ל-200 אבל מציין שנוצר משאב חדש (למשל חשבון משתמש). גם זה נחשב להצלחה (<code>ok = true</code>).</td>
+            <td>מסמנים כ"עובד".</td>
+            <td style="text-align:center; direction:ltr;"><span class="result-icon">✅</span> עובד</td>
+          </tr>
+          <tr>
+            <td><span class="status-badge s400">400 Bad Request</span></td>
+            <td>בקשה שגויה</td>
+            <td>השרת דחה את הבקשה מפני שהנתונים לא תקינים. בהקשר של סיסמה — כנראה שה-validation חסם את התו המיוחד.</td>
+            <td>מסמנים כ"נחסם — validation". <strong>באג פוטנציאלי</strong> אם הלקוח מאפשר את התו.</td>
+            <td style="text-align:center; direction:ltr;"><span class="result-icon">❌</span> נחסם validation</td>
+          </tr>
+          <tr>
+            <td><span class="status-badge s401">401 Unauthorized</span></td>
+            <td>לא מאומת</td>
+            <td>הטוקן (session) פג תוקף. השרת לא יודע מי שולח את הבקשה. לא קשור לתו המיוחד.</td>
+            <td>התחברו מחדש והריצו שוב. אל תסמנו כ"נחסם".</td>
+            <td style="text-align:center; direction:ltr;"><span class="result-icon">⚠️</span> token פג</td>
+          </tr>
+          <tr>
+            <td><span class="status-badge s403">403 Forbidden</span></td>
+            <td>אסור</td>
+            <td>השרת מכיר אתכם אבל לא מאפשר את הפעולה הזו. ייתכן שהחשבון נעול, או שהטוקן חסר הרשאות.</td>
+            <td>בדקו אם החשבון נעול. לרוב — התחברו מחדש.</td>
+            <td style="text-align:center; direction:ltr;"><span class="result-icon">⚠️</span> token פג</td>
+          </tr>
+          <tr>
+            <td><span class="status-badge s500">500 Internal Server Error</span></td>
+            <td>שגיאת שרת</td>
+            <td>השרת קרס תוך כדי עיבוד הבקשה. לרוב מעיד על באג בשרת — אולי התו גרם לחריגה לא מטופלת (unhandled exception).</td>
+            <td><strong>מסמנים כ"נחסם — שגיאת שרת"</strong>. זה ממצא חשוב לדיווח! השרת לא מסוגל לטפל בתו הזה בצורה מבוקרת.</td>
+            <td style="text-align:center; direction:ltr;"><span class="result-icon">❌</span> שגיאת שרת</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────
+       HOW TO USE
+  ───────────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-number" style="background:rgba(255,255,255,0.15);">▶</div>
+      <div class="section-title-block">
+        <h2>איך להשתמש בסקריפט — סדר הפעולות</h2>
+        <span class="section-tag">Usage guide</span>
+      </div>
+    </div>
+    <div class="explanation">
+      <ol style="padding-right: 22px;">
+        <li style="margin-bottom:10px;">פתחו את ה-DevTools של הדפדפן (<strong>F12</strong>) ועברו ל-Tab של <strong>Console</strong>.</li>
+        <li style="margin-bottom:10px;">הדביקו את <strong>כל</strong> הסקריפט (<code>special-chars-tester.js</code>) לקונסול ולחצו Enter. כעת הסקשנים 1–7 פועלים ברקע ומחכים.</li>
+        <li style="margin-bottom:10px;">עברו לאפליקציה ובצעו <strong>פעולת לוגין</strong> (או כל פעולה שמשנה סיסמה). ברגע שהאפליקציה שולחת בקשה, תראו בקונסול את ההודעה <code>📡 Fetch נלכד!</code> או שהסקשן XHR יתעד אותה שקט.</li>
+        <li style="margin-bottom:10px;">חזרו לקונסול והריצו: <code>testChars()</code>. הסקריפט ישלח 6 בקשות — אחת לכל תו מיוחד — וימתין בין כל אחת 600ms.</li>
+        <li style="margin-bottom:10px;">לאחר כ-4–5 שניות תופיע <strong>טבלת תוצאות</strong> עם הסטטוס לכל תו.</li>
+      </ol>
+
+      <div class="info-box warn">
+        <div class="info-box-title">שימו לב</div>
+        <p>
+          אם בזמן הריצה מתקבל 401 או 403 לרוב הבקשות — הטוקן פג. בצעו לוגין מחדש, הריצו שוב את כל הסקריפט, ורק אז <code>testChars()</code>.
+          כמו כן, הסקריפט <strong>מתאפס</strong> בכל רענון של הדף (F5) — יש להדביק מחדש.
+        </p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ─────────────────────────────────────────────
+       JS GLOSSARY — מילון מושגי JavaScript עמוק
+  ───────────────────────────────────────────── -->
+  <div class="section-card" id="js-glossary">
+    <div class="section-header">
+      <div class="section-number" style="background:rgba(255,255,255,0.15);font-size:1.1rem;">📚</div>
+      <div class="section-title-block">
+        <h2>מילון JavaScript — הסבר עמוק לכל מונח בסקריפט</h2>
+        <span class="section-tag">JavaScript Deep Glossary — for QA testers</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="explanation">
+
+        <style>
+          .gl-entry { margin-bottom: 36px; border-bottom: 2px solid #e8eef5; padding-bottom: 32px; }
+          .gl-entry:last-child { border-bottom: none; margin-bottom: 0; }
+          .gl-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+          .gl-badge { background: #1a3c6e; color: #fff; border-radius: 6px; padding: 4px 14px; font-family: 'Consolas', monospace; font-size: 0.88rem; direction: ltr; white-space: nowrap; }
+          .gl-category { font-size: 0.73rem; background: #e8eef5; color: #4a7cc9; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+          .gl-title { font-size: 1.02rem; font-weight: 700; color: #1a3c6e; margin-bottom: 8px; }
+          .gl-def { background: #f8f9fc; border-right: 4px solid #4a7cc9; padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 0.9rem; line-height: 1.7; }
+          .gl-code { direction: ltr; text-align: left; background: #0d1b2e; color: #cdd9e5; font-family: 'Consolas', monospace; font-size: 0.81rem; padding: 16px 20px; border-radius: 8px; margin: 10px 0; line-height: 1.75; overflow-x: auto; white-space: pre; }
+          .gl-trap { background: #fff8e1; border-right: 4px solid #f0a020; padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 0.87rem; line-height: 1.7; }
+          .gl-trap-title { font-weight: 700; color: #8a5700; font-size: 0.79rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+          .gl-analogy { background: #f0f7ff; border-right: 4px solid #4a7cc9; padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 0.87rem; line-height: 1.7; }
+          .gl-analogy-title { font-weight: 700; color: #1a3c6e; font-size: 0.79rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+          .gl-in-script { background: #f0fff4; border-right: 4px solid #2da44e; padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 10px 0; font-size: 0.87rem; line-height: 1.7; }
+          .gl-is-title { font-weight: 700; color: #1a6e3c; font-size: 0.79rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+          .gl-sub { font-size: 0.91rem; color: #2d3e52; line-height: 1.8; margin-bottom: 10px; }
+          .gl-sub strong { color: #1a3c6e; }
+          .gl-toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; padding: 16px; background: #f8f9fc; border-radius: 10px; }
+          .gl-toc a { background: #1a3c6e; color: #fff; padding: 5px 13px; border-radius: 14px; font-size: 0.78rem; text-decoration: none; font-family: 'Consolas', monospace; transition: background 0.15s; }
+          .gl-toc a:hover { background: #4a7cc9; }
+          .gl-intro { background: #f0f4ff; border-right: 4px solid #1a3c6e; padding: 14px 18px; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-size: 0.93rem; line-height: 1.7; }
+          .gl-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+          .gl-box { border-radius: 8px; padding: 12px 16px; font-size: 0.85rem; line-height: 1.7; }
+          .gl-box-blue   { background: #e3f2fd; border: 1px solid #90caf9; }
+          .gl-box-green  { background: #e8f5e9; border: 1px solid #a5d6a7; }
+          .gl-box-red    { background: #fce4ec; border: 1px solid #ef9a9a; }
+          .gl-box-amber  { background: #fff8e1; border: 1px solid #ffe082; }
+          @media(max-width:600px){ .gl-two-col { grid-template-columns:1fr; } }
+        </style>
+
+        <div class="gl-intro">
+          הסקשנים הקודמים הסבירו כל חלק בסקריפט ברמת "מה הוא עושה". הדף הזה מסביר את <strong>מושגי ה-JavaScript עצמם</strong> ברמה עמוקה יותר — עם אנלוגיות, מלכודות נפוצות, ואיפה בדיוק המושג מופיע בסקריפט שלנו.
+        </div>
+
+        <!-- תוכן עניינים -->
+        <div class="gl-toc">
+          <a href="#gl-scope">Scope &amp; Hoisting</a>
+          <a href="#gl-arrow">Arrow Function</a>
+          <a href="#gl-closure">Closure</a>
+          <a href="#gl-eventloop">Event Loop</a>
+          <a href="#gl-promise">Promise מעמיק</a>
+          <a href="#gl-optional">Optional Chaining (?.)</a>
+          <a href="#gl-nullish">Nullish (??) vs OR</a>
+          <a href="#gl-spread">Spread (...)</a>
+          <a href="#gl-destruct">Destructuring</a>
+          <a href="#gl-callapply">call / apply</a>
+          <a href="#gl-typeof">typeof</a>
+          <a href="#gl-forofin">for...of vs forEach</a>
+          <a href="#gl-regex">RegExp עמוק</a>
+          <a href="#gl-recursion">Recursion עמוק</a>
+          <a href="#gl-json">JSON מעמיק</a>
+        </div>
+
+        <!-- ══════════ 1. Scope & Hoisting ══════════ -->
+        <div class="gl-entry" id="gl-scope">
+          <div class="gl-header">
+            <span class="gl-badge">const / let / var — Scope &amp; Hoisting</span>
+            <span class="gl-category">Variables</span>
+          </div>
+          <div class="gl-title">הצהרת משתנה — Scope, Hoisting ו-TDZ</div>
+          <div class="gl-sub">
+            <p>שלוש מילות המפתח יוצרות "קופסאות זיכרון", אך עם הבדלים קריטיים ב<strong>מי רואה אותן</strong>, ו<strong>מה קורה לפני שהן מוגדרות</strong>.</p>
+          </div>
+          <div class="gl-code"><span class="cm">// ─── SCOPE ─── תחום הגישה</span>
+
+<span class="kw">function</span> <span class="fn">example</span>() {
+  <span class="kw">if</span> (<span class="val">true</span>) {
+    <span class="kw">var</span>   x <span class="op">=</span> <span class="num">10</span><span class="punc">;</span>  <span class="cm">// var "בורח" מה-if — function scope</span>
+    <span class="kw">let</span>   y <span class="op">=</span> <span class="num">20</span><span class="punc">;</span>  <span class="cm">// let נכלא ב-{ } — block scope</span>
+    <span class="kw">const</span> z <span class="op">=</span> <span class="num">30</span><span class="punc">;</span>  <span class="cm">// const נכלא ב-{ } — block scope</span>
+  }
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(x)<span class="punc">;</span>   <span class="cm">// ✅ 10  (var "דלף" החוצה)</span>
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(y)<span class="punc">;</span>   <span class="cm">// ❌ ReferenceError (let כלוא)</span>
+}
+
+<span class="cm">// ─── HOISTING ─── "הרמה" לראש הפונקציה</span>
+
+<span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(a)<span class="punc">;</span>  <span class="cm">// → undefined  (var "הורם" אבל לא הערך!)</span>
+<span class="kw">var</span> a <span class="op">=</span> <span class="num">5</span><span class="punc">;</span>
+
+<span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(b)<span class="punc">;</span>  <span class="cm">// ❌ ReferenceError — TDZ (ראו הסבר)</span>
+<span class="kw">let</span> b <span class="op">=</span> <span class="num">5</span><span class="punc">;</span>
+
+<span class="cm">// מה JavaScript עשה מתחת למכסה עם var:
+// var a;                ← הוקם לראש הסקופ (ריק)
+// console.log(a);       ← undefined
+// a = 5;                ← השמה קורית בשורה המקורית</span>
+
+<span class="cm">// ─── TDZ — Temporal Dead Zone ───
+// let ו-const "קיימים" מתחילת ה-block, אבל אסור לגשת אליהם לפני ה-let/const</span>
+
+{
+  <span class="cm">// ← כאן מתחיל ה-TDZ של z</span>
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(z)<span class="punc">;</span>  <span class="cm">// ❌ ReferenceError: Cannot access 'z' before initialization</span>
+  <span class="kw">const</span> z <span class="op">=</span> <span class="num">99</span><span class="punc">;</span>    <span class="cm">// ← כאן ה-TDZ מסתיים</span>
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(z)<span class="punc">;</span>  <span class="cm">// ✅ 99</span>
+}
+
+<span class="cm">// ─── CONST — לא "קפואה" לגמרי ───</span>
+<span class="kw">const</span> <span class="var">arr</span> <span class="op">=</span> [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]<span class="punc">;</span>
+<span class="var">arr</span><span class="punc">.</span><span class="fn">push</span>(<span class="num">4</span>)<span class="punc">;</span>        <span class="cm">// ✅ מותר — שינוי תוכן המערך</span>
+<span class="var">arr</span> <span class="op">=</span> [<span class="num">5</span>, <span class="num">6</span>]<span class="punc">;</span>       <span class="cm">// ❌ TypeError — לא ניתן להחליף ה-reference</span></div>
+          <div class="gl-analogy">
+            <div class="gl-analogy-title">אנלוגיה</div>
+            <p><strong>var</strong> = מפתח שנמצא בכיס המעיל — גישה מכל מקום בחדר (פונקציה).<br>
+            <strong>let</strong> = מפתח שנמצא בתיבה ספציפית — רק מי שבחדר הספציפי (<code>{ }</code>) יכול להשתמש בו.<br>
+            <strong>const</strong> = כתובת חקוקה בשיש — לא ניתן לשנות לאן מצביעים, אך ניתן לשנות את הדבר שבכתובת.<br>
+            <strong>TDZ</strong> = הספר בספריה כבר "רשום" בשם שלכם, אבל טרם הגיע — לא ניתן לקחת אותו עד שיגיע.</p>
+          </div>
+          <div class="gl-trap">
+            <div class="gl-trap-title">מלכודות נפוצות</div>
+            <p>1. <code>var</code> בתוך לולאה — כל הסיבובים חולקים אותה משתנה אחת. לעולם השתמשו ב-<code>let</code> בלולאות.<br>
+            2. <code>const obj = {}</code> — ניתן לשנות תכונות, לא ניתן להחליף את האובייקט כולו.<br>
+            3. TDZ נוגע גם לפרמטרים ברירת מחדל: <code>function f(a = b, b = 2)</code> — TDZ error כי b לא הוגדר עדיין!</p>
+          </div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו</div>
+            <p><code>const SPECIAL_CHARS</code>, <code>const PLACEHOLDER</code>, <code>const BASE_PASSWORD</code> = קבועים שלא ישתנו. <code>let _captured = null</code> = המשתנה היחיד שמשתנה בזמן ריצה, ולכן <code>let</code> ולא <code>const</code>.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 2. Arrow Function ══════════ -->
+        <div class="gl-entry" id="gl-arrow">
+          <div class="gl-header">
+            <span class="gl-badge">Arrow Function ( =&gt; )</span>
+            <span class="gl-category">Functions</span>
+          </div>
+          <div class="gl-title">פונקציית חץ — קצרה יותר, עם this שונה לגמרי</div>
+          <div class="gl-sub"><p>הוצגו ב-ES6. שתי סיבות לקיומן: <strong>כתיבה קצרה</strong>, ו<strong>this קבוע</strong> מהסביבה החיצונית.</p></div>
+          <div class="gl-code"><span class="cm">// ─── כתיבה מלאה → מקוצרת ───</span>
+<span class="kw">const</span> <span class="fn">greet</span> <span class="op">=</span> <span class="kw">function</span>(<span class="var">name</span>) { <span class="kw">return</span> <span class="str">"Hello "</span> <span class="op">+</span> <span class="var">name</span><span class="punc">; };</span>  <span class="cm">// ישן</span>
+<span class="kw">const</span> <span class="fn">greet</span> <span class="op">=</span> (<span class="var">name</span>) <span class="op">=></span> { <span class="kw">return</span> <span class="str">"Hello "</span> <span class="op">+</span> <span class="var">name</span><span class="punc">; };</span>  <span class="cm">// arrow</span>
+<span class="kw">const</span> <span class="fn">greet</span> <span class="op">=</span>  <span class="var">name</span>  <span class="op">=></span>          <span class="str">"Hello "</span> <span class="op">+</span> <span class="var">name</span>  <span class="punc">;</span>   <span class="cm">// implicit return!</span>
+
+<span class="cm">// Implicit Return — כשאין { }, הביטוי מוחזר אוטומטית:</span>
+<span class="kw">const</span> <span class="fn">double</span>  <span class="op">=</span> <span class="var">x</span>       <span class="op">=></span> <span class="var">x</span> <span class="op">*</span> <span class="num">2</span><span class="punc">;</span>          <span class="cm">// פרמטר יחיד — ללא ()</span>
+<span class="kw">const</span> <span class="fn">add</span>     <span class="op">=</span> (<span class="var">a</span>, <span class="var">b</span>) <span class="op">=></span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span><span class="punc">;</span>         <span class="cm">// שני פרמטרים — עם ()</span>
+<span class="kw">const</span> <span class="fn">noArgs</span>  <span class="op">=</span> ()      <span class="op">=></span> <span class="num">42</span><span class="punc">;</span>             <span class="cm">// ללא פרמטרים — () חובה</span>
+<span class="kw">const</span> <span class="fn">getObj</span>  <span class="op">=</span> ()      <span class="op">=></span> (<span class="punc">{</span> <span class="prop">key</span><span class="punc">:</span> <span class="num">1</span> <span class="punc">})</span><span class="punc">;</span>  <span class="cm">// אובייקט — עוטפים ב-() כדי לא לבלבל עם { }</span>
+
+<span class="cm">// ─── THIS — ההבדל הגדול ───</span>
+<span class="kw">const</span> <span class="var">obj</span> <span class="op">=</span> {
+  <span class="prop">name</span><span class="punc">:</span> <span class="str">"test"</span><span class="punc">,</span>
+
+  <span class="cm">// function רגילה: this = מי שקרא לה (ה-caller)</span>
+  <span class="prop">regularFn</span><span class="punc">:</span> <span class="kw">function</span>() { <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="kw">this</span><span class="punc">.</span><span class="prop">name</span>)<span class="punc">; },</span>  <span class="cm">// → "test"</span>
+
+  <span class="cm">// arrow: this = this של ה-scope שבו הפונקציה נוצרה (לא obj!)</span>
+  <span class="prop">arrowFn</span><span class="punc">:</span>   () <span class="op">=></span> { <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="kw">this</span><span class="punc">.</span><span class="prop">name</span>)<span class="punc">; }   <span class="cm">// → undefined (this = window!)</span>
+}<span class="punc">;</span>
+
+<span class="var">obj</span><span class="punc">.</span><span class="fn">regularFn</span>()<span class="punc">;</span>  <span class="cm">// → "test" ✅</span>
+<span class="var">obj</span><span class="punc">.</span><span class="fn">arrowFn</span>()<span class="punc">;</span>    <span class="cm">// → undefined ❌ (this = Window/global)</span>
+
+<span class="cm">// אבל בתוך method — arrow function מועילה לשמירת this:</span>
+<span class="kw">const</span> <span class="var">timer</span> <span class="op">=</span> {
+  <span class="prop">count</span><span class="punc">:</span> <span class="num">0</span><span class="punc">,</span>
+  <span class="prop">start</span><span class="punc">:</span> <span class="kw">function</span>() {
+    <span class="cm">// ❌ בלי arrow: this בתוך setTimeout = window</span>
+    <span class="fn">setTimeout</span>(() <span class="op">=></span> {
+      <span class="kw">this</span><span class="punc">.</span><span class="prop">count</span><span class="op">++</span><span class="punc">;</span>      <span class="cm">// ✅ arrow זוכרת this = timer</span>
+    <span class="punc">},</span> <span class="num">1000</span>)<span class="punc">;</span>
+  }
+}<span class="punc">;</span></div>
+          <div class="gl-analogy">
+            <div class="gl-analogy-title">אנלוגיה</div>
+            <p><strong>function רגילה</strong> = שכיר שבכל בוקר שואל "מי המנהל שלי היום?" — this נקבע כשקוראים לה.<br>
+            <strong>Arrow function</strong> = עצמאי שזוכר תמיד מי הכשיר אותו — this נקבע כשהפונקציה <em>נוצרת</em>, לא כשנקראת.</p>
+          </div>
+          <div class="gl-trap">
+            <div class="gl-trap-title">מלכודות נפוצות</div>
+            <p>1. לעולם אל תשתמשו ב-arrow function כ-<strong>method</strong> של אובייקט אם תצטרכו לגשת ל-<code>this</code>.<br>
+            2. Arrow functions לא ניתן להשתמש בהן עם <code>new</code> (לא constructors).<br>
+            3. Arrow functions אין להן <code>arguments</code> object — השתמשו ב-rest params: <code>(...args) =&gt; {}</code>.</p>
+          </div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו</div>
+            <p><code>const makePassword = (char) =&gt; BASE_PASSWORD.replace(PLACEHOLDER, char)</code> — implicit return קצר. <code>.catch(() =&gt; '')</code> — מחזירה ריק בשקט. <code>r =&gt; setTimeout(r, 600)</code> — arrow קצרה לעטיפת setTimeout.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 3. Closure ══════════ -->
+        <div class="gl-entry" id="gl-closure">
+          <div class="gl-header">
+            <span class="gl-badge">Closure</span>
+            <span class="gl-category">Scope &amp; Functions</span>
+          </div>
+          <div class="gl-title">Closure — פונקציה שזוכרת את הסביבה שנולדה בה</div>
+          <div class="gl-sub">
+            <p>Closure נוצר כשפונקציה "רואה" ומשתמשת במשתנים מה-scope שבו הוגדרה — גם אחרי שה-scope ההוא "נסגר". זהו אחד המושגים החשובים ביותר ב-JavaScript.</p>
+          </div>
+          <div class="gl-code"><span class="cm">// ─── דוגמה בסיסית ───</span>
+<span class="kw">function</span> <span class="fn">createCounter</span>() {
+  <span class="kw">let</span> <span class="var">count</span> <span class="op">=</span> <span class="num">0</span><span class="punc">;</span>            <span class="cm">// משתנה פרטי ב-scope של createCounter</span>
+  <span class="kw">return function</span>() {       <span class="cm">// הפונקציה הפנימית היא ה-closure</span>
+    <span class="var">count</span><span class="op">++</span><span class="punc">;</span>               <span class="cm">// "רואה" ו"זוכרת" את count — גם אחרי שcreateCounter סיים</span>
+    <span class="kw">return</span> <span class="var">count</span><span class="punc">;</span>
+  }<span class="punc">;</span>
+}
+
+<span class="kw">const</span> <span class="var">counter</span> <span class="op">=</span> <span class="fn">createCounter</span>()<span class="punc">;</span>  <span class="cm">// createCounter רץ ו"נסגר"</span>
+<span class="fn">counter</span>()<span class="punc">;</span>  <span class="cm">// → 1 (count עדיין חי בזיכרון!)</span>
+<span class="fn">counter</span>()<span class="punc">;</span>  <span class="cm">// → 2</span>
+<span class="fn">counter</span>()<span class="punc">;</span>  <span class="cm">// → 3</span>
+
+<span class="cm">// ─── Factory Function — שימוש מעשי ───</span>
+<span class="kw">function</span> <span class="fn">makeMultiplier</span>(<span class="var">factor</span>) {
+  <span class="kw">return</span> <span class="var">n</span> <span class="op">=></span> <span class="var">n</span> <span class="op">*</span> <span class="var">factor</span><span class="punc">;</span>  <span class="cm">// "זוכרת" את factor</span>
+}
+<span class="kw">const</span> <span class="fn">double</span> <span class="op">=</span> <span class="fn">makeMultiplier</span>(<span class="num">2</span>)<span class="punc">;</span>
+<span class="kw">const</span> <span class="fn">triple</span> <span class="op">=</span> <span class="fn">makeMultiplier</span>(<span class="num">3</span>)<span class="punc">;</span>
+<span class="fn">double</span>(<span class="num">5</span>)<span class="punc">;</span>  <span class="cm">// → 10  (factor = 2)</span>
+<span class="fn">triple</span>(<span class="num">5</span>)<span class="punc">;</span>  <span class="cm">// → 15  (factor = 3)</span>
+
+<span class="cm">// ─── Closure שומר על פרטיות ───</span>
+<span class="kw">function</span> <span class="fn">createBankAccount</span>(<span class="var">initialBalance</span>) {
+  <span class="kw">let</span> <span class="var">balance</span> <span class="op">=</span> <span class="var">initialBalance</span><span class="punc">;</span>  <span class="cm">// ← פרטי! לא ניתן לגישה ישירה מבחוץ</span>
+  <span class="kw">return</span> {
+    <span class="prop">deposit</span><span class="punc">:</span>  <span class="var">amount</span> <span class="op">=></span> { <span class="var">balance</span> <span class="op">+=</span> <span class="var">amount</span><span class="punc">; },</span>
+    <span class="prop">withdraw</span><span class="punc">:</span> <span class="var">amount</span> <span class="op">=></span> { <span class="var">balance</span> <span class="op">-=</span> <span class="var">amount</span><span class="punc">; },</span>
+    <span class="prop">getBalance</span><span class="punc">:</span> ()     <span class="op">=></span> <span class="var">balance</span>
+  }<span class="punc">;</span>
+}</div>
+          <div class="gl-analogy">
+            <div class="gl-analogy-title">אנלוגיה</div>
+            <p>הכנתם קפה בבית (= הסביבה), ויצאתם לטיול עם הכוס. הכוס "זוכרת" שיצאה מהבית ויש בה קפה — גם כשהבית נעול מאחוריכם. ה-closure היא הכוס: פונקציה שלוקחת איתה את מה שהיה ב-scope שנולדה בו.</p>
+          </div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו</div>
+            <p>כל הפונקציות (סקשנים 4–8) הן <strong>closure</strong> מעל <code>_captured</code> ו-<code>_originalFetch</code>. הן הוגדרו ב-scope הגלובלי ו"זוכרות" את שני המשתנים — גם כשנקראות מתוך לולאה בזמן הריצה. <code>makePassword</code> היא closure מעל <code>BASE_PASSWORD</code> ו-<code>PLACEHOLDER</code>.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 4. Event Loop ══════════ -->
+        <div class="gl-entry" id="gl-eventloop">
+          <div class="gl-header">
+            <span class="gl-badge">Event Loop + async/await</span>
+            <span class="gl-category">Asynchronous JavaScript</span>
+          </div>
+          <div class="gl-title">איך JavaScript "מחכה" בלי לקפוא — Event Loop</div>
+          <div class="gl-sub">
+            <p>JavaScript הוא <strong>Single Threaded</strong> — שרשור יחיד בלבד. רק פעולה אחת מתבצעת בכל רגע. אז איך הוא שולח בקשת רשת ו<em>ממשיך לרוץ</em> בלי לחכות?</p>
+          </div>
+          <div class="gl-code"><span class="cm">// ─── Call Stack + Queue ───</span>
+<span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'1'</span>)<span class="punc">;</span>            <span class="cm">// ← מיידי — נכנס ל-Call Stack ויוצא</span>
+
+<span class="fn">setTimeout</span>(() <span class="op">=></span> {
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'2 (setTimeout)'</span>)<span class="punc">;</span>
+<span class="punc">},</span> <span class="num">0</span>)<span class="punc">;</span>                     <span class="cm">// ← נשלח לדפדפן. אפילו 0ms — עדיין אסינכרוני!</span>
+
+<span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'3'</span>)<span class="punc">;</span>            <span class="cm">// ← מיידי</span>
+
+<span class="cm">// ─── Output ───
+// '1' → '3' → '2 (setTimeout)'
+// למה? כי setTimeout נכנס ל-Callback Queue ומחכה שה-Call Stack יתרוקן</span>
+
+<span class="cm">// ─── Microtask vs Macrotask ───
+// Promises (microtasks) — "דוחקים לראש התור" לפני setTimeout (macrotask):</span>
+<span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'A'</span>)<span class="punc">;</span>
+<span class="fn">setTimeout</span>(() <span class="op">=></span> <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'B setTimeout'</span>)<span class="punc">,</span> <span class="num">0</span>)<span class="punc">;</span>
+<span class="var">Promise</span><span class="punc">.</span><span class="fn">resolve</span>()<span class="punc">.</span><span class="fn">then</span>(() <span class="op">=></span> <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'C Promise'</span>))<span class="punc">;</span>
+<span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'D'</span>)<span class="punc">;</span>
+<span class="cm">// Output: A → D → C Promise → B setTimeout</span>
+
+<span class="cm">// ─── async/await פשוט ───</span>
+<span class="kw">async function</span> <span class="fn">getData</span>() {
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'לפני await'</span>)<span class="punc">;</span>
+  <span class="kw">const</span> <span class="var">res</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api'</span>)<span class="punc">;</span>   <span class="cm">// "עצור ופנה מקום לאחרים"</span>
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">'אחרי await'</span>)<span class="punc">;</span>     <span class="cm">// ← רץ כשהתשובה חזרה</span>
+  <span class="kw">return</span> <span class="var">res</span><span class="punc">.</span><span class="fn">json</span>()<span class="punc">;</span>
+}
+
+<span class="cm">// async function תמיד מחזירה Promise — גם אם כתבתם return 42:</span>
+<span class="kw">async function</span> <span class="fn">getNum</span>() { <span class="kw">return</span> <span class="num">42</span><span class="punc">; }</span>
+<span class="fn">getNum</span>()<span class="punc">.</span><span class="fn">then</span>(<span class="var">n</span> <span class="op">=></span> <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="var">n</span>))<span class="punc">;</span>  <span class="cm">// → 42 (Promise wrapped)</span></div>
+          <div class="gl-analogy">
+            <div class="gl-analogy-title">אנלוגיה</div>
+            <p>מסעדה עם מלצר אחד בלבד. הוא מקבל הזמנה ושולח למטבח — <strong>לא עומד ומחכה</strong>, ממשיך לקבל הזמנות אחרות. כשמנה מוכנה, הוא חוזר ומגיש אותה. זהו <strong>Event Loop</strong>. <code>await</code> אומר: "אחכה לפריט הזה לפני שאמשיך" — אבל המלצר עדיין לא חסום לשאר הלקוחות.</p>
+          </div>
+          <div class="gl-trap">
+            <div class="gl-trap-title">מלכודות נפוצות</div>
+            <p>1. <code>await</code> עובד <strong>רק</strong> בתוך <code>async function</code> — בלי <code>async</code> תקבלו SyntaxError.<br>
+            2. <code>await</code> בתוך <code>forEach</code> <strong>לא</strong> ממתין כצפוי! השתמשו ב-<code>for...of</code> במקום.<br>
+            3. async function תמיד מחזירה Promise — לא ניתן "לשלוף" ממנה ערך סינכרוני.</p>
+          </div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו</div>
+            <p><code>async function testChars()</code> — ללא async, ה-<code>await _sendFetch()</code> היה גורם ל-SyntaxError. <code>await new Promise(r =&gt; setTimeout(r, 600))</code> = שינה אסינכרונית שלא חוסמת את הדפדפן בין בקשה לבקשה.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 5. Promise מעמיק ══════════ -->
+        <div class="gl-entry" id="gl-promise">
+          <div class="gl-header">
+            <span class="gl-badge">Promise</span>
+            <span class="gl-category">Asynchronous JavaScript</span>
+          </div>
+          <div class="gl-title">Promise — "הבטחה" לערך עתידי, שלושה מצבים</div>
+          <div class="gl-code"><span class="cm">// ─── שלושת המצבים ───
+// PENDING   → הפעולה עדיין רצה
+// FULFILLED → הצליח (resolve נקרא)
+// REJECTED  → נכשל  (reject נקרא)
+// מצב אחד שנסגר לא ניתן לשנות!</span>
+
+<span class="kw">const</span> <span class="var">p</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">Promise</span>((<span class="var">resolve</span>, <span class="var">reject</span>) <span class="op">=></span> {
+  <span class="fn">setTimeout</span>(() <span class="op">=></span> {
+    <span class="kw">if</span> (<span class="var">Math</span><span class="punc">.</span><span class="fn">random</span>() <span class="op">></span> <span class="num">0.5</span>) {
+      <span class="fn">resolve</span>(<span class="str">"הצלחה!"</span>)<span class="punc">;</span>    <span class="cm">// → FULFILLED</span>
+    } <span class="kw">else</span> {
+      <span class="fn">reject</span>(<span class="kw">new</span> <span class="fn">Error</span>(<span class="str">"כשל!"</span>))<span class="punc">;</span>  <span class="cm">// → REJECTED</span>
+    }
+  <span class="punc">},</span> <span class="num">1000</span>)<span class="punc">;</span>
+})<span class="punc">;</span>
+
+<span class="cm">// ─── שרשור ───</span>
+<span class="fn">fetch</span>(<span class="str">'/api/user'</span>)
+  <span class="punc">.</span><span class="fn">then</span>(<span class="var">res</span>  <span class="op">=></span> <span class="var">res</span><span class="punc">.</span><span class="fn">json</span>())<span class="punc">;</span>      <span class="cm">// כשהצליח — המר ל-JSON</span>
+  <span class="punc">.</span><span class="fn">then</span>(<span class="var">user</span> <span class="op">=></span> <span class="var">user</span><span class="punc">.</span><span class="prop">name</span>)<span class="punc">;</span>     <span class="cm">// כשהמרה הצליחה — קח את השם</span>
+  <span class="punc">.</span><span class="fn">catch</span>(<span class="var">err</span>  <span class="op">=></span> <span class="var">console</span><span class="punc">.</span><span class="fn">error</span>(<span class="var">err</span>))<span class="punc">;</span> <span class="cm">// כשלון בכל שלב</span>
+  <span class="punc">.</span><span class="fn">finally</span>(() <span class="op">=></span> <span class="fn">hideLoader</span>())<span class="punc">;</span>    <span class="cm">// תמיד — גם אם נכשל</span>
+
+<span class="cm">// ─── Promise.all — מקביל ───</span>
+<span class="kw">const</span> [<span class="var">user</span>, <span class="var">posts</span>] <span class="op">=</span> <span class="kw">await</span> <span class="var">Promise</span><span class="punc">.</span><span class="fn">all</span>([
+  <span class="fn">fetch</span>(<span class="str">'/api/user'</span>)<span class="punc">.</span><span class="fn">then</span>(<span class="var">r</span> <span class="op">=></span> <span class="var">r</span><span class="punc">.</span><span class="fn">json</span>())<span class="punc">,</span>
+  <span class="fn">fetch</span>(<span class="str">'/api/posts'</span>)<span class="punc">.</span><span class="fn">then</span>(<span class="var">r</span> <span class="op">=></span> <span class="var">r</span><span class="punc">.</span><span class="fn">json</span>())<span class="punc">,</span>
+])<span class="punc">;</span>
+<span class="cm">// → שתי הבקשות רצות במקביל, מחכה לשתיהן. מהיר!
+// אם אחת נכשלת — Promise.all נכשל כולו</span>
+
+<span class="cm">// ─── עוטף XHR ב-Promise ───</span>
+<span class="kw">function</span> <span class="fn">xhrGet</span>(<span class="var">url</span>) {
+  <span class="kw">return new</span> <span class="fn">Promise</span>((<span class="var">resolve</span>, <span class="var">reject</span>) <span class="op">=></span> {
+    <span class="kw">const</span> <span class="var">xhr</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">XMLHttpRequest</span>()<span class="punc">;</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="fn">open</span>(<span class="str">'GET'</span>, <span class="var">url</span>)<span class="punc">;</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="prop">onload</span>  <span class="op">=</span> () <span class="op">=></span> <span class="fn">resolve</span>(<span class="var">xhr</span><span class="punc">.</span><span class="prop">responseText</span>)<span class="punc">;</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="prop">onerror</span> <span class="op">=</span> () <span class="op">=></span> <span class="fn">reject</span>(<span class="kw">new</span> <span class="fn">Error</span>(<span class="str">'Network error'</span>))<span class="punc">;</span>
+    <span class="var">xhr</span><span class="punc">.</span><span class="fn">send</span>()<span class="punc">;</span>
+  })<span class="punc">;</span>
+}
+<span class="kw">const</span> <span class="var">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">xhrGet</span>(<span class="str">'/api'</span>)<span class="punc">;</span>  <span class="cm">// כעת ניתן await!</span></div>
+          <div class="gl-trap">
+            <div class="gl-trap-title">מלכודת — UnhandledPromiseRejection</div>
+            <p>Promise שנדחה (REJECTED) ואין לו <code>.catch()</code> או <code>try/catch</code> — גורם לאזהרה קריטית (ובNode.js מציאות קורס התהליך). תמיד טפלו בשגיאות!</p>
+          </div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשן 7)</div>
+            <p><code>_sendXHR</code> עוטפת XHR ב-Promise כי XHR עצמו הוא callback-based ולא תואם ל-<code>await</code>. <code>new Promise(r =&gt; setTimeout(r, 600))</code> = Promise שמתקיים אחרי 600ms — שיטה סטנדרטית ל"שינה אסינכרונית".</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 6. Optional Chaining ══════════ -->
+        <div class="gl-entry" id="gl-optional">
+          <div class="gl-header">
+            <span class="gl-badge">Optional Chaining ( ?. )</span>
+            <span class="gl-category">Modern JS (ES2020)</span>
+          </div>
+          <div class="gl-title">גישה בטוחה לתכונות עמוקות — ללא קריסה</div>
+          <div class="gl-code"><span class="cm">// ─── הבעיה ─── גישה ל-null קורסת</span>
+<span class="kw">const</span> <span class="var">user</span> <span class="op">=</span> <span class="val">null</span><span class="punc">;</span>
+<span class="var">user</span><span class="punc">.</span><span class="prop">name</span><span class="punc">;</span>           <span class="cm">// ❌ TypeError: Cannot read properties of null</span>
+<span class="var">user</span><span class="punc">.</span><span class="prop">address</span><span class="punc">.</span><span class="prop">city</span><span class="punc">;</span>  <span class="cm">// ❌ TypeError (כפול)</span>
+
+<span class="cm">// ─── הפתרון הישן ─── מסורבל</span>
+<span class="kw">const</span> <span class="var">city</span> <span class="op">=</span> <span class="var">user</span> <span class="op">&amp;&amp;</span> <span class="var">user</span><span class="punc">.</span><span class="prop">address</span> <span class="op">&amp;&amp;</span> <span class="var">user</span><span class="punc">.</span><span class="prop">address</span><span class="punc">.</span><span class="prop">city</span><span class="punc">;</span>
+
+<span class="cm">// ─── Optional Chaining — נקי ─── </span>
+<span class="kw">const</span> <span class="var">city</span> <span class="op">=</span> <span class="var">user</span><span class="op">?.</span><span class="prop">address</span><span class="op">?.</span><span class="prop">city</span><span class="punc">;</span>  <span class="cm">// → undefined (לא שגיאה!)</span>
+
+<span class="cm">// גישה לפונקציה:</span>
+<span class="var">user</span><span class="op">?.</span><span class="fn">getAddress</span><span class="op">?.</span>()<span class="punc">;</span>   <span class="cm">// קורא לפונקציה רק אם user וgetAddress קיימים</span>
+
+<span class="cm">// גישה לאינדקס:</span>
+<span class="var">arr</span><span class="op">?.</span>[<span class="num">0</span>]<span class="op">?.</span><span class="prop">name</span><span class="punc">;</span>         <span class="cm">// בטוח גם אם arr=null</span>
+
+<span class="cm">// מה מוחזר כשנכשל?</span>
+<span class="kw">const</span> <span class="var">x</span> <span class="op">=</span> <span class="val">null</span><span class="op">?.</span><span class="prop">something</span><span class="punc">;</span>  <span class="cm">// → undefined (לא null)</span>
+<span class="kw">const</span> <span class="var">y</span> <span class="op">=</span> <span class="val">null</span><span class="op">?.</span><span class="fn">fn</span>()<span class="punc">;</span>        <span class="cm">// → undefined</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשן 2)</div>
+            <p><code>typeof input === 'string' ? input : input?.url</code> — אם input הוא Request object, <code>input?.url</code> מחלץ את ה-URL בבטחה. <code>init?.body ?? input?.body</code> — שרשור <code>?.</code> עם <code>??</code> לחילוץ body בטוח.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 7. Nullish ══════════ -->
+        <div class="gl-entry" id="gl-nullish">
+          <div class="gl-header">
+            <span class="gl-badge">Nullish Coalescing ( ?? ) vs OR ( || )</span>
+            <span class="gl-category">Modern JS (ES2020)</span>
+          </div>
+          <div class="gl-title">?? לעומת || — מה ההבדל ומתי לבחור?</div>
+          <div class="gl-code"><span class="cm">// ─── FALSY values ב-JavaScript ─── (ערכים שנחשבים כ-false)</span>
+<span class="cm">// false, 0, -0, 0n, '', "", ``, null, undefined, NaN</span>
+
+<span class="cm">// ─── || (OR) — מחליף כל FALSY ───</span>
+<span class="num">0</span>     <span class="op">||</span> <span class="str">"default"</span>   <span class="cm">// → "default" ⚠️ (0 הוא falsy!)</span>
+<span class="str">""</span>    <span class="op">||</span> <span class="str">"default"</span>   <span class="cm">// → "default" ⚠️ (מחרוזת ריקה = falsy!)</span>
+<span class="val">false</span> <span class="op">||</span> <span class="str">"default"</span>   <span class="cm">// → "default"</span>
+<span class="val">null</span>  <span class="op">||</span> <span class="str">"default"</span>   <span class="cm">// → "default"</span>
+<span class="str">"hi"</span>  <span class="op">||</span> <span class="str">"default"</span>   <span class="cm">// → "hi" ✅</span>
+
+<span class="cm">// ─── ?? (Nullish) — מחליף רק null/undefined ───</span>
+<span class="num">0</span>         <span class="op">??</span> <span class="str">"default"</span>  <span class="cm">// → 0         ✅ (שומר אפס!)</span>
+<span class="str">""</span>        <span class="op">??</span> <span class="str">"default"</span>  <span class="cm">// → ""        ✅ (שומר מחרוזת ריקה!)</span>
+<span class="val">false</span>     <span class="op">??</span> <span class="str">"default"</span>  <span class="cm">// → false     ✅ (שומר false!)</span>
+<span class="val">null</span>      <span class="op">??</span> <span class="str">"default"</span>  <span class="cm">// → "default" ✅</span>
+<span class="val">undefined</span> <span class="op">??</span> <span class="str">"default"</span>  <span class="cm">// → "default" ✅</span>
+
+<span class="cm">// ─── הכלל ─── מתי לבחור?</span>
+<span class="cm">// ??: כשמספר 0, מחרוזת ריקה "" או false הם ערכים לגיטימיים</span>
+<span class="cm">// ||: כשכל ערך "ריק" (גם 0, "") צריך לקבל ברירת מחדל</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשן 2)</div>
+            <p><code>init?.body ?? input?.body</code> — הבחירה ב-<code>??</code> חשובה! אם <code>init.body</code> הוא <code>""</code> (גוף ריק), <code>||</code> היה מחליף אותו ב-<code>input.body</code> — שגיאה. <code>??</code> שומר את <code>""</code> כערך לגיטימי.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 8. Spread ══════════ -->
+        <div class="gl-entry" id="gl-spread">
+          <div class="gl-header">
+            <span class="gl-badge">Spread Operator ( ... )</span>
+            <span class="gl-category">Modern JS (ES6)</span>
+          </div>
+          <div class="gl-title">... — "פרוס" אלמנטים ממערך או אובייקט</div>
+          <div class="gl-code"><span class="cm">// ─── מערכים ───</span>
+<span class="kw">const</span> <span class="var">a</span> <span class="op">=</span> [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]<span class="punc">;</span>
+<span class="kw">const</span> <span class="var">b</span> <span class="op">=</span> [<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>]<span class="punc">;</span>
+<span class="kw">const</span> <span class="var">combined</span> <span class="op">=</span> [<span class="op">...</span><span class="var">a</span>, <span class="op">...</span><span class="var">b</span>]<span class="punc">;</span>  <span class="cm">// → [1,2,3,4,5,6]</span>
+<span class="kw">const</span> <span class="var">copy</span>     <span class="op">=</span> [<span class="op">...</span><span class="var">a</span>]<span class="punc">;</span>         <span class="cm">// העתקה שטחית של מערך</span>
+
+<span class="cm">// ─── אובייקטים ───</span>
+<span class="kw">const</span> <span class="var">base</span>  <span class="op">=</span> <span class="punc">{</span> <span class="prop">color</span><span class="punc">:</span> <span class="str">'red'</span><span class="punc">,</span>  <span class="prop">size</span><span class="punc">:</span> <span class="str">'medium'</span> <span class="punc">};</span>
+<span class="kw">const</span> <span class="var">patch</span> <span class="op">=</span> <span class="punc">{</span> <span class="prop">color</span><span class="punc">:</span> <span class="str">'blue'</span> <span class="punc">};</span>
+<span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> <span class="punc">{</span> <span class="op">...</span><span class="var">base</span>, <span class="op">...</span><span class="var">patch</span> <span class="punc">};</span>  <span class="cm">// → { color: 'blue', size: 'medium' }</span>
+<span class="cm">// מה שבא אחרון מנצח!</span>
+
+<span class="cm">// ─── SHALLOW COPY — המלכודת ───</span>
+<span class="kw">const</span> <span class="var">obj</span>  <span class="op">=</span> <span class="punc">{</span> <span class="prop">nested</span><span class="punc">:</span> <span class="punc">{</span> <span class="prop">count</span><span class="punc">:</span> <span class="num">1</span> <span class="punc">}</span> <span class="punc">};</span>
+<span class="kw">const</span> <span class="var">copy</span> <span class="op">=</span> <span class="punc">{</span> <span class="op">...</span><span class="var">obj</span> <span class="punc">};</span>
+<span class="var">copy</span><span class="punc">.</span><span class="prop">nested</span><span class="punc">.</span><span class="prop">count</span> <span class="op">=</span> <span class="num">99</span><span class="punc">;</span>  <span class="cm">// שינוי ה-nested...</span>
+<span class="var">obj</span><span class="punc">.</span><span class="prop">nested</span><span class="punc">.</span><span class="prop">count</span><span class="punc">;</span>       <span class="cm">// → 99 !! המקור השתנה גם! (shallow copy)</span>
+<span class="cm">// הפתרון: JSON.parse(JSON.stringify(obj)) לעותק עמוק</span>
+
+<span class="cm">// ─── REST PARAMS — הצד ההפוך ───</span>
+<span class="kw">function</span> <span class="fn">sum</span>(<span class="op">...</span><span class="var">numbers</span>) {   <span class="cm">// ...rest מקבץ ארגומנטים למערך</span>
+  <span class="kw">return</span> <span class="var">numbers</span><span class="punc">.</span><span class="fn">reduce</span>((<span class="var">a</span>, <span class="var">b</span>) <span class="op">=></span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span>, <span class="num">0</span>)<span class="punc">;</span>
+}
+<span class="fn">sum</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>)<span class="punc">;</span>  <span class="cm">// → 15</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו</div>
+            <p>סקשן 3: <code>headers: { ...this._h }</code> — העתק שטחי של headers. סקשן 4: <code>{ ...init }</code> — fallback כשה-JSON.stringify נכשל. זוהי סיבה ש-JSON.stringify+parse עדיף לאובייקטים מקוננים.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 9. Destructuring ══════════ -->
+        <div class="gl-entry" id="gl-destruct">
+          <div class="gl-header">
+            <span class="gl-badge">Destructuring</span>
+            <span class="gl-category">Modern JS (ES6)</span>
+          </div>
+          <div class="gl-title">פירוק מבני — "משיכה" ישירה של ערכים</div>
+          <div class="gl-code"><span class="cm">// ─── Object Destructuring ───</span>
+<span class="kw">const</span> <span class="var">person</span> <span class="op">=</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Maya'</span><span class="punc">,</span> <span class="prop">age</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span> <span class="prop">city</span><span class="punc">:</span> <span class="str">'TLV'</span> <span class="punc">};</span>
+
+<span class="cm">// ישן:</span>
+<span class="kw">const</span> <span class="var">name</span> <span class="op">=</span> <span class="var">person</span><span class="punc">.</span><span class="prop">name</span><span class="punc">;</span>
+<span class="kw">const</span> <span class="var">age</span>  <span class="op">=</span> <span class="var">person</span><span class="punc">.</span><span class="prop">age</span><span class="punc">;</span>
+
+<span class="cm">// destructuring — קצר:</span>
+<span class="kw">const</span> <span class="punc">{</span> <span class="var">name</span>, <span class="var">age</span> <span class="punc">}</span> <span class="op">=</span> <span class="var">person</span><span class="punc">;</span>
+
+<span class="cm">// שינוי שם:</span>
+<span class="kw">const</span> <span class="punc">{</span> <span class="var">name</span><span class="punc">:</span> <span class="var">fullName</span> <span class="punc">}</span> <span class="op">=</span> <span class="var">person</span><span class="punc">;</span>  <span class="cm">// fullName = 'Maya'</span>
+
+<span class="cm">// ערך ברירת מחדל:</span>
+<span class="kw">const</span> <span class="punc">{</span> <span class="var">country</span> <span class="op">=</span> <span class="str">'Israel'</span> <span class="punc">}</span> <span class="op">=</span> <span class="var">person</span><span class="punc">;</span>  <span class="cm">// country = 'Israel' (לא קיים ב-person)</span>
+
+<span class="cm">// ─── Array Destructuring ───</span>
+<span class="kw">const</span> <span class="var">colors</span> <span class="op">=</span> [<span class="str">'red'</span>, <span class="str">'green'</span>, <span class="str">'blue'</span>]<span class="punc">;</span>
+<span class="kw">const</span> [<span class="var">first</span>, <span class="var">second</span>]  <span class="op">=</span> <span class="var">colors</span><span class="punc">;</span>       <span class="cm">// first='red', second='green'</span>
+<span class="kw">const</span> [, , <span class="var">third</span>]      <span class="op">=</span> <span class="var">colors</span><span class="punc">;</span>       <span class="cm">// דילוג: third='blue'</span>
+<span class="kw">const</span> [<span class="var">head</span>, <span class="op">...</span><span class="var">rest</span>]  <span class="op">=</span> <span class="var">colors</span><span class="punc">;</span>       <span class="cm">// head='red', rest=['green','blue']</span>
+
+<span class="cm">// ─── בפרמטרי פונקציה ───</span>
+<span class="kw">function</span> <span class="fn">greet</span>(<span class="punc">{</span> <span class="var">name</span>, <span class="var">age</span> <span class="punc">})</span> <span class="punc">{</span>
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">`<span class="var">${name}</span> בן <span class="var">${age}</span>`</span>)<span class="punc">;</span>
+<span class="punc">}</span>
+<span class="fn">greet</span>(<span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Maya'</span><span class="punc">,</span> <span class="prop">age</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span> <span class="prop">city</span><span class="punc">:</span> <span class="str">'TLV'</span> <span class="punc">})</span><span class="punc">;</span>  <span class="cm">// → "Maya בן 30"</span>
+<span class="cm">// city נשמט — destructuring מתעלם ממה שלא ביקשנו</span>
+
+<span class="cm">// ─── שרשור (nested) ───</span>
+<span class="kw">const</span> <span class="punc">{</span> <span class="prop">init</span><span class="punc">:</span> <span class="punc">{</span> <span class="prop">headers</span><span class="punc">:</span> <span class="punc">{</span> <span class="var">authorization</span> <span class="punc">}</span> <span class="punc">}</span> <span class="punc">}</span> <span class="op">=</span> <span class="var">captured</span><span class="punc">;</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשן 8)</div>
+            <p><code>for (const { char, name } of SPECIAL_CHARS)</code> — במקום <code>item.char</code> ו-<code>item.name</code>, מייד "פורקים" כל אובייקט ב-SPECIAL_CHARS לשתי משתנות. גם: <code>for (const [name, value] of Object.entries(headers))</code> — destructuring של מערך זוגות.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 10. call / apply ══════════ -->
+        <div class="gl-entry" id="gl-callapply">
+          <div class="gl-header">
+            <span class="gl-badge">call / apply / bind</span>
+            <span class="gl-category">Function Context (this)</span>
+          </div>
+          <div class="gl-title">שינוי this בזמן ריצה — "השאלת" פונקציה</div>
+          <div class="gl-code"><span class="kw">function</span> <span class="fn">greet</span>(<span class="var">greeting</span>, <span class="var">punct</span>) {
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="str">`<span class="var">${greeting}</span>, <span class="var">${<span class="kw">this</span>.name}</span><span class="var">${punct}</span>`</span>)<span class="punc">;</span>
+}
+<span class="kw">const</span> <span class="var">obj</span> <span class="op">=</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">"Maya"</span> <span class="punc">};</span>
+
+<span class="cm">// .call(thisArg, arg1, arg2, ...) — פרמטרים אחד אחד:</span>
+<span class="fn">greet</span><span class="punc">.</span><span class="fn">call</span>(<span class="var">obj</span>, <span class="str">"שלום"</span>, <span class="str">"!"</span>)<span class="punc">;</span>   <span class="cm">// → "שלום, Maya!"</span>
+
+<span class="cm">// .apply(thisArg, [args]) — פרמטרים כמערך:</span>
+<span class="fn">greet</span><span class="punc">.</span><span class="fn">apply</span>(<span class="var">obj</span>, [<span class="str">"היי"</span>, <span class="str">"."</span>])<span class="punc">;</span>  <span class="cm">// → "היי, Maya."</span>
+
+<span class="cm">// .bind(thisArg) — מחזיר פונקציה חדשה עם this קבוע (לא מריץ!):</span>
+<span class="kw">const</span> <span class="fn">greetMaya</span> <span class="op">=</span> <span class="fn">greet</span><span class="punc">.</span><span class="fn">bind</span>(<span class="var">obj</span>, <span class="str">"שלום"</span>)<span class="punc">;</span>
+<span class="fn">greetMaya</span>(<span class="str">"!"</span>)<span class="punc">;</span>  <span class="cm">// → "שלום, Maya!"</span>
+
+<span class="cm">// ─── arguments object — כל הארגומנטים ───</span>
+<span class="kw">function</span> <span class="fn">wrapper</span>() {
+  <span class="cm">// arguments = "מערך" (לא אמיתי) של כל הארגומנטים שנשלחו</span>
+  <span class="kw">return</span> <span class="var">originalFn</span><span class="punc">.</span><span class="fn">apply</span>(<span class="kw">this</span>, <span class="var">arguments</span>)<span class="punc">;</span>
+  <span class="cm">// ↑ מריץ originalFn עם אותו this ואותם arguments בדיוק</span>
+}
+
+<span class="cm">// ─── מדוע apply+arguments חשוב לנו? ───
+// כשמחליפים window.fetch, חייבים להעביר הכל ל-original
+// בלי apply(this, arguments) — ה-original לא יקבל נכון את הארגומנטים</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשנים 2, 3)</div>
+            <p><code>_originalFetch.apply(this, arguments)</code> — מריץ fetch המקורי עם <strong>אותו this</strong> ו<strong>אותם arguments</strong>. קריטי! אחרת ה-fetch המקורי יאבד את ה-context שלו. אותו עיקרון ב-<code>_xhrOpen.apply(this, arguments)</code> ו-<code>_xhrSend.apply(this, arguments)</code>.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 11. typeof ══════════ -->
+        <div class="gl-entry" id="gl-typeof">
+          <div class="gl-header">
+            <span class="gl-badge">typeof</span>
+            <span class="gl-category">Type Checking</span>
+          </div>
+          <div class="gl-title">typeof — בדיקת סוג הנתון, עם באגים היסטוריים</div>
+          <div class="gl-code"><span class="cm">// ─── הערכים שמחזיר typeof ───</span>
+<span class="kw">typeof</span> <span class="num">42</span>            <span class="cm">// → "number"</span>
+<span class="kw">typeof</span> <span class="str">"hello"</span>       <span class="cm">// → "string"</span>
+<span class="kw">typeof</span> <span class="val">true</span>          <span class="cm">// → "boolean"</span>
+<span class="kw">typeof</span> <span class="val">undefined</span>    <span class="cm">// → "undefined"</span>
+<span class="kw">typeof</span> <span class="kw">function</span>(){}  <span class="cm">// → "function"</span>
+<span class="kw">typeof</span> {}            <span class="cm">// → "object"</span>
+<span class="kw">typeof</span> []            <span class="cm">// → "object" ← מערך! לא "array"!</span>
+<span class="kw">typeof</span> <span class="val">null</span>          <span class="cm">// → "object" ← באג היסטורי מ-1995!</span>
+<span class="kw">typeof</span> <span class="num">42n</span>           <span class="cm">// → "bigint"</span>
+<span class="kw">typeof</span> <span class="fn">Symbol</span>()      <span class="cm">// → "symbol"</span>
+
+<span class="cm">// ─── בדיקות נכונות ───</span>
+<span class="var">Array</span><span class="punc">.</span><span class="fn">isArray</span>([])<span class="punc">;</span>         <span class="cm">// → true ✅ (לא typeof)</span>
+<span class="var">Array</span><span class="punc">.</span><span class="fn">isArray</span>({})<span class="punc">;</span>         <span class="cm">// → false ✅</span>
+<span class="var">value</span> <span class="op">===</span> <span class="val">null</span><span class="punc">;</span>             <span class="cm">// → true ✅ (לא typeof)</span>
+
+<span class="cm">// בדיקה מלאה לאובייקט (לא null, לא מערך, לא function):</span>
+<span class="kw">if</span> (<span class="var">value</span> <span class="op">!==</span> <span class="val">null</span> <span class="op">&amp;&amp;</span> <span class="kw">typeof</span> <span class="var">value</span> <span class="op">===</span> <span class="str">'object'</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="var">Array</span><span class="punc">.</span><span class="fn">isArray</span>(<span class="var">value</span>)) <span class="punc">{</span>
+  <span class="cm">// value הוא אובייקט אמיתי!</span>
+<span class="punc">}</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשנים 2, 5)</div>
+            <p><code>typeof input === 'string'</code> — בודק האם ה-input של fetch הוא URL פשוט, או Request object. <code>typeof body === 'string'</code> — body יכול להיות גם FormData/Blob שלא ניתן לשמור כטקסט. <code>typeof obj !== 'object' || obj === null</code> — BASE CASE ברקורסיה.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 12. for...of vs forEach ══════════ -->
+        <div class="gl-entry" id="gl-forofin">
+          <div class="gl-header">
+            <span class="gl-badge">for...of / for...in / forEach</span>
+            <span class="gl-category">Iteration</span>
+          </div>
+          <div class="gl-title">שלוש דרכי לולאה — מתי לבחור כל אחת</div>
+          <div class="gl-code"><span class="kw">const</span> <span class="var">arr</span> <span class="op">=</span> [<span class="str">'a'</span>, <span class="str">'b'</span>, <span class="str">'c'</span>]<span class="punc">;</span>
+<span class="kw">const</span> <span class="var">obj</span> <span class="op">=</span> <span class="punc">{</span> <span class="prop">x</span><span class="punc">:</span> <span class="num">1</span><span class="punc">,</span> <span class="prop">y</span><span class="punc">:</span> <span class="num">2</span> <span class="punc">};</span>
+
+<span class="cm">// for...of — עובר על ערכים, תומך ב-await!</span>
+<span class="kw">for</span> (<span class="kw">const</span> <span class="var">item</span> <span class="kw">of</span> <span class="var">arr</span>) {
+  <span class="kw">await</span> <span class="fn">doSomething</span>(<span class="var">item</span>)<span class="punc">;</span>  <span class="cm">// ✅ ממתין בכל סיבוב</span>
+}
+
+<span class="cm">// for...in — עובר על מפתחות אובייקט</span>
+<span class="kw">for</span> (<span class="kw">const</span> <span class="var">key</span> <span class="kw">in</span> <span class="var">obj</span>) {
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="var">key</span>, <span class="var">obj</span>[<span class="var">key</span>])<span class="punc">;</span>
+}
+<span class="cm">// ⚠️ כולל מפתחות שעלו מה-prototype! (בדרך כלל לא רצוי)</span>
+
+<span class="cm">// forEach — מתודת Array, callback לכל פריט</span>
+<span class="var">arr</span><span class="punc">.</span><span class="fn">forEach</span>((<span class="var">item</span>, <span class="var">index</span>) <span class="op">=></span> {
+  <span class="kw">await</span> <span class="fn">doSomething</span>(<span class="var">item</span>)<span class="punc">;</span>  <span class="cm">// ❌ לא ממתין! forEach לא יודע על Promise</span>
+})<span class="punc">;</span>
+
+<span class="cm">// Object.entries — for...of על אובייקט:</span>
+<span class="kw">for</span> (<span class="kw">const</span> [<span class="var">key</span>, <span class="var">value</span>] <span class="kw">of</span> <span class="var">Object</span><span class="punc">.</span><span class="fn">entries</span>(<span class="var">obj</span>)) {
+  <span class="var">console</span><span class="punc">.</span><span class="fn">log</span>(<span class="var">key</span>, <span class="var">value</span>)<span class="punc">;</span>
+}
+
+<span class="cm">// ─── המלצה: for...of כשיש await, forEach כשאין ───</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו</div>
+            <p>סקשן 8: <code>for (const { char, name } of SPECIAL_CHARS)</code> — <strong>חייב</strong> להיות for...of (לא forEach) כי בתוכו יש <code>await _sendFetch()</code>. סקשן 7: <code>for (const [name, value] of Object.entries(headers))</code> — לולאה על headers עם destructuring.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 13. RegExp ══════════ -->
+        <div class="gl-entry" id="gl-regex">
+          <div class="gl-header">
+            <span class="gl-badge">RegExp — ביטויים רגולריים</span>
+            <span class="gl-category">Pattern Matching</span>
+          </div>
+          <div class="gl-title">Regular Expression — שפה לחיפוש תבניות בטקסט</div>
+          <div class="gl-code"><span class="cm">// ─── יצירה ───</span>
+<span class="kw">const</span> <span class="var">re1</span> <span class="op">=</span> <span class="reg">/hello/i</span><span class="punc">;</span>                  <span class="cm">// literal syntax</span>
+<span class="kw">const</span> <span class="var">re2</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">RegExp</span>(<span class="str">'hello'</span>, <span class="str">'i'</span>)<span class="punc">;</span>  <span class="cm">// dynamic — לשימוש עם משתנים</span>
+
+<span class="cm">// ─── FLAGS ─── (כאן i, g, m הנפוצים)</span>
+<span class="cm">// /i  — case Insensitive: 'Hello' מתאים ל-/hello/i</span>
+<span class="cm">// /g  — Global: מוצא כל ההתאמות (לא רק הראשונה)</span>
+<span class="cm">// /m  — Multiline: ^ ו-$ מתאימים לכל שורה</span>
+
+<span class="cm">// ─── מתודות ───</span>
+<span class="reg">/\d+/</span><span class="punc">.</span><span class="fn">test</span>(<span class="str">"abc123"</span>)<span class="punc">;</span>         <span class="cm">// → true (יש ספרות?)</span>
+<span class="str">"abc123"</span><span class="punc">.</span><span class="fn">match</span>(<span class="reg">/\d+/</span>)<span class="punc">;</span>         <span class="cm">// → ["123"] (מה נמצא?)</span>
+<span class="str">"abc123"</span><span class="punc">.</span><span class="fn">replace</span>(<span class="reg">/[0-9]+/</span>, <span class="str">'NUM'</span>)<span class="punc">;</span>  <span class="cm">// → "abcNUM"</span>
+<span class="str">"a1b2c3"</span><span class="punc">.</span><span class="fn">replace</span>(<span class="reg">/[0-9]+/g</span>, <span class="str">'#'</span>)<span class="punc">;</span>  <span class="cm">// → "a#b#c#" (g = כולם)</span>
+
+<span class="cm">// ─── מתאים מיוחדים ───</span>
+<span class="cm">// .     — כל תו (חוץ מ-newline)     [^]  — כל תו כולל newline</span>
+<span class="cm">// \d    — [0-9]                      \D   — לא ספרה</span>
+<span class="cm">// \w    — [a-zA-Z0-9_]               \W   — לא אלפאנומרי</span>
+<span class="cm">// \s    — whitespace                 \S   — לא whitespace</span>
+<span class="cm">// *     — 0 או יותר    +  — 1 יותר  ?    — 0 או 1</span>
+<span class="cm">// {n,m} — בין n ל-m    ^  — התחלה   $    — סוף</span>
+
+<span class="cm">// ─── LOOKAHEAD — בדיקה "להמשך" בלי לצרוך תווים ───</span>
+<span class="cm">// (?=X) — Positive: "חייב להיות X אחר כך"</span>
+<span class="cm">// (?!X) — Negative: "לא יכול להיות X אחר כך"</span>
+<span class="reg">/^(?=.*\d)(?=.*[A-Z]).{8,}$/</span>  <span class="cm">// סיסמה חייבת: ספרה, אות גדולה, 8+ תווים</span>
+
+<span class="cm">// ─── GROUPS ───</span>
+<span class="cm">// (X)   — Capturing group: שומר את X בתוצאה</span>
+<span class="cm">// (?:X) — Non-capturing: מקבץ X אבל לא שומר</span>
+<span class="str">"2024-03-17"</span><span class="punc">.</span><span class="fn">match</span>(<span class="reg">/(\d{4})-(\d{2})-(\d{2})/</span>)<span class="punc">;</span>
+<span class="cm">// → ["2024-03-17", "2024", "03", "17"] (index 1,2,3 = groups)</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשן 5)</div>
+            <p><code>/([&amp;?]?(?:password|pass|pwd|newPassword|new_password)[^&amp;=]*)=([^&amp;]*)/gi</code> — ניתוח:</p>
+            <ul>
+              <li><code>gi</code> — global + case-insensitive</li>
+              <li><code>[&amp;?]?</code> — תו & או ? אופציונלי בהתחלה</li>
+              <li><code>(?:password|...)</code> — non-capturing group, אלטרנטיבות</li>
+              <li><code>[^&amp;=]*</code> — כל תו שאינו & או = (suffix אחרי שם השדה)</li>
+              <li><code>([^&amp;]*)</code> — capturing group: הערך של השדה</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ══════════ 14. Recursion ══════════ -->
+        <div class="gl-entry" id="gl-recursion">
+          <div class="gl-header">
+            <span class="gl-badge">Recursion</span>
+            <span class="gl-category">Algorithms</span>
+          </div>
+          <div class="gl-title">רקורסיה — פונקציה שקוראת לעצמה, עם Call Stack</div>
+          <div class="gl-code"><span class="cm">// ─── מבנה הכרחי ───
+// 1. BASE CASE — תנאי עצירה (חשוב מאוד! בלעדיו → לולאה אינסופית)
+// 2. RECURSIVE CALL — קריאה לעצמה עם ערך קטן/פשוט יותר</span>
+
+<span class="kw">function</span> <span class="fn">factorial</span>(<span class="var">n</span>) {
+  <span class="kw">if</span> (<span class="var">n</span> <span class="op">&lt;=</span> <span class="num">1</span>) <span class="kw">return</span> <span class="num">1</span><span class="punc">;</span>           <span class="cm">// ← BASE CASE</span>
+  <span class="kw">return</span> <span class="var">n</span> <span class="op">*</span> <span class="fn">factorial</span>(<span class="var">n</span> <span class="op">-</span> <span class="num">1</span>)<span class="punc">;</span>  <span class="cm">// ← RECURSIVE CALL</span>
+}
+<span class="cm">// factorial(4) = 4 * factorial(3)
+//              = 4 * 3 * factorial(2)
+//              = 4 * 3 * 2 * factorial(1)
+//              = 4 * 3 * 2 * 1 = 24</span>
+
+<span class="cm">// ─── Call Stack — מחסנית הקריאות ───
+// כל קריאה לפונקציה "נדחפת" למחסנית. כשהפונקציה סיימת — "מושכת" החוצה.
+// רקורסיה עמוקה מדי → Maximum call stack size exceeded!</span>
+
+<span class="cm">// ─── עץ אובייקטים — שימוש מעשי ───</span>
+<span class="kw">function</span> <span class="fn">deepFind</span>(<span class="var">obj</span>, <span class="var">searchKey</span>) {
+  <span class="kw">if</span> (<span class="kw">typeof</span> <span class="var">obj</span> <span class="op">!==</span> <span class="str">'object'</span> <span class="op">||</span> <span class="var">obj</span> <span class="op">===</span> <span class="val">null</span>) <span class="kw">return</span> <span class="val">undefined</span><span class="punc">;</span>  <span class="cm">// BASE CASE</span>
+  <span class="kw">if</span> (<span class="var">obj</span>[<span class="var">searchKey</span>] <span class="op">!==</span> <span class="val">undefined</span>) <span class="kw">return</span> <span class="var">obj</span>[<span class="var">searchKey</span>]<span class="punc">;</span>  <span class="cm">// נמצא!</span>
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">key</span> <span class="kw">of</span> <span class="var">Object</span><span class="punc">.</span><span class="fn">keys</span>(<span class="var">obj</span>)) {
+    <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> <span class="fn">deepFind</span>(<span class="var">obj</span>[<span class="var">key</span>], <span class="var">searchKey</span>)<span class="punc">;</span>  <span class="cm">// RECURSIVE CALL</span>
+    <span class="kw">if</span> (<span class="var">result</span> <span class="op">!==</span> <span class="val">undefined</span>) <span class="kw">return</span> <span class="var">result</span><span class="punc">;</span>
+  }
+}
+
+<span class="cm">// ─── STACK OVERFLOW ───</span>
+<span class="kw">function</span> <span class="fn">infinite</span>() { <span class="kw">return</span> <span class="fn">infinite</span>()<span class="punc">; }</span>
+<span class="fn">infinite</span>()<span class="punc">;</span>  <span class="cm">// ❌ Maximum call stack size exceeded!</span></div>
+          <div class="gl-analogy">
+            <div class="gl-analogy-title">אנלוגיה</div>
+            <p>בובות מטריושקה: פותחים בובה → מוצאים בובה קטנה יותר → פותחים גם אותה → וכן הלאה, עד שמגיעים לבובה הכי קטנה שלא ניתן לפתוח (BASE CASE).</p>
+          </div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשן 5)</div>
+            <p><code>_deepReplace(obj, newPw)</code>:
+            BASE CASE = <code>typeof obj !== 'object' || obj === null</code> — ערך פרימיטיבי, מחזירים אותו.
+            RECURSIVE CASE = <code>result[key] = _deepReplace(obj[key], newPw)</code> — "צוללים" פנימה לכל ערך שהוא אובייקט.
+            כך מגיעים לסיסמאות עמוק בתוך JSON מקונן, ללא ידיעה מוקדמת של עומק המבנה.</p>
+          </div>
+        </div>
+
+        <!-- ══════════ 15. JSON ══════════ -->
+        <div class="gl-entry" id="gl-json">
+          <div class="gl-header">
+            <span class="gl-badge">JSON.stringify / JSON.parse</span>
+            <span class="gl-category">Data &amp; Serialization</span>
+          </div>
+          <div class="gl-title">JSON — המרה בין אובייקט לטקסט, ו-Deep Clone</div>
+          <div class="gl-code"><span class="cm">// ─── stringify: אובייקט → מחרוזת טקסט ───</span>
+<span class="kw">const</span> <span class="var">obj</span> <span class="op">=</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">"Maya"</span><span class="punc">,</span> <span class="prop">age</span><span class="punc">:</span> <span class="num">30</span><span class="punc">,</span> <span class="prop">active</span><span class="punc">:</span> <span class="val">true</span> <span class="punc">};</span>
+<span class="kw">const</span> <span class="var">str</span> <span class="op">=</span> <span class="var">JSON</span><span class="punc">.</span><span class="fn">stringify</span>(<span class="var">obj</span>)<span class="punc">;</span>
+<span class="cm">// → '{"name":"Maya","age":30,"active":true}'  (מחרוזת!)</span>
+
+<span class="cm">// ─── parse: מחרוזת → אובייקט חדש בזיכרון ───</span>
+<span class="kw">const</span> <span class="var">obj2</span> <span class="op">=</span> <span class="var">JSON</span><span class="punc">.</span><span class="fn">parse</span>(<span class="var">str</span>)<span class="punc">;</span>
+<span class="var">obj2</span> <span class="op">===</span> <span class="var">obj</span><span class="punc">;</span>  <span class="cm">// → false! אובייקט שונה בזיכרון</span>
+
+<span class="cm">// ─── Deep Clone — עותק עמוק ───</span>
+<span class="kw">const</span> <span class="var">original</span> <span class="op">=</span> <span class="punc">{</span> <span class="prop">user</span><span class="punc">:</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">"Maya"</span><span class="punc">,</span> <span class="prop">scores</span><span class="punc">:</span> [<span class="num">90</span>, <span class="num">85</span>] <span class="punc">}</span> <span class="punc">};</span>
+<span class="kw">const</span> <span class="var">clone</span>    <span class="op">=</span> <span class="var">JSON</span><span class="punc">.</span><span class="fn">parse</span>(<span class="var">JSON</span><span class="punc">.</span><span class="fn">stringify</span>(<span class="var">original</span>))<span class="punc">;</span>
+<span class="var">clone</span><span class="punc">.</span><span class="prop">user</span><span class="punc">.</span><span class="prop">name</span> <span class="op">=</span> <span class="str">"Dana"</span><span class="punc">;</span>
+<span class="var">original</span><span class="punc">.</span><span class="prop">user</span><span class="punc">.</span><span class="prop">name</span><span class="punc">;</span>  <span class="cm">// → "Maya" ✅ המקור לא השתנה!</span>
+
+<span class="cm">// ─── מה stringify לא תומך — מה "נאבד" ───</span>
+<span class="kw">const</span> <span class="var">obj3</span> <span class="op">=</span> <span class="punc">{</span>
+  <span class="prop">fn</span><span class="punc">:</span>    <span class="kw">function</span>() {},  <span class="cm">// → נמחק!</span>
+  <span class="prop">date</span><span class="punc">:</span>  <span class="kw">new</span> <span class="fn">Date</span>(),       <span class="cm">// → הופך למחרוזת ISO</span>
+  <span class="prop">rx</span><span class="punc">:</span>    <span class="reg">/hello/</span>,          <span class="cm">// → הופך ל-{} !</span>
+  <span class="prop">undef</span><span class="punc">:</span> <span class="val">undefined</span>,       <span class="cm">// → נמחק!</span>
+  <span class="prop">inf</span><span class="punc">:</span>   <span class="var">Infinity</span>,         <span class="cm">// → null</span>
+<span class="punc">};</span>
+<span class="var">JSON</span><span class="punc">.</span><span class="fn">stringify</span>(<span class="var">obj3</span>)<span class="punc">;</span>
+<span class="cm">// → '{"date":"2024-...","rx":{},"inf":null}'  (fn ו-undef נמחקו!)</span>
+
+<span class="cm">// ─── עיצוב יפה ───</span>
+<span class="var">JSON</span><span class="punc">.</span><span class="fn">stringify</span>(<span class="var">obj</span>, <span class="val">null</span>, <span class="num">2</span>)<span class="punc">;</span>  <span class="cm">// 2 = מספר רווחים per indent</span></div>
+          <div class="gl-in-script">
+            <div class="gl-is-title">בסקריפט שלנו (סקשנים 4, 5)</div>
+            <p><code>_cloneInit</code>: <code>JSON.parse(JSON.stringify(init))</code> — deep clone של הגדרות הבקשה כדי שכל איטרציה תשנה גרסה עצמאית ולא את המקור. <code>_replacePassword</code>: parse → שינוי שדה הסיסמה → stringify חזרה — מבנה שלם ללא פגיעה ב-structure.</p>
+          </div>
+        </div>
+
+      </div><!-- /explanation -->
+    </div><!-- /section-body -->
+  </div><!-- /section-card glossary -->
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════════════ -->
+<footer class="page-footer">
+  <p>מסמך QA — <code style="font-size:0.8rem;">special-chars-tester.js</code> | הופק לצורכי בדיקות פנימיות בלבד</p>
+  <p style="margin-top:4px;">כל הסברי הקוד נועדו לבודקים — לא לשימוש בסביבת ייצור</p>
+</footer>
+
+  <!-- back-to-index -->
+  <style>
+    #back-to-index {
+      position: fixed; bottom: 22px; left: 22px; z-index: 9999;
+      background: #1a3c6e; color: #fff;
+      border: none; border-radius: 28px;
+      padding: 10px 18px 10px 14px;
+      font-size: .85rem; font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      display: flex; align-items: center; gap: 7px;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    #back-to-index:hover { background: #1565c0; transform: translateY(-2px); }
+  </style>
+  <a id='back-to-index' href='index.html'>&#127968; כל המסמכים</a>
+</body>
+</html>

@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מדריך בדיקת תווים מיוחדים בסיסמא — Postman</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1a2a3a;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ===== PRINT ===== */
+    @media print {
+      nav, .no-print { display: none !important; }
+      body { background: #fff; }
+      .card { box-shadow: none; border: 1px solid #ccc; }
+      .print-table { page-break-inside: avoid; }
+    }
+
+    /* ===== COLOR SCHEME ===== */
+    :root {
+      --navy:       #1a3c6e;
+      --navy-dark:  #112a52;
+      --navy-light: #2a5298;
+      --accent:     #e8a020;
+      --green:      #1a8a4a;
+      --red:        #c0392b;
+      --orange:     #d35400;
+      --code-bg:    #1e2a3a;
+      --code-fg:    #e8f0f8;
+      --border:     #d0dcea;
+    }
+
+    /* ===== NAVIGATION ===== */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--navy-dark);
+      border-bottom: 3px solid var(--accent);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-height: 52px;
+    }
+
+    nav .nav-brand {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 0;
+      margin-left: 16px;
+      white-space: nowrap;
+      border-left: 2px solid rgba(255,255,255,0.2);
+      padding-left: 16px;
+    }
+
+    nav a {
+      color: #c8d8f0;
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    nav a:hover {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+
+    /* ===== HEADER ===== */
+    .page-header {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-light) 100%);
+      color: #fff;
+      padding: 48px 40px 40px;
+      text-align: center;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .page-header .subtitle {
+      font-size: 15px;
+      color: #b8d0f0;
+      max-width: 680px;
+      margin: 0 auto 18px;
+    }
+
+    .header-badges {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .header-badge {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 13px;
+      color: #dce8ff;
+    }
+
+    /* ===== MAIN LAYOUT ===== */
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(26,60,110,0.08);
+      padding: 32px 36px;
+      margin-bottom: 32px;
+      border-top: 4px solid var(--navy);
+    }
+
+    .card h2 {
+      color: var(--navy);
+      font-size: 20px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e0eaff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--navy);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ===== NUMBERED STEPS ===== */
+    .steps {
+      counter-reset: step-counter;
+      list-style: none;
+      margin: 18px 0;
+    }
+
+    .steps li {
+      counter-increment: step-counter;
+      position: relative;
+      padding-right: 52px;
+      padding-bottom: 18px;
+      margin-bottom: 4px;
+    }
+
+    .steps li:last-child { padding-bottom: 0; }
+
+    .steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      right: 0;
+      top: 2px;
+      width: 28px;
+      height: 28px;
+      background: var(--navy-light);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .steps li::after {
+      content: '';
+      position: absolute;
+      right: 13px;
+      top: 32px;
+      bottom: 0;
+      width: 2px;
+      background: #d0dcea;
+    }
+
+    .steps li:last-child::after { display: none; }
+
+    .steps li strong { color: var(--navy); }
+
+    /* ===== CODE & PRE ===== */
+    code, pre, .code-block {
+      direction: ltr;
+      text-align: left;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    code {
+      background: #e8f0fa;
+      color: #1a3c6e;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12.5px;
+    }
+
+    pre.code-block {
+      background: var(--code-bg);
+      color: var(--code-fg);
+      padding: 18px 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 14px 0;
+      line-height: 1.6;
+      border-right: 4px solid var(--accent);
+    }
+
+    pre.code-block .kw { color: #79c0ff; }
+    pre.code-block .str { color: #a5d6a7; }
+    pre.code-block .flag { color: #f48fb1; }
+    pre.code-block .val { color: #ffd54f; }
+    pre.code-block .comment { color: #8898aa; font-style: italic; }
+
+    /* ===== TABLES ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--navy);
+      color: #fff;
+      padding: 10px 14px;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #e0eaff;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td { background: #f5f8ff; }
+    tr:hover td { background: #edf2ff; }
+
+    td code { background: #e0eaff; }
+
+    /* ===== STATUS BADGES ===== */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: monospace;
+      direction: ltr;
+    }
+
+    .badge-200 { background: #d4edda; color: var(--green); border: 1px solid #a8d8b5; }
+    .badge-400 { background: #fde8e8; color: var(--red); border: 1px solid #f5b8b8; }
+    .badge-401 { background: #fff3cd; color: var(--orange); border: 1px solid #ffc107; }
+    .badge-500 { background: #fde8e8; color: #8b0000; border: 1px solid #e57373; }
+
+    /* ===== COMPARISON TABLE ===== */
+    .compare-table th:first-child { width: 200px; }
+    .compare-table .col-good { background: #edfaf3; }
+    .compare-table .col-bad  { background: #fdf0f0; }
+
+    /* ===== INFO / WARNING BOXES ===== */
+    .info-box, .warn-box, .tip-box {
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-size: 14px;
+      position: relative;
+      padding-right: 46px;
+    }
+
+    .info-box::before, .warn-box::before, .tip-box::before {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      font-size: 18px;
+    }
+
+    .info-box  { background: #e8f0ff; border-right: 4px solid var(--navy-light); color: #1a3060; }
+    .info-box::before { content: 'ℹ️'; }
+
+    .warn-box  { background: #fff8e1; border-right: 4px solid #f59e0b; color: #7c4a00; }
+    .warn-box::before { content: '⚠️'; }
+
+    .tip-box   { background: #edfaf3; border-right: 4px solid var(--green); color: #145230; }
+    .tip-box::before { content: '💡'; }
+
+    /* ===== CURL ANATOMY ===== */
+    .curl-anatomy {
+      background: var(--code-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 16px 0;
+      border-right: 4px solid var(--accent);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .curl-anatomy .curl-line {
+      display: flex;
+      align-items: flex-start;
+      padding: 6px 16px;
+      font-family: monospace;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .curl-anatomy .curl-line:last-child { border-bottom: none; }
+
+    .curl-anatomy .curl-code { color: var(--code-fg); flex: 1; }
+    .curl-anatomy .curl-label {
+      background: var(--navy-light);
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-right: 12px;
+      white-space: nowrap;
+      font-family: 'Segoe UI', sans-serif;
+      direction: rtl;
+      align-self: center;
+    }
+
+    /* ===== MOCK DEVTOOLS ===== */
+    .mock-devtools {
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 20px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      border: 1px solid #333;
+    }
+
+    .devtools-titlebar {
+      background: #2d2d2d;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #aaa;
+      direction: ltr;
+    }
+
+    .devtools-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+
+    .devtools-tabs {
+      background: #1e1e1e;
+      display: flex;
+      gap: 0;
+      direction: ltr;
+      border-bottom: 1px solid #444;
+    }
+
+    .devtools-tab {
+      padding: 6px 16px;
+      font-size: 12px;
+      color: #999;
+      cursor: default;
+      border-bottom: 2px solid transparent;
+    }
+
+    .devtools-tab.active {
+      color: #4e9eff;
+      border-bottom: 2px solid #4e9eff;
+      background: rgba(78,158,255,0.08);
+    }
+
+    .devtools-toolbar {
+      background: #252526;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      direction: ltr;
+      border-bottom: 1px solid #3a3a3a;
+    }
+
+    .devtools-toolbar-btn {
+      font-size: 16px;
+      cursor: default;
+      color: #ccc;
+    }
+
+    .devtools-filter {
+      background: #1e1e1e;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 2px 8px;
+      color: #ccc;
+      font-size: 12px;
+      width: 160px;
+      direction: ltr;
+    }
+
+    .devtools-body {
+      background: #1a1a1a;
+      direction: ltr;
+    }
+
+    .devtools-header-row {
+      display: grid;
+      grid-template-columns: 2fr 80px 100px 70px 70px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: #888;
+      background: #222;
+      border-bottom: 1px solid #333;
+    }
+
+    .devtools-row {
+      display: grid;
+      grid-template-columns: 2fr 80px 100px 70px 70px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: #ccc;
+      border-bottom: 1px solid #2a2a2a;
+      cursor: default;
+      transition: background 0.1s;
+    }
+
+    .devtools-row:hover { background: #2a3040; }
+    .devtools-row.highlight { background: #1a3050; border-right: 3px solid #4e9eff; }
+
+    .devtools-row .method-post { color: #ffd700; font-weight: 700; font-size: 11px; }
+    .devtools-row .status-ok  { color: #4caf50; }
+    .devtools-row .status-err { color: #f44336; }
+    .devtools-row .status-pend { color: #9e9e9e; }
+    .devtools-row .url-text   { color: #79c0ff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .devtools-context-menu {
+      background: #2d2d2d;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 4px 0;
+      font-size: 12px;
+      color: #ddd;
+      width: 200px;
+      margin: 4px 0 4px 40px;
+      direction: ltr;
+    }
+
+    .devtools-context-menu .cm-item {
+      padding: 5px 14px;
+      cursor: default;
+    }
+    .devtools-context-menu .cm-item:hover { background: #3a5080; }
+    .devtools-context-menu .cm-item.highlight { background: #1a4080; color: #79c0ff; }
+    .devtools-context-menu .cm-separator { height: 1px; background: #444; margin: 3px 0; }
+    .devtools-context-menu .cm-sub { padding-right: 24px; color: #aaa; font-size: 11px; }
+
+    /* ===== MOCK POSTMAN ===== */
+    .mock-postman {
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 20px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      border: 1px solid #222;
+    }
+
+    .postman-titlebar {
+      background: #1a1a1a;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #888;
+      direction: ltr;
+    }
+
+    .postman-logo { color: #ff6c37; font-weight: 900; font-size: 14px; }
+
+    .postman-sidebar {
+      display: flex;
+      direction: ltr;
+    }
+
+    .postman-sidebar-icons {
+      background: #1a1a1a;
+      width: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      gap: 18px;
+      color: #666;
+      font-size: 16px;
+      border-left: 1px solid #2a2a2a;
+    }
+
+    .postman-main {
+      flex: 1;
+      background: #1e1e1e;
+    }
+
+    .postman-tabs {
+      background: #252526;
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #333;
+      direction: ltr;
+    }
+
+    .postman-tab {
+      padding: 8px 18px;
+      font-size: 12px;
+      color: #999;
+      border-bottom: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .postman-tab.active {
+      color: #fff;
+      border-bottom: 2px solid #ff6c37;
+      background: rgba(255,108,55,0.08);
+    }
+
+    .postman-tab .tab-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ff6c37;
+    }
+
+    .postman-request-bar {
+      background: #252526;
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid #333;
+      direction: ltr;
+    }
+
+    .method-badge {
+      background: #ff6c37;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .url-bar {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #79c0ff;
+      direction: ltr;
+    }
+
+    .send-btn {
+      background: #1a8a4a;
+      color: #fff;
+      padding: 6px 20px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .postman-sub-tabs {
+      background: #1e1e1e;
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #2a2a2a;
+      padding: 0 14px;
+      direction: ltr;
+    }
+
+    .postman-sub-tab {
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #888;
+      border-bottom: 2px solid transparent;
+    }
+
+    .postman-sub-tab.active {
+      color: #ff6c37;
+      border-bottom: 2px solid #ff6c37;
+    }
+
+    .postman-body-area {
+      background: #1a1a1a;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--code-fg);
+      direction: ltr;
+      min-height: 80px;
+    }
+
+    /* ===== MOCK RESPONSE PANEL ===== */
+    .mock-response {
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 20px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      border: 1px solid #222;
+      direction: ltr;
+    }
+
+    .response-status-bar {
+      background: #252526;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid #333;
+    }
+
+    .status-code-big {
+      font-size: 22px;
+      font-weight: 900;
+      font-family: monospace;
+    }
+
+    .status-code-big.ok  { color: #4caf50; }
+    .status-code-big.err { color: #f44336; }
+
+    .status-text { font-size: 13px; color: #aaa; }
+    .status-time { font-size: 12px; color: #888; margin-right: auto; }
+
+    .response-body {
+      background: #1a1a1a;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #ccc;
+      min-height: 80px;
+    }
+
+    .response-body .json-key   { color: #79c0ff; }
+    .response-body .json-str   { color: #a5d6a7; }
+    .response-body .json-num   { color: #ffd54f; }
+    .response-body .json-bool  { color: #f48fb1; }
+
+    /* ===== RESULTS TABLE ===== */
+    .results-table th { text-align: center; }
+    .results-table td { text-align: center; vertical-align: middle; }
+    .results-table .char-cell {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--navy);
+    }
+
+    .results-table .pass-cell { color: var(--green); font-weight: 700; }
+    .results-table .fail-cell { color: var(--red);   font-weight: 700; }
+    .results-table .empty-cell {
+      min-width: 80px;
+      border-bottom: 1px dashed #aaa;
+      height: 22px;
+      display: inline-block;
+    }
+
+    /* ===== BUG REPORT BOX ===== */
+    .bug-template {
+      background: #fff8f8;
+      border: 2px dashed #e57373;
+      border-radius: 8px;
+      padding: 20px 24px;
+      direction: ltr;
+      text-align: left;
+      font-family: monospace;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.8;
+      margin: 16px 0;
+    }
+
+    .bug-template .bug-field { color: #1a3c6e; font-weight: 700; }
+    .bug-template .bug-placeholder { color: #888; font-style: italic; }
+
+    /* ===== ENV VAR PILL ===== */
+    .env-pill {
+      display: inline-block;
+      background: #fff3cd;
+      border: 1px solid #d4a017;
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #7c4a00;
+    }
+
+    /* ===== PRINT BUTTON ===== */
+    .print-btn {
+      display: inline-block;
+      background: var(--navy);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      margin-bottom: 16px;
+      transition: background 0.15s;
+    }
+
+    .print-btn:hover { background: var(--navy-light); }
+
+    /* ===== HTTP PART CARDS ===== */
+    .http-parts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .http-part {
+      background: #f5f8ff;
+      border: 2px solid #c0d0f0;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .http-part .hp-icon { font-size: 28px; margin-bottom: 8px; }
+    .http-part .hp-title { font-weight: 700; color: var(--navy); font-size: 15px; margin-bottom: 6px; }
+    .http-part .hp-desc  { font-size: 13px; color: #444; }
+
+    @media (max-width: 600px) {
+      .http-parts { grid-template-columns: 1fr; }
+    }
+
+    /* ===== COLLECTION RUNNER MOCK ===== */
+    .runner-mock {
+      background: #1a1a1a;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 16px 0;
+      direction: ltr;
+    }
+
+    .runner-header {
+      background: #252526;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #888;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .runner-header .runner-title { color: #ccc; font-weight: 600; }
+
+    .runner-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-family: monospace;
+      border-bottom: 1px solid #2a2a2a;
+      align-items: center;
+    }
+
+    .runner-row.head { background: #222; color: #888; font-family: 'Segoe UI', sans-serif; font-weight: 600; }
+    .runner-row .rr-name { color: #ccc; }
+    .runner-row .rr-pass { color: #4caf50; font-weight: 700; }
+    .runner-row .rr-fail { color: #f44336; font-weight: 700; }
+    .runner-row .rr-pend { color: #888; }
+
+    /* ===== HIGHLIGHT SPAN ===== */
+    .hl { background: #fff3cd; padding: 0 3px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+  <span class="nav-brand">מדריך Postman — תווים מיוחדים</span>
+  <a href="#s1">למה פוסטמן?</a>
+  <a href="#s2">לכידת בקשה</a>
+  <a href="#s3">ייבוא ל-Postman</a>
+  <a href="#s4">מבנה הבקשה</a>
+  <a href="#s5">בדיקה ידנית</a>
+  <a href="#s6">Collection Runner</a>
+  <a href="#s7">קריאת תגובה</a>
+  <a href="#s8">טבלת תוצאות</a>
+  <a href="#s9">מה עושים עם התוצאות</a>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>בדיקת תווים מיוחדים בשדה סיסמא — מדריך Postman לצוות QA</h1>
+  <p class="subtitle">
+    ה-UI מציג את כל 6 התווים כתקינים — אך השרת מחזיר "משהו השתבש" לחלק מהם.
+    מדריך זה מסביר כיצד לשלוח בקשות HTTP ישירות דרך Postman כדי לקבוע בדיוק
+    אילו תווים השרת מקבל ואילו הוא דוחה.
+  </p>
+  <div class="header-badges">
+    <span class="header-badge">מערכת: אימות משרד הבריאות</span>
+    <span class="header-badge">תווים נבדקים: ! @ # $ % *</span>
+    <span class="header-badge">כלי: Postman</span>
+    <span class="header-badge">גרסה: 1.0</span>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============================= SECTION 1 ============================= -->
+  <section class="card" id="s1">
+    <h2><span class="section-num">1</span> למה פוסטמן?</h2>
+
+    <p>
+      כאשר ה-UI מציג תגובה כללית כמו <strong>"משהו השתבש"</strong>, קשה לדעת מה
+      קורה בפועל בשרת. דפדפן מבצע בקשות HTTP מאחורי הקלעים — Postman מאפשר לנו
+      לשלוח בדיוק את אותן הבקשות, אך עם שליטה מלאה על כל פרמטר, ולראות בדיוק
+      מה השרת מחזיר.
+    </p>
+
+    <div class="info-box">
+      Postman שולח בקשות HTTP ישירות לשרת, בדיוק כמו הדפדפן — אך עם שליטה מלאה.
+      ניתן לשנות כל פרמטר, לשמור בקשות, לחזור עליהן ולהשוות תוצאות — בלי להיות
+      תלויים ב-UI כלל.
+    </div>
+
+    <h3 style="color: var(--navy); margin: 20px 0 10px;">השוואה: DevTools Script מול Postman</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>קריטריון</th>
+          <th>סקריפט ב-DevTools Console</th>
+          <th>Postman</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>קושי הגדרה</strong></td>
+          <td class="col-bad">דורש העתקת טוקן ידנית, קוד JavaScript, הבנת fetch API</td>
+          <td class="col-good">ייבוא cURL בלחיצה אחת — הכל מוגדר אוטומטית</td>
+        </tr>
+        <tr>
+          <td><strong>שמירת תוצאות</strong></td>
+          <td class="col-bad">התוצאות נעלמות עם רענון הדף, לא ניתן לייצא</td>
+          <td class="col-good">כל בקשה ותגובה נשמרת ב-History; ניתן לייצא ל-JSON/CSV</td>
+        </tr>
+        <tr>
+          <td><strong>חזרה על בדיקות</strong></td>
+          <td class="col-bad">צריך להריץ מחדש ידנית, לא ניתן לאחד 6 בדיקות בריצה אחת</td>
+          <td class="col-good">Collection Runner מריץ את כל 6 הבקשות ברצף ומציג דו"ח</td>
+        </tr>
+        <tr>
+          <td><strong>שקיפות מה קורה</strong></td>
+          <td class="col-bad">תגובה מוצגת ב-Console בלבד; קשה לנתח headers</td>
+          <td class="col-good">פאנל תגובה מסודר עם Status, Headers, Body — כל דבר בנפרד</td>
+        </tr>
+        <tr>
+          <td><strong>מתאים ל</strong></td>
+          <td>מפתחים שמרגישים בנוח עם JavaScript ו-DevTools</td>
+          <td class="col-good">בודקי QA — לא דורש תכנות; ממשק גרפי ברור</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============================= SECTION 2 ============================= -->
+  <section class="card" id="s2">
+    <h2><span class="section-num">2</span> שלב א — לכידת הבקשה מ-Network</h2>
+
+    <p>
+      לפני שניתן לשלוח בקשה מ-Postman, עלינו ללכוד את הבקשה שהדפדפן שולח כאשר
+      מבצעים שינוי סיסמא ב-UI. כך נדע בדיוק לאיזה URL לשלוח, אילו headers נדרשים,
+      ואיך נראה ה-body.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <strong>פתח את כלי המפתחים:</strong> לחץ <code>F12</code> בדפדפן (Chrome/Edge),
+        ועבור ללשונית <strong>Network</strong>.
+      </li>
+      <li>
+        <strong>נקה את הלוג:</strong> לחץ על כפתור ה-🚫 (Clear) כדי שתראה רק את הבקשות
+        הרלוונטיות לפעולה שלך — לא רעש מרקע של הדף.
+      </li>
+      <li>
+        <strong>בצע את הפעולה ב-UI:</strong> מלא סיסמא תקינה (כולל תו מיוחד כלשהו)
+        ולחץ על "שמור" / "אשר". זה גורם לדפדפן לשלוח את הבקשה לשרת.
+      </li>
+      <li>
+        <strong>מצא את הבקשה הרלוונטית:</strong> חפש בקשה מסוג <code>POST</code> או
+        <code>PUT</code> בעמודת Method. ה-URL ייראה כמו
+        <code>/api/.../password</code> או <code>/auth/...</code>.
+        לחץ עליה כדי לבחור אותה.
+      </li>
+      <li>
+        <strong>העתק כ-cURL:</strong> לחץ קליק ימני על הבקשה הנבחרת →
+        בחר <strong>Copy</strong> → בחר <strong>Copy as cURL (bash)</strong>.
+        הבקשה המלאה עם כל ה-headers והגוף מועתקת ללוח.
+      </li>
+    </ol>
+
+    <!-- MOCK DEVTOOLS -->
+    <p style="font-size: 13px; color: #555; margin-top: 10px;">
+      <em>מה נראה — לשונית Network ב-Chrome DevTools:</em>
+    </p>
+
+    <div class="mock-devtools">
+      <div class="devtools-titlebar">
+        <span class="devtools-dot dot-red"></span>
+        <span class="devtools-dot dot-yellow"></span>
+        <span class="devtools-dot dot-green"></span>
+        <span style="margin-right: 10px;">Chrome DevTools — Network</span>
+      </div>
+      <div class="devtools-tabs">
+        <div class="devtools-tab">Elements</div>
+        <div class="devtools-tab">Console</div>
+        <div class="devtools-tab">Sources</div>
+        <div class="devtools-tab active">Network</div>
+        <div class="devtools-tab">Performance</div>
+        <div class="devtools-tab">Application</div>
+      </div>
+      <div class="devtools-toolbar">
+        <span class="devtools-toolbar-btn" title="Record">⏺</span>
+        <span class="devtools-toolbar-btn" title="Clear" style="color:#f66;">🚫</span>
+        <span class="devtools-toolbar-btn" title="Filter">🔍</span>
+        <input class="devtools-filter" type="text" value="password" readonly />
+        <span style="font-size:11px; color:#888; margin-right: 8px;">☐ Preserve log &nbsp; ☐ Disable cache</span>
+      </div>
+      <div class="devtools-body">
+        <div class="devtools-header-row">
+          <span>Name</span>
+          <span>Method</span>
+          <span>Status</span>
+          <span>Type</span>
+          <span>Time</span>
+        </div>
+        <div class="devtools-row">
+          <span class="url-text">login</span>
+          <span class="method-post">POST</span>
+          <span class="status-ok">200</span>
+          <span>fetch</span>
+          <span>342 ms</span>
+        </div>
+        <div class="devtools-row">
+          <span class="url-text">profile</span>
+          <span>GET</span>
+          <span class="status-ok">200</span>
+          <span>fetch</span>
+          <span>89 ms</span>
+        </div>
+        <div class="devtools-row highlight">
+          <span class="url-text" title="https://api.example.gov.il/auth/password/reset">/auth/password/reset</span>
+          <span class="method-post">POST</span>
+          <span class="status-err">500</span>
+          <span>fetch</span>
+          <span>1.2 s</span>
+        </div>
+        <div class="devtools-row">
+          <span class="url-text">analytics</span>
+          <span>GET</span>
+          <span class="status-ok">200</span>
+          <span>xhr</span>
+          <span>211 ms</span>
+        </div>
+      </div>
+      <!-- Context menu on highlighted row -->
+      <div style="background:#252526; padding: 4px 0 8px; direction:ltr; border-top: 1px solid #333;">
+        <div style="font-size:11px; color:#888; padding: 4px 14px;">קליק ימני על הבקשה /auth/password/reset →</div>
+        <div class="devtools-context-menu">
+          <div class="cm-item">Open in new tab</div>
+          <div class="cm-separator"></div>
+          <div class="cm-item">Copy</div>
+          <div class="cm-item cm-sub highlight">↳ Copy as cURL (bash)</div>
+          <div class="cm-item cm-sub">↳ Copy as fetch</div>
+          <div class="cm-item cm-sub">↳ Copy link address</div>
+          <div class="cm-separator"></div>
+          <div class="cm-item">Clear browser cache</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <strong>שימי לב:</strong> הבקשה הנבחרת היא זו שמחזירה שגיאה 500 — זה בדיוק
+      מה שאנחנו צריכים לבדוק. בחרי בה וכפי שמוצג למעלה, לחצי קליק ימני → Copy → Copy as cURL.
+    </div>
+  </section>
+
+  <!-- ============================= SECTION 3 ============================= -->
+  <section class="card" id="s3">
+    <h2><span class="section-num">3</span> שלב ב — ייבוא לפוסטמן</h2>
+
+    <ol class="steps">
+      <li>
+        <strong>פתח את Postman.</strong> אם אין לך אותו, ניתן להוריד בחינם מ-<code>postman.com</code>.
+        אין צורך בחשבון להתחיל.
+      </li>
+      <li>
+        <strong>לחץ על Import</strong> (פינה שמאלית עליונה — כפתור כחול).
+        ייפתח חלון ייבוא.
+      </li>
+      <li>
+        <strong>בחר "Raw text"</strong> (או "Paste cURL") ו<strong>הדבק</strong>
+        את הטקסט שהעתקת מ-DevTools. לחץ Continue ואז Import.
+      </li>
+      <li>
+        <strong>הבקשה נפתחת אוטומטית</strong> עם כל ה-headers וה-body ממולאים מהעותק.
+        לא צריך להקליד דבר ידנית.
+      </li>
+    </ol>
+
+    <p>כך נראה פקודת cURL שנעתקה — זה מה שמדביקים ב-Postman:</p>
+
+    <pre class="code-block"><span class="kw">curl</span> <span class="str">'https://api.example.gov.il/auth/password/reset'</span> \
+  <span class="flag">-X</span> <span class="val">POST</span> \
+  <span class="flag">-H</span> <span class="str">'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...'</span> \
+  <span class="flag">-H</span> <span class="str">'Content-Type: application/json'</span> \
+  <span class="flag">-H</span> <span class="str">'X-Request-ID: 4f2a91bc-e3d0-4c1a-a7f9-123456789abc'</span> \
+  <span class="flag">--data-raw</span> <span class="str">'{"newPassword":"Abc1!defgh","confirmPassword":"Abc1!defgh"}'</span></pre>
+
+    <h3 style="color: var(--navy); margin: 20px 0 12px; font-size: 16px;">הסבר על כל חלק בפקודה:</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>חלק ב-cURL</th>
+          <th>תפקיד</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>curl 'https://...'</code></td>
+          <td>כתובת השרת — לאן הבקשה נשלחת</td>
+        </tr>
+        <tr>
+          <td><code>-X POST</code></td>
+          <td>מתודה (שיטת HTTP) — POST = שולח נתונים חדשים, PUT = עדכון</td>
+        </tr>
+        <tr>
+          <td><code>-H 'Authorization: Bearer ...'</code></td>
+          <td><strong>הכי חשוב!</strong> הטוקן שמזהה את המשתמש. בלי זה השרת מחזיר 401.</td>
+        </tr>
+        <tr>
+          <td><code>-H 'Content-Type: application/json'</code></td>
+          <td>אומר לשרת שהגוף הוא JSON</td>
+        </tr>
+        <tr>
+          <td><code>--data-raw '{...}'</code></td>
+          <td>הגוף — כאן נמצאת הסיסמא שנרצה לשנות</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warn-box">
+      <strong>טוקן Authorization:</strong> הטוקן תקף לפרק זמן מוגבל (בדרך כלל 15–60 דקות).
+      אם Postman מחזיר שגיאה 401, יש ללכוד בקשה חדשה מה-Network tab ולעדכן את הטוקן.
+    </div>
+  </section>
+
+  <!-- ============================= SECTION 4 ============================= -->
+  <section class="card" id="s4">
+    <h2><span class="section-num">4</span> שלב ג — הבנת מבנה הבקשה</h2>
+
+    <p>כל בקשת HTTP מורכבת משלושה חלקים עיקריים:</p>
+
+    <div class="http-parts">
+      <div class="http-part">
+        <div class="hp-icon">🌐</div>
+        <div class="hp-title">URL</div>
+        <div class="hp-desc">
+          כתובת היעד — לאן הבקשה נשלחת.<br/>
+          דומה לכתובת בית: שם השרת + נתיב ספציפי.
+        </div>
+      </div>
+      <div class="http-part">
+        <div class="hp-icon">🔑</div>
+        <div class="hp-title">Headers (כותרות)</div>
+        <div class="hp-desc">
+          מידע על הזהות והפורמט.<br/>
+          <strong>Authorization</strong> = "המפתח" שמוכיח מי שלח את הבקשה.
+        </div>
+      </div>
+      <div class="http-part">
+        <div class="hp-icon">📦</div>
+        <div class="hp-title">Body (גוף)</div>
+        <div class="hp-desc">
+          הנתונים עצמם — הסיסמא שאנו רוצים לשנות.
+          בפורמט JSON: <code>{"newPassword": "..."}</code>
+        </div>
+      </div>
+    </div>
+
+    <p>פירוק ויזואלי של פקודת ה-cURL שלנו עם תיוגים צבעוניים:</p>
+
+    <div class="curl-anatomy">
+      <div class="curl-line">
+        <span class="curl-code"><span style="color:#79c0ff;">curl</span> <span style="color:#a5d6a7;">'https://api.example.gov.il/auth/password/reset'</span> \</span>
+        <span class="curl-label">URL — כתובת היעד</span>
+      </div>
+      <div class="curl-line">
+        <span class="curl-code">&nbsp;&nbsp;<span style="color:#f48fb1;">-X POST</span> \</span>
+        <span class="curl-label">Method — מתודה</span>
+      </div>
+      <div class="curl-line">
+        <span class="curl-code">&nbsp;&nbsp;<span style="color:#f48fb1;">-H</span> <span style="color:#ffd54f;">'Authorization: Bearer eyJhbGc...'</span> \</span>
+        <span class="curl-label">Header — טוקן זיהוי</span>
+      </div>
+      <div class="curl-line">
+        <span class="curl-code">&nbsp;&nbsp;<span style="color:#f48fb1;">-H</span> <span style="color:#ffd54f;">'Content-Type: application/json'</span> \</span>
+        <span class="curl-label">Header — פורמט הגוף</span>
+      </div>
+      <div class="curl-line">
+        <span class="curl-code">&nbsp;&nbsp;<span style="color:#f48fb1;">-H</span> <span style="color:#ffd54f;">'X-Request-ID: 4f2a91bc-e3d0'</span> \</span>
+        <span class="curl-label">Header — מזהה בקשה</span>
+      </div>
+      <div class="curl-line">
+        <span class="curl-code">&nbsp;&nbsp;<span style="color:#f48fb1;">--data-raw</span> <span style="color:#a5d6a7;">'{"newPassword":"Abc1!defgh","confirmPassword":"Abc1!defgh"}'</span></span>
+        <span class="curl-label">Body — הסיסמא</span>
+      </div>
+    </div>
+
+    <p style="margin-top: 14px;">כאשר Postman מייבא את ה-cURL, הוא מפצל אוטומטית את הפקודה לשלושת לשוניות: <strong>Params</strong>, <strong>Headers</strong>, ו-<strong>Body</strong>. כל אחת מציגה את החלק שלה בצורה נוחה לעריכה.</p>
+
+    <!-- Mock Postman showing headers + body -->
+    <div class="mock-postman" style="margin-top: 16px;">
+      <div class="postman-titlebar">
+        <span class="postman-logo">▶</span>
+        <span style="color:#888;">Postman — POST /auth/password/reset</span>
+      </div>
+      <div class="postman-sidebar">
+        <div class="postman-sidebar-icons">
+          <span>📁</span>
+          <span>▶</span>
+          <span>🔧</span>
+          <span>🌐</span>
+        </div>
+        <div class="postman-main">
+          <div class="postman-tabs">
+            <div class="postman-tab active"><span class="tab-dot"></span> POST /auth/password/reset</div>
+            <div class="postman-tab">+ New Tab</div>
+          </div>
+          <div class="postman-request-bar">
+            <div class="method-badge">POST</div>
+            <div class="url-bar">https://api.example.gov.il/auth/password/reset</div>
+            <div class="send-btn">Send</div>
+          </div>
+          <div class="postman-sub-tabs">
+            <div class="postman-sub-tab">Params</div>
+            <div class="postman-sub-tab active">Headers <span style="color:#ff6c37;">(3)</span></div>
+            <div class="postman-sub-tab">Body</div>
+            <div class="postman-sub-tab">Auth</div>
+          </div>
+          <div class="postman-body-area">
+            <table style="border-collapse:collapse; width:100%; font-size:12px; margin:0; direction:ltr;">
+              <tr style="border-bottom:1px solid #333;">
+                <th style="background:transparent; color:#888; padding:4px 8px; text-align:left; font-weight:400; width:30%;">KEY</th>
+                <th style="background:transparent; color:#888; padding:4px 8px; text-align:left; font-weight:400;">VALUE</th>
+              </tr>
+              <tr style="border-bottom:1px solid #2a2a2a;">
+                <td style="background:transparent; padding:5px 8px; color:#79c0ff;">Authorization</td>
+                <td style="background:transparent; padding:5px 8px; color:#a5d6a7;">Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...</td>
+              </tr>
+              <tr style="border-bottom:1px solid #2a2a2a;">
+                <td style="background:transparent; padding:5px 8px; color:#79c0ff;">Content-Type</td>
+                <td style="background:transparent; padding:5px 8px; color:#a5d6a7;">application/json</td>
+              </tr>
+              <tr>
+                <td style="background:transparent; padding:5px 8px; color:#79c0ff;">X-Request-ID</td>
+                <td style="background:transparent; padding:5px 8px; color:#a5d6a7;">4f2a91bc-e3d0-4c1a-a7f9-123456789abc</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= SECTION 5 ============================= -->
+  <section class="card" id="s5">
+    <h2><span class="section-num">5</span> שלב ד — בדיקת כל תו ידנית</h2>
+
+    <p>
+      עבור כל אחד מ-6 התווים המיוחדים, נשנה את הסיסמא ב-Body ונשלח את הבקשה.
+      כל בדיקה לוקחת כ-30 שניות. בסך הכל — כ-3 דקות לכל 6 הבדיקות.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <strong>לחץ על לשונית Body</strong> בחלק העליון של הבקשה ב-Postman.
+        בחר <code>raw</code> ו-<code>JSON</code> מהתפריט הנפתח.
+      </li>
+      <li>
+        <strong>שנה רק את ערך הסיסמא</strong> — אל תשנה שום דבר אחר!
+        מצא את <code>"newPassword"</code> ו-<code>"confirmPassword"</code>
+        ושנה את הערך לסיסמא הנבדקת.
+      </li>
+      <li>
+        <strong>לחץ Send</strong> (כפתור כתום בפינה הימנית).
+        Postman שולח את הבקשה ומציג את תגובת השרת.
+      </li>
+      <li>
+        <strong>קרא את ה-Status Code</strong> בחלק התגובה (ראה סעיף 7 להסבר מפורט).
+        <span class="badge badge-200">200</span> = עבד,
+        <span class="badge badge-400">400</span> = נדחה (validation),
+        <span class="badge badge-500">500</span> = קריסת שרת.
+      </li>
+      <li>
+        <strong>רשום את התוצאה</strong> בטבלה למטה לפני שתעבור לתו הבא.
+      </li>
+    </ol>
+
+    <div class="tip-box">
+      <strong>טיפ:</strong> אל תלחצי "Send" פעמיים לאותה בקשה — שינוי סיסמא הוא פעולה
+      שמשנה את הסיסמא בפועל. אם תשלחי פעמיים את אותה בקשה, ודאי שה-token עדיין תקף ושהסיסמא
+      הקודמת עדיין מה שנחשבת.
+    </div>
+
+    <h3 style="color: var(--navy); margin: 20px 0 10px; font-size: 16px;">הסיסמאות הנבדקות — 6 תווים:</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 60px;">תו</th>
+          <th>שם התו</th>
+          <th>סיסמא לבדיקה (הדבק ב-Body)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-size:22px; text-align:center; font-weight:900;">!</td>
+          <td>Exclamation Mark</td>
+          <td><code>Abc1!defgh</code></td>
+        </tr>
+        <tr>
+          <td style="font-size:22px; text-align:center; font-weight:900;">@</td>
+          <td>At Sign</td>
+          <td><code>Abc1@defgh</code></td>
+        </tr>
+        <tr>
+          <td style="font-size:22px; text-align:center; font-weight:900;">#</td>
+          <td>Hash / Number Sign</td>
+          <td><code>Abc1#defgh</code></td>
+        </tr>
+        <tr>
+          <td style="font-size:22px; text-align:center; font-weight:900;">$</td>
+          <td>Dollar Sign</td>
+          <td><code>Abc1$defgh</code></td>
+        </tr>
+        <tr>
+          <td style="font-size:22px; text-align:center; font-weight:900;">%</td>
+          <td>Percent Sign</td>
+          <td><code>Abc1%defgh</code></td>
+        </tr>
+        <tr>
+          <td style="font-size:22px; text-align:center; font-weight:900;">*</td>
+          <td>Asterisk</td>
+          <td><code>Abc1*defgh</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top: 16px; font-size: 14px;">
+      כאשר משנים את הסיסמא בלשונית Body של Postman, ה-JSON ייראה כך:
+    </p>
+
+    <pre class="code-block">{
+  <span class="kw">"newPassword"</span>: <span class="str">"Abc1!defgh"</span>,       <span class="comment">// ← שנה רק כאן</span>
+  <span class="kw">"confirmPassword"</span>: <span class="str">"Abc1!defgh"</span>  <span class="comment">// ← ואת זה גם, לאותה ערך</span>
+}</pre>
+
+    <h3 style="color: var(--navy); margin: 20px 0 10px; font-size: 16px;">טבלת מעקב בדיקות (מלאי בזמן הבדיקה):</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px;">תו</th>
+          <th>סיסמא שנבדקה</th>
+          <th style="width:100px;">Status</th>
+          <th>תוצאה (עבר / נכשל)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-size:20px; text-align:center; font-weight:900;">!</td>
+          <td><code>Abc1!defgh</code></td>
+          <td style="text-align:center;">
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 70px; height: 22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 120px; height: 22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-size:20px; text-align:center; font-weight:900;">@</td>
+          <td><code>Abc1@defgh</code></td>
+          <td style="text-align:center;">
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 70px; height: 22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 120px; height: 22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-size:20px; text-align:center; font-weight:900;">#</td>
+          <td><code>Abc1#defgh</code></td>
+          <td style="text-align:center;">
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 70px; height: 22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 120px; height: 22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-size:20px; text-align:center; font-weight:900;">$</td>
+          <td><code>Abc1$defgh</code></td>
+          <td style="text-align:center;">
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 70px; height: 22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 120px; height: 22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-size:20px; text-align:center; font-weight:900;">%</td>
+          <td><code>Abc1%defgh</code></td>
+          <td style="text-align:center;">
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 70px; height: 22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 120px; height: 22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-size:20px; text-align:center; font-weight:900;">*</td>
+          <td><code>Abc1*defgh</code></td>
+          <td style="text-align:center;">
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 70px; height: 22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom: 1px dashed #aaa; width: 120px; height: 22px;"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============================= SECTION 6 ============================= -->
+  <section class="card" id="s6">
+    <h2><span class="section-num">6</span> שלב ה — שימוש ב-Collection Runner (אוטומציה)</h2>
+
+    <p>
+      Collection Runner מאפשר להריץ קבוצה של בקשות ברצף ולקבל דו"ח מסכם אחד.
+      במקום ללחוץ Send 6 פעמים ולעקוב ידנית — הכל קורה אוטומטית.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <strong>שמור את הבקשה ב-Collection:</strong> לחץ Save (Ctrl+S) ושמור תחת
+        Collection חדש בשם <em>"בדיקת תווים מיוחדים — סיסמא"</em>.
+      </li>
+      <li>
+        <strong>שכפל את הבקשה 6 פעמים:</strong> קליק ימני על הבקשה בסייד-בר →
+        Duplicate. עשה זאת 5 פעמים נוספות עד שיש לך 6 עותקים. תן לכל אחד שם:
+        <em>Test ! password</em>, <em>Test @ password</em>, וכן הלאה.
+      </li>
+      <li>
+        <strong>ערוך כל עותק:</strong> בכל עותק, שנה את הסיסמא ב-Body לסיסמא הרלוונטית
+        לאותו תו מיוחד.
+      </li>
+      <li>
+        <strong>הפעל את Collection Runner:</strong> לחץ על שם ה-Collection בסייד-בר →
+        לחץ על כפתור ▶ (Run). ייפתח Collection Runner.
+      </li>
+      <li>
+        <strong>לחץ Run:</strong> כל 6 הבקשות ירוצו ברצף. כל תוצאה תוצג מיד.
+      </li>
+    </ol>
+
+    <!-- Mock Collection Runner -->
+    <p style="font-size: 13px; color: #555; margin-top: 14px;"><em>מה נראה — Collection Runner עם תוצאות:</em></p>
+
+    <div class="runner-mock">
+      <div class="runner-header">
+        <span class="runner-title">Collection Runner — בדיקת תווים מיוחדים</span>
+        <span style="margin-right:auto; background:#1a8a4a; color:#fff; font-size:11px; padding:2px 10px; border-radius:10px;">Run Complete</span>
+      </div>
+      <div class="runner-row head">
+        <span>Request Name</span>
+        <span>Method</span>
+        <span>Status</span>
+        <span>Result</span>
+      </div>
+      <div class="runner-row">
+        <span class="rr-name">Test ! password</span>
+        <span style="color:#ffd700;">POST</span>
+        <span class="rr-pass">200 OK</span>
+        <span class="rr-pass">PASS</span>
+      </div>
+      <div class="runner-row">
+        <span class="rr-name">Test @ password</span>
+        <span style="color:#ffd700;">POST</span>
+        <span class="rr-pass">200 OK</span>
+        <span class="rr-pass">PASS</span>
+      </div>
+      <div class="runner-row">
+        <span class="rr-name">Test # password</span>
+        <span style="color:#ffd700;">POST</span>
+        <span class="rr-fail">500 Error</span>
+        <span class="rr-fail">FAIL</span>
+      </div>
+      <div class="runner-row">
+        <span class="rr-name">Test $ password</span>
+        <span style="color:#ffd700;">POST</span>
+        <span class="rr-pass">200 OK</span>
+        <span class="rr-pass">PASS</span>
+      </div>
+      <div class="runner-row">
+        <span class="rr-name">Test % password</span>
+        <span style="color:#ffd700;">POST</span>
+        <span class="rr-fail">500 Error</span>
+        <span class="rr-fail">FAIL</span>
+      </div>
+      <div class="runner-row">
+        <span class="rr-name">Test * password</span>
+        <span style="color:#ffd700;">POST</span>
+        <span class="rr-pass">200 OK</span>
+        <span class="rr-pass">PASS</span>
+      </div>
+      <div style="background:#1e1e1e; padding: 8px 14px; display:flex; gap:20px; font-size:12px; color:#888; direction:ltr; border-top:1px solid #333;">
+        <span>Total: 6</span>
+        <span style="color:#4caf50;">Passed: 4</span>
+        <span style="color:#f44336;">Failed: 2</span>
+        <span>Duration: 3.8s</span>
+      </div>
+    </div>
+
+    <h3 style="color: var(--navy); margin: 20px 0 12px; font-size: 16px;">אפשרות מתקדמת — משתנה סביבה <span class="env-pill">{{password}}</span></h3>
+
+    <p>
+      במקום לערוך כל עותק ידנית, ניתן להשתמש במשתנה סביבה אחד וב-Data File
+      (קובץ CSV) שמחליף אוטומטית את הסיסמא בכל ריצה:
+    </p>
+
+    <ol class="steps">
+      <li>
+        בתוך ה-Body, שנה את ערך הסיסמא למשתנה: <span class="env-pill">{{password}}</span>
+        <br/>
+        <pre class="code-block" style="margin-top:8px;">{
+  <span class="kw">"newPassword"</span>: <span class="str">"{{password}}"</span>,
+  <span class="kw">"confirmPassword"</span>: <span class="str">"{{password}}"</span>
+}</pre>
+      </li>
+      <li>
+        צור קובץ CSV בשם <code>passwords.csv</code> עם הנתונים:
+        <pre class="code-block">password
+Abc1!defgh
+Abc1@defgh
+Abc1#defgh
+Abc1$defgh
+Abc1%defgh
+Abc1*defgh</pre>
+      </li>
+      <li>
+        בחלון Collection Runner, לחץ <strong>Select File</strong> ובחר את
+        <code>passwords.csv</code>. Postman ירוץ פעם אחת לכל שורה, ויחליף
+        את <span class="env-pill">{{password}}</span> בערך הרלוונטי.
+      </li>
+    </ol>
+
+    <div class="tip-box">
+      <strong>יתרון שיטת ה-CSV:</strong> אפשר לשמור Collection אחד בלבד עם בקשה אחת,
+      ורק הנתונים (הסיסמאות) משתנים. נוח יותר לתחזוקה ולהרחבת הבדיקות.
+    </div>
+  </section>
+
+  <!-- ============================= SECTION 7 ============================= -->
+  <section class="card" id="s7">
+    <h2><span class="section-num">7</span> קריאת התגובה — Response</h2>
+
+    <p>
+      לאחר לחיצה על Send, חלק התגובה (Response) מוצג בחצי התחתון של Postman.
+      הנה איך לקרוא אותו:
+    </p>
+
+    <table style="margin-bottom: 20px;">
+      <thead>
+        <tr>
+          <th>Status Code</th>
+          <th>משמעות</th>
+          <th>פעולה נדרשת</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-200">200 OK</span></td>
+          <td>הבקשה הצליחה — הסיסמא שונתה בהצלחה</td>
+          <td>תעדי כ-PASS</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-400">400 Bad Request</span></td>
+          <td>השרת דחה את הבקשה (validation error) — הבקשה לא תקינה לפי הגדרות</td>
+          <td>תעדי כ-FAIL, בדקי את ה-Response Body להסבר</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-401">401 Unauthorized</span></td>
+          <td>הטוקן פג תוקף או שגוי</td>
+          <td>לכודי בקשה חדשה עם טוקן מעודכן</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-401" style="background:#fff3cd;color:#d35400;border-color:#d35400;">403 Forbidden</span></td>
+          <td>אין הרשאות לבצע את הפעולה</td>
+          <td>בדקי שהמשתמש מחובר ויש לו הרשאת שינוי סיסמא</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-500">500 Internal Server Error</span></td>
+          <td>קריסה בצד השרת — השרת לא ידע לטפל בבקשה</td>
+          <td>תעדי כ-BUG! זה פגם — שגיאת validation בשרת, לא ב-UI</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size: 13px; color: #555;"><em>מה נראה — פאנל Response ב-Postman (שגיאת 500):</em></p>
+
+    <div class="mock-response">
+      <div class="postman-titlebar">
+        <span class="postman-logo">▶</span>
+        <span style="color:#888; font-size:12px;">Response</span>
+      </div>
+      <div class="response-status-bar">
+        <span class="status-code-big err">500</span>
+        <span class="status-text">Internal Server Error</span>
+        <span class="status-time">Time: 1247 ms &nbsp;|&nbsp; Size: 312 B</span>
+      </div>
+      <div style="background:#252526; display:flex; gap:0; border-bottom:1px solid #333; direction:ltr;">
+        <div style="padding:5px 14px; font-size:12px; color:#ff6c37; border-bottom:2px solid #ff6c37;">Body</div>
+        <div style="padding:5px 14px; font-size:12px; color:#888;">Headers</div>
+        <div style="padding:5px 14px; font-size:12px; color:#888;">Test Results</div>
+      </div>
+      <div class="response-body">
+        {<br/>
+        &nbsp;&nbsp;<span class="json-key">"success"</span>: <span class="json-bool">false</span>,<br/>
+        &nbsp;&nbsp;<span class="json-key">"error"</span>: <span class="json-str">"Internal Server Error"</span>,<br/>
+        &nbsp;&nbsp;<span class="json-key">"message"</span>: <span class="json-str">"משהו השתבש. יש לנסות שוב."</span>,<br/>
+        &nbsp;&nbsp;<span class="json-key">"statusCode"</span>: <span class="json-num">500</span>,<br/>
+        &nbsp;&nbsp;<span class="json-key">"requestId"</span>: <span class="json-str">"4f2a91bc-e3d0-4c1a"</span><br/>
+        }
+      </div>
+    </div>
+
+    <p style="font-size: 13px; color: #555; margin-top: 16px;"><em>להשוואה — תגובה תקינה עם Status 200:</em></p>
+
+    <div class="mock-response">
+      <div class="postman-titlebar">
+        <span class="postman-logo">▶</span>
+        <span style="color:#888; font-size:12px;">Response</span>
+      </div>
+      <div class="response-status-bar">
+        <span class="status-code-big ok">200</span>
+        <span class="status-text">OK</span>
+        <span class="status-time">Time: 342 ms &nbsp;|&nbsp; Size: 128 B</span>
+      </div>
+      <div style="background:#252526; display:flex; gap:0; border-bottom:1px solid #333; direction:ltr;">
+        <div style="padding:5px 14px; font-size:12px; color:#ff6c37; border-bottom:2px solid #ff6c37;">Body</div>
+        <div style="padding:5px 14px; font-size:12px; color:#888;">Headers</div>
+        <div style="padding:5px 14px; font-size:12px; color:#888;">Test Results</div>
+      </div>
+      <div class="response-body">
+        {<br/>
+        &nbsp;&nbsp;<span class="json-key">"success"</span>: <span class="json-bool">true</span>,<br/>
+        &nbsp;&nbsp;<span class="json-key">"message"</span>: <span class="json-str">"הסיסמא שונתה בהצלחה"</span><br/>
+        }
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>Response Time (זמן תגובה):</strong> אם זמן התגובה גבוה מאוד (למשל מעל שנייה)
+      בהשוואה לבקשות אחרות — זה יכול להעיד שהשרת "נאבק" עם הקלט לפני שהחזיר שגיאה.
+      תווי זמן גבוה לצד 500 = סמן נוסף לבאג.
+    </div>
+  </section>
+
+  <!-- ============================= SECTION 8 ============================= -->
+  <section class="card print-table" id="s8">
+    <h2><span class="section-num">8</span> טבלת תוצאות מלאה</h2>
+
+    <div class="no-print">
+      <button class="print-btn" onclick="window.print()">הדפס טבלה</button>
+      <p style="font-size: 13px; color: #666; margin-bottom: 16px;">
+        ניתן להדפיס טבלה זו ולמלא ידנית, או למלא אותה דיגיטלית לפני ההדפסה.
+      </p>
+    </div>
+
+    <table class="results-table" style="border: 2px solid var(--navy);">
+      <thead>
+        <tr>
+          <th>תו</th>
+          <th>שם התו</th>
+          <th>סיסמא</th>
+          <th>Status מצופה</th>
+          <th>Status בפועל</th>
+          <th>תוצאה</th>
+          <th>הערות / Body תגובה</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="char-cell">!</td>
+          <td>Exclamation Mark</td>
+          <td><code>Abc1!defgh</code></td>
+          <td><span class="badge badge-200">200</span></td>
+          <td style="min-width:80px;">
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:80px; height:22px;"></span>
+          </td>
+          <td style="min-width:90px;">
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:90px; height:22px;"></span>
+          </td>
+          <td style="min-width:160px;">
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:100%; height:22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="char-cell">@</td>
+          <td>At Sign</td>
+          <td><code>Abc1@defgh</code></td>
+          <td><span class="badge badge-200">200</span></td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:80px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:90px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:100%; height:22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="char-cell">#</td>
+          <td>Hash / Number Sign</td>
+          <td><code>Abc1#defgh</code></td>
+          <td><span class="badge badge-200">200</span></td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:80px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:90px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:100%; height:22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="char-cell">$</td>
+          <td>Dollar Sign</td>
+          <td><code>Abc1$defgh</code></td>
+          <td><span class="badge badge-200">200</span></td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:80px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:90px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:100%; height:22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="char-cell">%</td>
+          <td>Percent Sign</td>
+          <td><code>Abc1%defgh</code></td>
+          <td><span class="badge badge-200">200</span></td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:80px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:90px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:100%; height:22px;"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="char-cell">*</td>
+          <td>Asterisk</td>
+          <td><code>Abc1*defgh</code></td>
+          <td><span class="badge badge-200">200</span></td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:80px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:90px; height:22px;"></span>
+          </td>
+          <td>
+            <span style="display:inline-block; border-bottom:1px dashed #aaa; width:100%; height:22px;"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size: 12px; color: #888; margin-top: 10px; text-align: left; direction: ltr;">
+      System under test: Israeli Ministry of Health Authentication — Password Change Endpoint<br/>
+      Test date: _____________________ | Tester: _____________________
+    </p>
+  </section>
+
+  <!-- ============================= SECTION 9 ============================= -->
+  <section class="card" id="s9">
+    <h2><span class="section-num">9</span> מה עושים עם התוצאות</h2>
+
+    <h3 style="color: var(--navy); margin: 0 0 12px; font-size: 16px;">פרשנות לפי Status Code:</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Status שהתקבל</th>
+          <th>משמעות</th>
+          <th>פעולה נדרשת</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-200">200 OK</span></td>
+          <td>התו עובד — השרת מקבל את הסיסמא ומשנה אותה</td>
+          <td>תעדי תוצאה חיובית. אין צורך בפגם.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-400">400 Bad Request</span></td>
+          <td>השרת דוחה את הסיסמא עם הסבר — ה-UI צריך להציג הודעת שגיאה ברורה</td>
+          <td>
+            בדקי את ה-Response Body לפרטי השגיאה. אם ה-UI לא מציג את הסיבה לדחייה —
+            פתחי בעיה קלה (UI חסר).
+          </td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-500">500 Internal Server Error</span></td>
+          <td>
+            <strong>באג!</strong> השרת קרס — לא טיפל בתו זה בצורה בטוחה.
+            ה-UI מציג את התו כתקין אך השרת לא מוכן לקבלו.
+          </td>
+          <td>
+            פתחי דוח פגם מיידי. השרת צריך לדחות את התו עם 400 ולא לקרוס ב-500.
+            הצרף לדוח: תו, סיסמא, Status, ו-Response Body מלא.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="color: var(--navy); margin: 24px 0 12px; font-size: 16px;">תבנית דוח פגם — להעתיק ל-Azure DevOps / Jira:</h3>
+
+    <div class="bug-template">
+      <span class="bug-field">כותרת:</span> תו [X] גורם לשגיאת שרת 500 בשינוי סיסמא<br/><br/>
+
+      <span class="bug-field">תיאור:</span><br/>
+      בעת שינוי סיסמא המכילה את התו [X] (<span class="bug-placeholder">לדוגמה: # — Hash</span>),
+      ה-UI מציג את הסיסמא כתקינה (פס הסיסמא ירוק, כפתור "שמור" פעיל),
+      אך השרת מחזיר שגיאה 500 Internal Server Error.<br/><br/>
+
+      <span class="bug-field">שלבים לשחזור:</span><br/>
+      1. היכנס למערכת ועבור לדף שינוי סיסמא<br/>
+      2. הזן סיסמא המכילה את התו [X]: <span class="bug-placeholder">Abc1#defgh</span><br/>
+      3. לחץ שמור / אישור<br/>
+      4. (אופציונלי) שלח בקשה ישירה דרך Postman לנקודת הקצה:<br/>
+      &nbsp;&nbsp;&nbsp;<span class="bug-placeholder">POST https://api.example.gov.il/auth/password/reset</span><br/>
+      &nbsp;&nbsp;&nbsp;<span class="bug-placeholder">Body: {"newPassword":"Abc1#defgh","confirmPassword":"Abc1#defgh"}</span><br/><br/>
+
+      <span class="bug-field">תוצאה צפויה:</span><br/>
+      השרת מחזיר תגובה מסודרת — אם התו לא מותר, יש להחזיר Status 400 עם הודעת שגיאה ברורה.
+      ה-UI צריך להציג את ההודעה למשתמש.<br/><br/>
+
+      <span class="bug-field">תוצאה בפועל:</span><br/>
+      ה-UI מציג: <span class="bug-placeholder">"משהו השתבש. יש לנסות שוב."</span><br/>
+      Postman מחזיר: Status 500 — Internal Server Error<br/>
+      Response Body: <span class="bug-placeholder">{"success":false,"error":"Internal Server Error","message":"משהו השתבש. יש לנסות שוב."}</span><br/><br/>
+
+      <span class="bug-field">חומרה:</span> High — ה-UI מטעה את המשתמש לחשוב שהסיסמא תקינה<br/>
+      <span class="bug-field">סביבה:</span> <span class="bug-placeholder">Production / Staging</span><br/>
+      <span class="bug-field">מערכת הפעלה / דפדפן:</span> <span class="bug-placeholder">Windows 10 / Chrome 120</span><br/>
+      <span class="bug-field">מזהה בקשה (requestId):</span> <span class="bug-placeholder">4f2a91bc-e3d0-4c1a (מה-Response Body)</span>
+    </div>
+
+    <div class="tip-box" style="margin-top: 20px;">
+      <strong>רמז לשורש הבעיה:</strong> תווים כמו <code>%</code> ו-<code>#</code> הם תווים
+      מיוחדים בפרוטוקולי URL ו-HTTP. <code>%</code> מתחיל רצף Percent-Encoding,
+      ו-<code>#</code> מסמן Fragment בURL. ייתכן שהשרת לא מבצע Escape נכון לתווים אלו
+      לפני שמשתמש בהם. המפתח צריך לוודא שהסיסמא מטופלת כ-plain string ולא מפורשת
+      כחלק מ-URL.
+    </div>
+
+    <h3 style="color: var(--navy); margin: 24px 0 12px; font-size: 16px;">סיכום תהליך הבדיקה:</h3>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <div style="background: #e8f0ff; border: 1px solid #b0c8f0; border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 160px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 6px;">🕵️</div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 13px;">לכוד</div>
+        <div style="font-size: 12px; color: #444;">הבקשה מ-Network tab</div>
+      </div>
+      <div style="align-self: center; font-size: 20px; color: #aaa;">›</div>
+      <div style="background: #e8f0ff; border: 1px solid #b0c8f0; border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 160px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 6px;">📥</div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 13px;">ייבא</div>
+        <div style="font-size: 12px; color: #444;">cURL לתוך Postman</div>
+      </div>
+      <div style="align-self: center; font-size: 20px; color: #aaa;">›</div>
+      <div style="background: #e8f0ff; border: 1px solid #b0c8f0; border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 160px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 6px;">🔁</div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 13px;">שנה &amp; שלח</div>
+        <div style="font-size: 12px; color: #444;">6 סיסמאות × Send</div>
+      </div>
+      <div style="align-self: center; font-size: 20px; color: #aaa;">›</div>
+      <div style="background: #e8f0ff; border: 1px solid #b0c8f0; border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 160px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 6px;">📋</div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 13px;">תעד</div>
+        <div style="font-size: 12px; color: #444;">תוצאות + דוח פגם</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div style="text-align: center; color: #888; font-size: 12px; padding: 20px 0 10px; border-top: 1px solid #d0dcea; margin-top: 8px;">
+    מדריך QA — בדיקת תווים מיוחדים בסיסמא | מערכת אימות משרד הבריאות | גרסה 1.0 | מרץ 2026
+  </div>
+
+</main>
+
+  <!-- back-to-index -->
+  <style>
+    #back-to-index {
+      position: fixed; bottom: 22px; left: 22px; z-index: 9999;
+      background: #1a3c6e; color: #fff;
+      border: none; border-radius: 28px;
+      padding: 10px 18px 10px 14px;
+      font-size: .85rem; font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      display: flex; align-items: center; gap: 7px;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    #back-to-index:hover { background: #1565c0; transform: translateY(-2px); }
+  </style>
+  <a id='back-to-index' href='index.html'>&#127968; כל המסמכים</a>
+</body>
+</html>

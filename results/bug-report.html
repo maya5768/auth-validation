@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>דוח באג — שאלות אבטחה</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    @media print {
+      .copy-btn, .pdf-btn { display: none !important; }
+      body { background: #fff; padding: 0; }
+      .card { box-shadow: none; border-radius: 0; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      padding: 30px 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      color: #1a3c6e;
+      margin-bottom: 30px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 28px 32px;
+      max-width: 860px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: #1a3c6e;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover { background: #2a5298; }
+    .copy-btn.copied { background: #2e7d32; }
+    .pdf-btn {
+      position: absolute;
+      top: 16px;
+      left: 130px;
+      background: #b71c1c;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .pdf-btn:hover { background: #d32f2f; }
+    h2 {
+      font-size: 1.05rem;
+      color: #1a3c6e;
+      margin: 20px 0 6px;
+      border-right: 4px solid #1a3c6e;
+      padding-right: 8px;
+    }
+    p, li { line-height: 1.8; font-size: 0.97rem; }
+    ol { padding-right: 20px; }
+    code {
+      background: #f0f0f0;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.92rem;
+      direction: ltr;
+      display: inline-block;
+    }
+    .severity {
+      display: inline-block;
+      background: #c62828;
+      color: #fff;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 0.88rem;
+      margin-right: 6px;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 18px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>דוח באג — שאלות אבטחה</h1>
+  <div class="card">
+    <button class="copy-btn" onclick="copyReport()">📋 העתק דוח</button>
+    <button class="pdf-btn" onclick="exportPdf()">🖨️ שמור PDF</button>
+
+    <h2>כותרת</h2>
+    <p>חוסר עקביות ב-Regex בין שלב הגדרת שאלות אבטחה לשלב האימות — תשובות תקינות שנשמרו מוגדרות כ"לא חוקיות" בשכחתי סיסמא</p>
+
+    <hr class="divider" />
+
+    <h2>תיאור</h2>
+    <p>
+      בתהליך <strong>איפוס סיסמא</strong> (מנהל), שדה "תשובה לשאלת אבטחה" מאמת לפי Regex אחד שמתיר תווים כמו
+      <code>+</code>, <code>=</code>, <code>~</code>, <code>:</code>, <code>;</code>, <code>^</code>, <code>(</code>, <code>)</code>, <code>_</code>, <code>-</code>.<br /><br />
+      בתהליך <strong>שכחתי סיסמא</strong> (משתמש), שדה "תשובה לשאלת אבטחה" מאמת לפי Regex <strong>מחמיר יותר</strong> שאינו מכיר בתווים אלו כחוקיים.<br /><br />
+      כתוצאה מכך: משתמש שהגדיר תשובה תקינה באיפוס סיסמא (למשל <code>LOO+PY</code>) — <strong>לעולם לא יצליח</strong> להשתמש בה בשכחתי סיסמא, כי אותה תשובה מוגדרת שם כ"לא חוקית".
+    </p>
+
+    <hr class="divider" />
+
+    <h2>שלבים לשחזור</h2>
+    <ol>
+      <li>מנהל מבצע איפוס סיסמא למשתמש ומגדיר תשובות לשאלות אבטחה הכוללות תו <code>+</code> (למשל: <code>LOO+PY</code>)</li>
+      <li>המערכת שומרת את התשובות ללא שגיאה</li>
+      <li>המשתמש ניגש לתהליך "שכחתי סיסמא" ומגיע לשלב "ענה על שאלות האבטחה"</li>
+      <li>המשתמש מזין את אותה תשובה שהוגדרה: <code>LOO+PY</code></li>
+      <li>המערכת מציגה: <strong>"תשובה לא חוקית"</strong> ואינה מאפשרת המשך</li>
+    </ol>
+
+    <hr class="divider" />
+
+    <h2>תוצאה צפויה</h2>
+    <p>אותו Regex (או לפחות אותה קבוצת תווים מותרים) בשני השלבים. תשובה שנשמרה כתקינה — תתקבל תמיד.</p>
+
+    <h2>תוצאה בפועל</h2>
+    <p>המשתמש תקוע — הוא לא יודע שהבעיה היא תו <code>+</code>, אין הנחיה ברורה, ואין דרך לאפס את שאלות האבטחה בעצמו.</p>
+
+    <hr class="divider" />
+
+    <h2>חומרה</h2>
+    <p><span class="severity">גבוהה</span> חוסמת תהליך שחזור גישה</p>
+
+    <hr class="divider" />
+
+    <h2>Regex</h2>
+    <p><strong>איפוס סיסמא (מתיר):</strong> <code>["a-zA-Zn×0-3_+-=?*",&amp;.;()'"]$</code></p>
+    <p><strong>שכחתי סיסמא (מחמיר):</strong> ← יש לבדוק ולתעד מול הקוד</p>
+  </div>
+
+  <!-- תיבת טקסט נסתרת — משמשת להעתקה כטקסט רגיל בלי עיצוב -->
+  <textarea id="plainText" readonly style="position:fixed;top:-9999px;left:-9999px;font-family:Arial;background:#fff;color:#000;"></textarea>
+
+  <script>
+    const REPORT_TEXT = `כותרת:
+חוסר עקביות ב-Regex בין שלב הגדרת שאלות אבטחה לשלב האימות — תשובות תקינות שנשמרו מוגדרות כ"לא חוקיות" בשכחתי סיסמא
+
+תיאור:
+בתהליך איפוס סיסמא (מנהל), שדה "תשובה לשאלת אבטחה" מאמת לפי Regex אחד שמתיר תווים כמו +, =, ~, :, ;, ^, (, ), _, -.
+בתהליך שכחתי סיסמא (משתמש), שדה "תשובה לשאלת אבטחה" מאמת לפי Regex מחמיר יותר שאינו מכיר בתווים אלו כחוקיים.
+כתוצאה מכך: משתמש שהגדיר תשובה תקינה באיפוס סיסמא (למשל: LOO+PY) — לעולם לא יצליח להשתמש בה בשכחתי סיסמא, כי אותה תשובה מוגדרת שם כ"לא חוקית".
+
+שלבים לשחזור:
+1. מנהל מבצע איפוס סיסמא למשתמש ומגדיר תשובות לשאלות אבטחה הכוללות תו + (למשל: LOO+PY)
+2. המערכת שומרת את התשובות ללא שגיאה
+3. המשתמש ניגש לתהליך "שכחתי סיסמא" ומגיע לשלב "ענה על שאלות האבטחה"
+4. המשתמש מזין את אותה תשובה שהוגדרה: LOO+PY
+5. המערכת מציגה: "תשובה לא חוקית" ואינה מאפשרת המשך
+
+תוצאה צפויה:
+אותו Regex (או לפחות אותה קבוצת תווים מותרים) בשני השלבים. תשובה שנשמרה כתקינה — תתקבל תמיד.
+
+תוצאה בפועל:
+המשתמש תקוע — הוא לא יודע שהבעיה היא תו +, אין הנחיה ברורה, ואין דרך לאפס את שאלות האבטחה בעצמו.
+
+חומרה: גבוהה — חוסמת תהליך שחזור גישה.
+
+Regex:
+איפוס סיסמא (מתיר): ["a-zA-Zn×0-3_+-=?*",&.;()'"]$
+שכחתי סיסמא (מחמיר): יש לבדוק ולתעד מול הקוד`;
+
+    // Fill the plain-text textarea on load
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('plainText').value = REPORT_TEXT;
+    });
+
+    function exportPdf() {
+      const card = document.querySelector('.card');
+      const btns = card.querySelectorAll('button');
+      btns.forEach(b => b.style.display = 'none');
+
+      html2pdf().set({
+        margin: 15,
+        filename: 'bug-report-security-questions.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(card).save().then(() => {
+        btns.forEach(b => b.style.display = '');
+      });
+    }
+
+    function copyReport() {
+      const ta = document.getElementById('plainText');
+      ta.select();
+      ta.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      window.getSelection()?.removeAllRanges();
+
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✅ הועתק!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 העתק דוח';
+        btn.classList.remove('copied');
+      }, 2500);
+    }
+  </script>
+  <!-- back-to-index -->
+  <style>
+    #back-to-index {
+      position: fixed; bottom: 22px; left: 22px; z-index: 9999;
+      background: #1a3c6e; color: #fff;
+      border: none; border-radius: 28px;
+      padding: 10px 18px 10px 14px;
+      font-size: .85rem; font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+      display: flex; align-items: center; gap: 7px;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    #back-to-index:hover { background: #1565c0; transform: translateY(-2px); }
+  </style>
+  <a id='back-to-index' href='index.html'>&#127968; כל המסמכים</a>
+</body>
+</html>
