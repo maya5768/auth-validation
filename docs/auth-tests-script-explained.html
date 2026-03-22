@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>הסבר מפורט — auth_tests_script.ts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      padding: 28px 20px 60px;
+      line-height: 1.6;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1a3c6e 0%, #2563a8 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 32px 36px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 1.9rem; margin-bottom: 8px; }
+    .hero .sub { font-size: 0.95rem; opacity: 0.85; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 28px 30px;
+      margin-bottom: 28px;
+    }
+
+    .block {
+      border: 1px solid #e0e7f3;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .block-header {
+      background: #1a3c6e;
+      color: #fff;
+      padding: 12px 18px;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .block-header code {
+      background: rgba(255,255,255,0.15);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: .9rem;
+    }
+    .block-body {
+      padding: 20px 24px;
+      line-height: 1.85;
+    }
+
+    .block-body ul, .block-body ol {
+      margin: 10px 0 10px 0;
+      padding-right: 22px;
+    }
+    .block-body li { margin-bottom: 5px; }
+
+    code {
+      background: #eef2ff;
+      color: #1a3c6e;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: .9em;
+    }
+
+    .code-box {
+      background: #1e2a35;
+      color: #a5d6a7;
+      font-family: 'Consolas', monospace;
+      font-size: .87rem;
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 14px 0;
+      overflow-x: auto;
+      white-space: pre;
+      direction: ltr;
+      text-align: left;
+      line-height: 1.6;
+    }
+    .code-box .cm  { color: #607d8b; }
+    .code-box .kw  { color: #80cbc4; }
+    .code-box .str { color: #f48fb1; }
+    .code-box .num { color: #ffcc80; }
+    .code-box .fn  { color: #fff176; }
+    .code-box .rx  { color: #ef9a9a; }
+    .code-box .prop{ color: #b3e5fc; }
+
+    .info-blue  { background: #e3f2fd; border-right: 4px solid #1565c0; border-radius: 7px; padding: 12px 16px; margin-top: 14px; font-size: .9rem; }
+    .info-green { background: #e8f5e9; border-right: 4px solid #43a047; border-radius: 7px; padding: 12px 16px; margin-top: 14px; font-size: .9rem; }
+    .info-orange{ background: #fff3e0; border-right: 4px solid #f57c00; border-radius: 7px; padding: 12px 16px; margin-top: 14px; font-size: .9rem; }
+    .info-red   { background: #fce4ec; border-right: 4px solid #c62828; border-radius: 7px; padding: 12px 16px; margin-top: 14px; font-size: .9rem; }
+    .info-box strong { display: block; margin-bottom: 4px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      margin-top: 12px;
+    }
+    th {
+      background: #e8eaf6;
+      padding: 8px 12px;
+      text-align: right;
+      border: 1px solid #c5cae9;
+      font-weight: 700;
+    }
+    td {
+      padding: 7px 12px;
+      border: 1px solid #e0e0e0;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #fafafa; }
+    td code { background: transparent; color: #c62828; padding: 0; }
+
+    .badge {
+      display: inline-block;
+      background: #1565c0;
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 6px;
+    }
+    .badge.green  { background: #2e7d32; }
+    .badge.orange { background: #e65100; }
+    .badge.red    { background: #b71c1c; }
+
+    .toc {
+      background: #eceff1;
+      border-radius: 10px;
+      padding: 16px 22px;
+      margin-bottom: 28px;
+    }
+    .toc h3 { font-size: 1rem; color: #1a3c6e; margin-bottom: 10px; }
+    .toc ol { padding-right: 20px; }
+    .toc li { margin-bottom: 5px; }
+    .toc a { color: #1565c0; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    h2 {
+      font-size: 1.25rem;
+      color: #1a3c6e;
+      border-bottom: 2px solid #e0e7f3;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+    }
+
+    footer {
+      text-align: center;
+      color: #90a4ae;
+      font-size: .82rem;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>📋 הסבר מפורט — auth_tests_script.ts</h1>
+  <div class="sub">
+    סקריפט בדיקות לדף הגדרת הסיסמא — משרד הבריאות<br>
+    הרצה דרך DevTools Console | F12 → Console → Paste → Enter
+  </div>
+</div>
+
+<!-- תוכן עניינים -->
+<div class="toc">
+  <h3>תוכן עניינים</h3>
+  <ol>
+    <li><a href="#block1">const TEST_CASES — מערך מקרי הבדיקה</a></li>
+    <li><a href="#block2">const REGEX — הביטוי הרגולרי המלא</a></li>
+    <li><a href="#block3">function findPasswordInput() — חיפוש שדה הסיסמא</a></li>
+    <li><a href="#block4">function setInputValue() — הזנת ערך בצורה בטוחה</a></li>
+    <li><a href="#block5">function getValidationMessage() — קריאת הודעת שגיאה מה-UI</a></li>
+    <li><a href="#block6">async function runTests() — הפונקציה הראשית</a></li>
+    <li><a href="#block7">תוצאות הריצה — מה לקרוא ב-Console</a></li>
+  </ol>
+</div>
+
+<!-- ===================================================
+     בלוק 1: TEST_CASES
+     =================================================== -->
+<div class="block" id="block1">
+  <div class="block-header">
+    <span>📋</span>
+    <span>בלוק 1 —</span>
+    <code>const TEST_CASES</code>
+    <span class="badge">מערך</span>
+  </div>
+  <div class="block-body">
+    <p><strong>מה זה?</strong> מערך של <strong>20 מקרי בדיקה</strong>. כל מקרה הוא object עם 4 שדות:</p>
+
+    <table>
+      <tr><th>שדה</th><th>סוג</th><th>תיאור</th><th>דוגמה</th></tr>
+      <tr><td><code>id</code></td><td>string</td><td>מזהה ייחודי לדיווח</td><td><code>'TC01'</code></td></tr>
+      <tr><td><code>password</code></td><td>string</td><td>הסיסמא שתוכנס לשדה</td><td><code>'Abcdef1!gh'</code></td></tr>
+      <tr><td><code>expected</code></td><td><code>'PASS'</code> | <code>'FAIL'</code></td><td>התוצאה הצפויה</td><td><code>'PASS'</code></td></tr>
+      <tr><td><code>desc</code></td><td>string</td><td>תיאור קצר של מה נבדק</td><td><code>'מינימום תקין 10 תווים'</code></td></tr>
+    </table>
+
+    <p style="margin-top:16px;"><strong>חלוקת 20 המקרים לקבוצות:</strong></p>
+    <table>
+      <tr><th>מקרים</th><th>קבוצה</th><th>מה נבדק</th><th>צפוי</th></tr>
+      <tr><td>TC01–TC03</td><td>✅ תקינות</td><td>סיסמאות שעומדות בכל 6 הכללים</td><td>PASS</td></tr>
+      <tr><td>TC04</td><td>❌ חסר</td><td>ללא אות גדולה (A-Z)</td><td>FAIL</td></tr>
+      <tr><td>TC05</td><td>❌ חסר</td><td>ללא אות קטנה (a-z)</td><td>FAIL</td></tr>
+      <tr><td>TC06</td><td>❌ חסר</td><td>ללא ספרה (0-9)</td><td>FAIL</td></tr>
+      <tr><td>TC07</td><td>❌ חסר</td><td>ללא תו מיוחד</td><td>FAIL</td></tr>
+      <tr><td>TC08–TC15</td><td>🚫 תווים אסורים</td><td>כל תו אסור בנפרד: _ + = - רווח ? ( ) ~</td><td>FAIL</td></tr>
+      <tr><td>TC16</td><td>🚫 עברית</td><td>מכיל אותיות עבריות</td><td>FAIL</td></tr>
+      <tr><td>TC17</td><td>⚠️ גבול</td><td>9 תווים — קצר ב-1 מהמינימום</td><td>FAIL</td></tr>
+      <tr><td>TC18</td><td>⚠️ גבול</td><td>10 תווים — בדיוק המינימום</td><td>PASS</td></tr>
+      <tr><td>TC19</td><td>⚠️ גבול</td><td>50 תווים — בדיוק המקסימום</td><td>PASS</td></tr>
+      <tr><td>TC20</td><td>⚠️ גבול</td><td>51 תווים — עולה ב-1 על המקסימום</td><td>FAIL</td></tr>
+    </table>
+
+    <div class="info-blue" style="margin-top:14px;">
+      <strong>למה בדיקות גבול (TC17–TC20)?</strong>
+      עקרון QA: רוב הבאגים מסתתרים בדיוק בגבולות — ב-10 ובדיוק ב-50, לא "איפשהו באמצע".
+      הסטנדרט הוא לבדוק תמיד <em>גבול-1</em>, <em>גבול עצמו</em>, <em>גבול+1</em>.
+    </div>
+
+    <div class="code-box"><span class="cm">// דוגמה לשני מקרי בדיקה מהמערך</span>
+{ <span class="prop">id</span>: <span class="str">'TC01'</span>, <span class="prop">password</span>: <span class="str">'Abcdef1!gh'</span>,  <span class="prop">expected</span>: <span class="str">'PASS'</span>, <span class="prop">desc</span>: <span class="str">'מינימום תקין 10 תווים'</span> },
+{ <span class="prop">id</span>: <span class="str">'TC08'</span>, <span class="prop">password</span>: <span class="str">'Abcde1!f_gh'</span>, <span class="prop">expected</span>: <span class="str">'FAIL'</span>, <span class="prop">desc</span>: <span class="str">'מכיל _ (אסור)'</span> },
+
+<span class="cm">// TC19 — שימוש ב-repeat() ליצירת 50 תווים בדיוק</span>
+{ <span class="prop">id</span>: <span class="str">'TC19'</span>, <span class="prop">password</span>: <span class="str">'Ab1!'</span> + <span class="str">'a'</span>.repeat(<span class="num">46</span>), <span class="prop">expected</span>: <span class="str">'PASS'</span>, <span class="prop">desc</span>: <span class="str">'50 תווים (גבול עליון)'</span> }</div>
+  </div>
+</div>
+
+<!-- ===================================================
+     בלוק 2: REGEX
+     =================================================== -->
+<div class="block" id="block2">
+  <div class="block-header">
+    <span>🔍</span>
+    <span>בלוק 2 —</span>
+    <code>const REGEX</code>
+    <span class="badge orange">ביטוי רגולרי</span>
+  </div>
+  <div class="block-body">
+    <p><strong>מה זה?</strong> ביטוי רגולרי אחד שמייצג את <em>כל 6 הכללים</em> של הסיסמא:</p>
+
+    <div class="code-box">/^(?=.*[A-Za-z])(?=.*[!@#$%*])(?=.*[0-9])(?=.*[a-z])(?!.*[ ~`:^()_+=\-?])(?!.*[\u05D0-\u05EA]).{10,50}$/</div>
+
+    <table>
+      <tr><th>חלק ב-Regex</th><th>סוג</th><th>מה בודק</th></tr>
+      <tr><td><code>^</code> ... <code>$</code></td><td>עוגנים</td><td>הרגקס חייב לכסות את כל המחרוזת מהתחלה עד הסוף</td></tr>
+      <tr><td><code>(?=.*[A-Za-z])</code></td><td>Positive Lookahead</td><td>חייבת להיות לפחות אות לטינית אחת (גדולה או קטנה)</td></tr>
+      <tr><td><code>(?=.*[!@#$%*])</code></td><td>Positive Lookahead</td><td>חייב תו מיוחד מהרשימה המאושרת בלבד</td></tr>
+      <tr><td><code>(?=.*[0-9])</code></td><td>Positive Lookahead</td><td>חייבת ספרה אחת לפחות</td></tr>
+      <tr><td><code>(?=.*[a-z])</code></td><td>Positive Lookahead</td><td>חייבת אות קטנה אחת לפחות</td></tr>
+      <tr><td><code>(?!.*[ ~`:^()_+=\-?])</code></td><td>Negative Lookahead</td><td>אסור שיהיה תו מהרשימה האסורה</td></tr>
+      <tr><td><code>(?!.*[\u05D0-\u05EA])</code></td><td>Negative Lookahead</td><td>אסורות אותיות עבריות (א–ת בטווח Unicode)</td></tr>
+      <tr><td><code>.{10,50}</code></td><td>כמות</td><td>אורך בין 10 ל-50 תווים</td></tr>
+    </table>
+
+    <div class="info-green" style="margin-top:14px;">
+      <strong>מה זה Lookahead?</strong>
+      Lookahead (<code>(?=...)</code> / <code>(?!...)</code>) הוא בדיקה קדימה — הרגקס בודק שמשהו קיים (או לא קיים) במחרוזת, <em>מבלי לצרוך תווים</em>.
+      כך אפשר לדרוש כמה תנאים על אותה מחרוזת בבת אחת.
+    </div>
+
+    <div class="info-orange">
+      <strong>למה <code>\u05D0-\u05EA</code>?</strong>
+      אלו קודי ה-Unicode של אותיות א–ת בעברית. הרגקס בודק שאף תו בסיסמא לא נופל בטווח הזה.
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================
+     בלוק 3: findPasswordInput
+     =================================================== -->
+<div class="block" id="block3">
+  <div class="block-header">
+    <span>🔎</span>
+    <span>בלוק 3 —</span>
+    <code>function findPasswordInput()</code>
+    <span class="badge green">פונקציית עזר</span>
+  </div>
+  <div class="block-body">
+    <p><strong>מה היא עושה?</strong> מחפשת את שדה הסיסמא בדף. מכסה frameworks שונים — כי React, Angular ו-plain HTML יוצרים אלמנטים בצורות שונות.</p>
+
+    <div class="code-box"><span class="kw">function</span> <span class="fn">findPasswordInput</span>() {
+  <span class="kw">const</span> selectors = [
+    <span class="str">'input[type="password"]'</span>,      <span class="cm">// שדה סיסמא סטנדרטי</span>
+    <span class="str">'input[name*="password"]'</span>,     <span class="cm">// שם השדה מכיל "password"</span>
+    <span class="str">'input[id*="password"]'</span>,       <span class="cm">// ID השדה מכיל "password"</span>
+    <span class="str">'input[placeholder*="סיסמ"]'</span>, <span class="cm">// placeholder בעברית</span>
+  ];
+  <span class="kw">for</span> (<span class="kw">const</span> sel <span class="kw">of</span> selectors) {
+    <span class="kw">const</span> el = document.querySelector(sel);
+    <span class="kw">if</span> (el) <span class="kw">return</span> el;  <span class="cm">// מחזירה מיד את הראשון שנמצא</span>
+  }
+  <span class="kw">return</span> <span class="kw">null</span>;            <span class="cm">// לא נמצא שום שדה</span>
+}</div>
+
+    <table>
+      <tr><th>Selector</th><th>מתי מתאים</th></tr>
+      <tr><td><code>input[type="password"]</code></td><td>plain HTML רגיל</td></tr>
+      <tr><td><code>input[name*="password"]</code></td><td>שם שדה מכיל "password"</td></tr>
+      <tr><td><code>input[id*="password"]</code></td><td>ID מכיל "password"</td></tr>
+      <tr><td><code>input[placeholder*="סיסמ"]</code></td><td>דף בעברית עם placeholder</td></tr>
+    </table>
+
+    <div class="info-orange">
+      <strong>למה 4 selectors?</strong>
+      בדף של משרד הבריאות (Angular), לא תמיד הפקד מוצג עם <code>type="password"</code> בלבד.
+      הכיסוי הרחב מבטיח שהסקריפט עובד גם אחרי עדכוני UI של הדף.
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================
+     בלוק 4: setInputValue
+     =================================================== -->
+<div class="block" id="block4">
+  <div class="block-header">
+    <span>✏️</span>
+    <span>בלוק 4 —</span>
+    <code>function setInputValue(input, value)</code>
+    <span class="badge green">פונקציית עזר</span>
+  </div>
+  <div class="block-body">
+    <p><strong>הבעיה:</strong> ב-Angular/React, כשעושים <code>input.value = 'xxx'</code> ישירות — ה-framework לא מרגיש בשינוי ולא מפעיל validation. הדף נראה כאילו לא הוכנס כלום.</p>
+
+    <p style="margin-top:12px;"><strong>הפתרון — שני שלבים:</strong></p>
+
+    <div class="code-box"><span class="kw">function</span> <span class="fn">setInputValue</span>(input, value) {
+
+  <span class="cm">// שלב 1: גישה ל-setter המקורי של הדפדפן דרך ה-prototype</span>
+  <span class="kw">const</span> setter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype, <span class="str">'value'</span>
+  )?.set;
+
+  <span class="cm">// setter.call() — מגדיר את הערך דרך המנגנון המקורי</span>
+  setter ? setter.call(input, value) : (input.value = value);
+
+  <span class="cm">// שלב 2: שליחת אירועים ידנית — מפעילה validation ב-Angular/React/Vue</span>
+  [<span class="str">'input'</span>, <span class="str">'change'</span>, <span class="str">'blur'</span>].forEach(e =>
+    input.dispatchEvent(<span class="kw">new</span> Event(e, { <span class="prop">bubbles</span>: <span class="kw">true</span> }))
+  );
+}</div>
+
+    <table>
+      <tr><th>מרכיב</th><th>מה עושה</th></tr>
+      <tr><td><code>Object.getOwnPropertyDescriptor</code></td><td>מושך את ה-setter המקורי של <code>input.value</code> מה-prototype של הדפדפן — <em>לפני</em> שה-framework דרס אותו</td></tr>
+      <tr><td><code>?.set</code></td><td>Optional Chaining — אם אין setter, לא נזרקת שגיאה</td></tr>
+      <tr><td><code>setter.call(input, value)</code></td><td>מפעיל את ה-setter על ה-input הספציפי</td></tr>
+      <tr><td><code>dispatchEvent('input')</code></td><td>מפעיל React/Angular לעדכן את ה-state</td></tr>
+      <tr><td><code>dispatchEvent('change')</code></td><td>מפעיל validators של Angular</td></tr>
+      <tr><td><code>dispatchEvent('blur')</code></td><td>מפעיל validators שמופעלים רק בעזיבת שדה</td></tr>
+      <tr><td><code>bubbles: true</code></td><td>האירוע "עולה" לאבות ב-DOM — ה-framework שומע אותו</td></tr>
+    </table>
+
+    <div class="info-green">
+      <strong>אנלוגיה:</strong>
+      כמו שלא ניתן לשנות מחיר ישירות בקופת סופר — צריך לעדכן במחשב הרשמי ולאחר מכן ללחוץ "אשר".
+      <code>setter.call()</code> = עדכון המחשב הרשמי.
+      <code>dispatchEvent</code> = לחיצת "אשר".
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================
+     בלוק 5: getValidationMessage
+     =================================================== -->
+<div class="block" id="block5">
+  <div class="block-header">
+    <span>💬</span>
+    <span>בלוק 5 —</span>
+    <code>function getValidationMessage(input)</code>
+    <span class="badge green">פונקציית עזר</span>
+  </div>
+  <div class="block-body">
+    <p><strong>מה היא עושה?</strong> קוראת את הודעת השגיאה שה-UI <em>מציג בפועל</em> אחרי הכנסת הסיסמא — לא רק מה הרגקס אומר.</p>
+
+    <div class="code-box"><span class="kw">function</span> <span class="fn">getValidationMessage</span>(input) {
+  <span class="cm">// עולה רמה אחת/שתיים ב-DOM לחפש את הccontainer של השגיאה</span>
+  <span class="kw">const</span> parent = input.closest(<span class="str">'form'</span>) || input.parentElement?.parentElement;
+
+  <span class="cm">// מחפשת אלמנט שגיאה לפי 3 שיטות</span>
+  <span class="kw">const</span> el = parent?.querySelector(
+    <span class="str">'[class*="error"],[role="alert"],[aria-live]'</span>
+  );
+
+  <span class="cm">// מחזירה טקסט, או validationMessage של הדפדפן, או ריק</span>
+  <span class="kw">return</span> el?.textContent?.trim() || input.validationMessage || <span class="str">''</span>;
+}</div>
+
+    <table>
+      <tr><th>שיטה</th><th>מה מחפשת</th><th>מתי עובד</th></tr>
+      <tr><td><code>[class*="error"]</code></td><td>אלמנט עם class שמכיל "error"</td><td>רוב frameworks</td></tr>
+      <tr><td><code>[role="alert"]</code></td><td>אלמנט נגישות ARIA</td><td>Angular Material, Bootstrap</td></tr>
+      <tr><td><code>[aria-live]</code></td><td>הודעות דינמיות למסכי קריאה</td><td>דפים עם נגישות גבוהה</td></tr>
+      <tr><td><code>input.validationMessage</code></td><td>הודעה מובנית של הדפדפן</td><td>Fallback אם לא נמצא כלום</td></tr>
+    </table>
+
+    <div class="info-blue">
+      <strong>Optional Chaining (<code>?.</code>):</strong>
+      כל הגישות כתובות עם <code>?.</code> — אם האלמנט לא קיים, לא נזרקת שגיאה.
+      <code>el?.textContent?.trim()</code> מחזיר <code>undefined</code> בצורה בטוחה במקום לקרוס.
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================
+     בלוק 6: runTests
+     =================================================== -->
+<div class="block" id="block6">
+  <div class="block-header">
+    <span>🚀</span>
+    <span>בלוק 6 —</span>
+    <code>async function runTests()</code>
+    <span class="badge red">פונקציה ראשית</span>
+  </div>
+  <div class="block-body">
+    <p><strong>הפונקציה הראשית.</strong> <code>async</code> כי היא ממתינה לדף בין בדיקות. הזרימה המלאה:</p>
+
+    <div class="code-box"><span class="kw">async function</span> <span class="fn">runTests</span>() {
+
+  <span class="cm">// שלב 1: חיפוש השדה — עצירה אם לא נמצא</span>
+  <span class="kw">const</span> input = <span class="fn">findPasswordInput</span>();
+  <span class="kw">if</span> (!input) {
+    console.error(<span class="str">'❌ לא נמצא שדה סיסמא!'</span>);
+    <span class="kw">return</span>;
+  }
+
+  <span class="kw">const</span> results = [];
+
+  <span class="cm">// שלב 2: לולאה על 20 מקרי הבדיקה</span>
+  <span class="kw">for</span> (<span class="kw">const</span> tc <span class="kw">of</span> TEST_CASES) {
+
+    <span class="cm">// שלב 3: הזנת הסיסמא לשדה</span>
+    <span class="fn">setInputValue</span>(input, tc.password);
+
+    <span class="cm">// שלב 4: המתנה 300ms לטעינת ה-validation של הדף</span>
+    <span class="kw">await new</span> Promise(r => setTimeout(r, <span class="num">300</span>));
+
+    <span class="cm">// שלב 5: בדיקת הרגקס המקומי</span>
+    <span class="kw">const</span> regexResult = REGEX.test(tc.password) ? <span class="str">'PASS'</span> : <span class="str">'FAIL'</span>;
+
+    <span class="cm">// שלב 6: קריאת הודעת UI מהדף</span>
+    <span class="kw">const</span> uiMsg = <span class="fn">getValidationMessage</span>(input);
+
+    <span class="cm">// שלב 7: השוואה לצפוי</span>
+    <span class="kw">const</span> ok = regexResult === tc.expected;
+
+    results.push({
+      ID: tc.id,
+      תיאור: tc.desc,
+      סיסמא: tc.password.substring(<span class="num">0</span>, <span class="num">14</span>),
+      צפוי: tc.expected,
+      Regex: regexResult,
+      תוצאה: ok ? <span class="str">'✅ עבר'</span> : <span class="str">'❌ נכשל'</span>,
+      שגיאה_UI: uiMsg || <span class="str">'-'</span>,
+    });
+  }
+
+  <span class="cm">// שלב 8: ניקוי השדה + הצגת תוצאות</span>
+  <span class="fn">setInputValue</span>(input, <span class="str">''</span>);
+  console.table(results);
+
+  <span class="kw">const</span> passed = results.filter(r => r.תוצאה.includes(<span class="str">'✅'</span>)).length;
+  console.log(<span class="str">`📊 סיכום: ${passed}/${results.length} עברו`</span>);
+}</div>
+
+    <table>
+      <tr><th>שלב</th><th>קוד</th><th>הסבר</th></tr>
+      <tr><td>1</td><td><code>findPasswordInput()</code></td><td>אם מחזירה null — עצירה עם הודעת שגיאה</td></tr>
+      <tr><td>2</td><td><code>for...of TEST_CASES</code></td><td>עובר על כל 20 מקרים לפי הסדר</td></tr>
+      <tr><td>3</td><td><code>setInputValue()</code></td><td>מזין את הסיסמא לשדה בצורה שמפעילה Angular</td></tr>
+      <tr><td>4</td><td><code>await setTimeout(300)</code></td><td>מחכה 300ms — נותן ל-Angular לבצע validation</td></tr>
+      <tr><td>5</td><td><code>REGEX.test()</code></td><td>בדיקת הרגקס המקומי — לא תלוי בדף</td></tr>
+      <tr><td>6</td><td><code>getValidationMessage()</code></td><td>קורא מה ה-UI מציג בפועל</td></tr>
+      <tr><td>7</td><td><code>ok = regexResult === expected</code></td><td>✅ אם הרגקס מחזיר מה שציפינו, ❌ אחרת</td></tr>
+      <tr><td>8</td><td><code>console.table(results)</code></td><td>טבלה מסודרת עם כל התוצאות</td></tr>
+    </table>
+
+    <div class="info-orange">
+      <strong>למה 300ms ולא פחות?</strong>
+      Angular מעבד validation באופן asynchronous — שינוי בשדה לא מוביל מיד להצגת הודעת שגיאה.
+      300ms נותנים לדף מספיק זמן לעבד את ה-change event ולעדכן את ה-DOM.
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================
+     בלוק 7: תוצאות
+     =================================================== -->
+<div class="block" id="block7">
+  <div class="block-header">
+    <span>📊</span>
+    <span>בלוק 7 — תוצאות הריצה</span>
+  </div>
+  <div class="block-body">
+    <p><strong>מה רואים ב-Console אחרי הרצת הסקריפט:</strong></p>
+
+    <table>
+      <tr><th>עמודה</th><th>מה מציגה</th></tr>
+      <tr><td><code>ID</code></td><td>TC01 … TC20</td></tr>
+      <tr><td><code>תיאור</code></td><td>הסבר קצר של מה נבדק</td></tr>
+      <tr><td><code>סיסמא</code></td><td>14 התווים הראשונים של הסיסמא</td></tr>
+      <tr><td><code>צפוי</code></td><td>PASS / FAIL לפי הגדרת הבדיקה</td></tr>
+      <tr><td><code>Regex</code></td><td>מה הרגקס המקומי מחזיר בפועל</td></tr>
+      <tr><td><code>תוצאה</code></td><td>✅ עבר — כשצפוי = Regex | ❌ נכשל — אחרת</td></tr>
+      <tr><td><code>שגיאה_UI</code></td><td>הודעת השגיאה שהדף מציג, או "-" אם אין</td></tr>
+    </table>
+
+    <p style="margin-top:16px;"><strong>מה לחפש בתוצאות:</strong></p>
+    <table>
+      <tr><th>מה רואים</th><th>המשמעות</th></tr>
+      <tr><td>עמודת <code>Regex</code> ≠ עמודת <code>צפוי</code></td><td>הרגקס שגוי — לא תואם לדרישות</td></tr>
+      <tr><td>עמודת <code>שגיאה_UI</code> ריקה כשצפוי FAIL</td><td>הדף לא מציג הודעת שגיאה למשתמש</td></tr>
+      <tr><td>כל השורות ✅</td><td>הרגקס תואם לכל הדרישות</td></tr>
+      <tr><td><code>שגיאה_UI</code> = "-" בכל השורות</td><td>הסקריפט לא הצליח לאתר את אלמנט הודעת השגיאה</td></tr>
+    </table>
+
+    <div class="info-green">
+      <strong>טיפ:</strong> לחצי על כותרת עמודה ב-<code>console.table</code> כדי למיין לפי אותה עמודה.
+      מיון לפי <code>תוצאה</code> יקבץ את כל ה-❌ יחד לזיהוי מהיר.
+    </div>
+  </div>
+</div>
+
+<footer>
+  auth-tests-script-explained.html &nbsp;|&nbsp; auth-validation QA project &nbsp;|&nbsp; 2026
+</footer>
+
+</body>
+</html>

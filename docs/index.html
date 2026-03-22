@@ -280,10 +280,10 @@
   <h1>מרכז בדיקות QA</h1>
   <p class="sub">מערכת ההזדהות של משרד הבריאות — תיעוד מלא של תהליך הבדיקה</p>
   <div class="header-badges">
-    <span class="hb">📁 7 מסמכים</span>
+    <span class="hb">📁 8 מסמכים</span>
     <span class="hb">🗓 מרץ 2026</span>
     <span class="hb">🔐 בדיקות סיסמא</span>
-    <span class="hb">🐛 2 ממצאים</span>
+    <span class="hb">🐛 3 ממצאים</span>
   </div>
 </header>
 
@@ -291,9 +291,9 @@
 
   <!-- Stats -->
   <div class="stats" style="margin-top:28px">
-    <div class="stat-card"><div class="sn">7</div><div class="sl">מסמכי תיעוד</div></div>
+    <div class="stat-card"><div class="sn">8</div><div class="sl">מסמכי תיעוד</div></div>
     <div class="stat-card green"><div class="sn">20</div><div class="sl">מקרי בדיקה</div></div>
-    <div class="stat-card orange"><div class="sn">2</div><div class="sl">ממצאים / באגים</div></div>
+    <div class="stat-card orange"><div class="sn">3</div><div class="sl">ממצאים / באגים</div></div>
     <div class="stat-card red"><div class="sn">1</div><div class="sl">באג UX פתוח</div></div>
   </div>
 
@@ -384,6 +384,70 @@
       </a>
     </div>
 
+    <!-- 1b -->
+    <div class="tl-item">
+      <div class="tl-dot">1b</div>
+      <a class="doc-card" href="forbidden-chars-devtools.html">
+        <div class="card-top">
+          <div class="card-number">1b</div>
+          <div class="card-header">
+            <h2>בדיקת תווים אסורים — סקריפט DevTools</h2>
+            <div class="card-sub">forbidden-chars-devtools.html &nbsp;·&nbsp; 17 מרץ</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            סקריפט ממוקד לבדיקת כלל 5 (Negative Lookahead) בלבד — 13 תווים אסורים × 3 מיקומים.
+            39 מקרי בדיקה מוכנים, כולל טבלה מלאה עם הדגשת התו האסור בכל סיסמא.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-rules">כלל 5</span>
+            <span class="badge date">📅 17 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">13 תווים אסורים</span>
+            <span class="sec-tag">39 מקרי בדיקה</span>
+            <span class="sec-tag">DevTools</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 1c -->
+    <div class="tl-item">
+      <div class="tl-dot">1c</div>
+      <a class="doc-card" href="ui-feedback-devtools.html">
+        <div class="card-top">
+          <div class="card-number">1c</div>
+          <div class="card-header">
+            <h2>בדיקת חיווי UI — תווים אסורים</h2>
+            <div class="card-sub">ui-feedback-devtools.html &nbsp;·&nbsp; 17 מרץ</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            סקריפט שמדמה הקלדה של כל תו אסור בשדה הסיסמא ובודק אם הדף מציג הודעת שגיאה.
+            חייב לרוץ מתוך דף הסיסמא עצמו.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-rules">UX</span>
+            <span class="badge date">📅 17 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">חיווי UI</span>
+            <span class="sec-tag">DOM automation</span>
+            <span class="sec-tag">Angular events</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
   </div>
 
   <!-- ── Phase 2: First test run ── -->
@@ -453,6 +517,39 @@
             <span class="sec-tag">שאלות אבטחה</span>
             <span class="sec-tag">שלבי שחזור</span>
             <span class="sec-tag">חומרה</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3b -->
+    <div class="tl-item">
+      <div class="tl-dot red">3b</div>
+      <a class="doc-card" href="bug-report-ui-feedback.html">
+        <div class="card-top">
+          <div class="card-number red">3b</div>
+          <div class="card-header">
+            <h2>דוח ממצא — תווים אסורים ללא חיווי UI</h2>
+            <div class="card-sub">bug-report-ui-feedback.html &nbsp;·&nbsp; 18 מרץ</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            BUG-UI-001 — שני תווים אסורים (<code>'</code> ו-<code>-</code>) גורמים לדחיית הסיסמא
+            אך לא מוצגת למשתמש כל הודעת שגיאה. נמצא באמצעות סקריפט DevTools אוטומטי.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-bug">דוח ממצא</span>
+            <span class="badge" style="background:#e67e22; color:#fff;">Medium</span>
+            <span class="badge date">📅 18 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">UX Bug</span>
+            <span class="sec-tag">חיווי שגיאה</span>
+            <span class="sec-tag">APOSTROPHE · HYPHEN</span>
           </div>
           <span class="open-link">פתח ←</span>
         </div>
@@ -605,6 +702,46 @@
             <span class="sec-tag">כלל מספר זהות</span>
             <span class="sec-tag">SetPasswordAndActivate</span>
             <span class="sec-tag">המלצות המשך</span>
+          </div>
+          <span class="open-link">פתח ←</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ── Phase 5: QA Summary Report ── -->
+  <div class="section-title">שלב ה — דוח סיכום בדיקות</div>
+  <div class="timeline">
+
+    <!-- 8 -->
+    <div class="tl-item">
+      <div class="tl-dot green">8</div>
+      <a class="doc-card" href="summary-report.html">
+        <div class="card-top">
+          <div class="card-number green">8</div>
+          <div class="card-header">
+            <h2>דוח סיכום בדיקות — שאלות אבטחה ובחירת סיסמא</h2>
+            <div class="card-sub">summary-report.html &nbsp;·&nbsp; 18 מרץ</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">
+            דוח מסכם המיועד למנהלת הפרויקט — סקירת שלושת תחומי הבדיקה: שאלות אבטחה באיפוס סיסמא, שאלות אבטחה בשכחתי סיסמא, ובחירת סיסמא בשכחתי סיסמא.
+            כולל הגדרות כללי הרגקס, טבלאות תווים מותרים ואסורים, ותיאור הבאג המרכזי בשפה פשוטה.
+          </div>
+          <div class="card-meta">
+            <span class="badge type-results">דוח סיכום</span>
+            <span class="badge type-bug">באג גבוהה</span>
+            <span class="badge date">📅 18 מרץ</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="sections">
+            <span class="sec-tag">3 תחומים</span>
+            <span class="sec-tag">כללי רגקס</span>
+            <span class="sec-tag">חוסר עקביות</span>
+            <span class="sec-tag">למנהלת הפרויקט</span>
           </div>
           <span class="open-link">פתח ←</span>
         </div>

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<!--
+  forbidden-chars-devtools.html
+  ==============================
+  סקריפט DevTools — בדיקת תווים אסורים בלבד (כלל 5 ב-REGEX).
+  39 מקרי בדיקה: 13 תווים אסורים × 3 מיקומים (התחלה / אמצע / סוף).
+  הסקריפט מוכן להעתקה ישירה אל DevTools Console.
+-->
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>בדיקת תווים אסורים — סקריפט DevTools</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      padding: 28px 20px 60px;
+      line-height: 1.6;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1a3c6e 0%, #2563a8 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 32px 36px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 1.9rem; margin-bottom: 8px; }
+    .hero .sub { font-size: 0.95rem; opacity: 0.85; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 28px 30px;
+      margin-bottom: 28px;
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      color: #1a3c6e;
+      border-bottom: 2px solid #e0e7f3;
+      padding-bottom: 8px;
+      margin-bottom: 18px;
+    }
+    .card h3 {
+      font-size: 1.05rem;
+      color: #2563a8;
+      margin: 18px 0 10px;
+    }
+
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 10px;
+      padding: 18px 22px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.88rem;
+      overflow-x: auto;
+      white-space: pre;
+      direction: ltr;
+      text-align: left;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: #eef2ff;
+      color: #c0392b;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.9em;
+    }
+
+    .c-green  { color: #4ec9b0; }
+    .c-red    { color: #f44747; }
+    .c-yellow { color: #dcdcaa; }
+    .c-blue   { color: #569cd6; }
+    .c-str    { color: #ce9178; }
+    .c-cmt    { color: #6a9955; }
+    .c-orange { color: #ffa500; }
+    .c-purple { color: #c586c0; }
+
+    .char-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .char-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 90px;
+      min-height: 80px;
+      border-radius: 10px;
+      border: 2px solid #f44747;
+      background: #fff5f5;
+      cursor: default;
+      transition: transform .15s;
+    }
+    .char-tile:hover { transform: scale(1.07); box-shadow: 0 3px 10px rgba(244,71,71,.25); }
+    .char-tile .glyph { font-size: 1.8rem; font-family: monospace; color: #c0392b; font-weight: bold; }
+    .char-tile .name  { font-size: 0.65rem; color: #666; text-align: center; margin-top: 4px; padding: 0 4px; }
+    .char-tile .code  { font-size: 0.6rem; color: #aaa; }
+
+    .ex-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .ex-table th {
+      background: #1a3c6e;
+      color: #fff;
+      padding: 9px 12px;
+      text-align: right;
+      font-weight: 600;
+    }
+    .ex-table td { padding: 7px 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    .ex-table tr:last-child td { border-bottom: none; }
+    .ex-table tr.start td { background: #fff8f0; }
+    .ex-table tr.mid   td { background: #f8f0ff; }
+    .ex-table tr.end   td { background: #f0f8ff; }
+    .ex-table tr:hover td { filter: brightness(0.97); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 0.77rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .badge.fail  { background: #e74c3c; }
+    .badge.start { background: #e67e22; }
+    .badge.mid   { background: #8e44ad; }
+    .badge.end   { background: #2980b9; }
+
+    .pw-cell { font-family: monospace; font-size: 0.9rem; direction: ltr; text-align: left; }
+    .pw-cell .hl { color: #e74c3c; font-weight: bold; background: #ffe0e0; border-radius: 3px; padding: 0 2px; }
+
+    .info-box {
+      border-left: 5px solid #2563a8;
+      background: #eef5ff;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 0.91rem;
+    }
+    .info-box.warn   { border-color: #e67e22; background: #fff8ee; }
+    .info-box.danger { border-color: #e74c3c; background: #fff5f5; }
+    .info-box.ok     { border-color: #27ae60; background: #f0fff4; }
+    .info-box strong { display: block; margin-bottom: 4px; }
+
+    .devtools-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #23272e;
+      color: #fff;
+      border-radius: 10px 10px 0 0;
+      padding: 10px 18px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82rem;
+    }
+    .devtools-header .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .devtools-header .dot.r { background: #ff5f57; }
+    .devtools-header .dot.y { background: #ffbd2e; }
+    .devtools-header .dot.g { background: #28c840; }
+    .devtools-header .tab {
+      background: #2d3748;
+      border-radius: 4px 4px 0 0;
+      padding: 3px 12px;
+      font-size: 0.78rem;
+      color: #a0aec0;
+    }
+    .devtools-body {
+      background: #1e1e2e;
+      border-radius: 0 0 10px 10px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .steps { counter-reset: step; list-style: none; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+      align-items: flex-start;
+    }
+    .steps li::before {
+      content: counter(step);
+      min-width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #2563a8;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .steps li .body { flex: 1; }
+
+    .pos-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    .pos-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+
+    .copy-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 20px;
+      background: #2563a8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .copy-btn:hover { background: #1a3c6e; }
+    .copy-btn.copied { background: #27ae60; }
+
+    footer {
+      text-align: center;
+      color: #999;
+      font-size: 0.8rem;
+      margin-top: 40px;
+    }
+
+    .section-num {
+      display: inline-block;
+      background: #1a3c6e;
+      color: #fff;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      text-align: center;
+      line-height: 28px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>&#x26D4; בדיקת תווים אסורים בסיסמא</h1>
+  <p class="sub">
+    סקריפט ממוקד להרצה ב-<strong>DevTools Console</strong> — תווים אסורים בלבד (כלל 5)<br>
+    39 מקרי בדיקה: 13 תווים × 3 מיקומים (התחלה / אמצע / סוף)
+  </p>
+</div>
+
+<!-- סעיף 1 — רקע קצר -->
+<div class="card">
+  <h2><span class="section-num">1</span> מה בודקים ולמה</h2>
+
+  <p>
+    כלל 5 ב-REGEX של אימות הסיסמא הוא <strong>Negative Lookahead</strong>:
+  </p>
+
+  <div class="code-block"><span class="c-red">(?!.*[ ~`':^()_+\-=?])</span>
+  <span class="c-cmt">↑ אם כל תו מהרשימה מופיע בסיסמא — ה-REGEX מחזיר false</span></div>
+
+  <div class="info-box">
+    <strong>מה זה Negative Lookahead?</strong>
+    <code>(?!.*X)</code> — מסתכל קדימה <em>מבלי לצרוך תווים</em>. אם הוא מוצא את X
+    (כל תו מהרשימה האסורה) בכל מקום במחרוזת — הוא כושל מיד ומחזיר <code>false</code>.
+  </div>
+
+  <p>הסקריפט בדף זה בודק <strong>רק את כלל 5</strong> — ומוודא שכל אחד מ-13 התווים האסורים
+  גורם לכישלון, ללא קשר למיקומו בסיסמא.</p>
+
+  <div class="info-box warn">
+    <strong>שים לב — 13 תווים, לא 11</strong>
+    הספירה המדויקת מה-REGEX: רווח, ~, `, ', :, ^, (, ), _, +, -, =, ? — סה"כ <strong>13 תווים אסורים</strong>.
+  </div>
+</div>
+
+<!-- סעיף 2 — לוח התווים -->
+<div class="card">
+  <h2><span class="section-num">2</span> 13 התווים האסורים</h2>
+
+  <div class="char-grid">
+    <div class="char-tile">
+      <span class="glyph">&#x2423;</span>
+      <span class="name">SPACE<br>רווח</span>
+      <span class="code">U+0020</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">~</span>
+      <span class="name">TILDE<br>טילדה</span>
+      <span class="code">U+007E</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">`</span>
+      <span class="name">BACKTICK<br>גרש אחורי</span>
+      <span class="code">U+0060</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">'</span>
+      <span class="name">APOSTROPHE<br>גרש</span>
+      <span class="code">U+0027</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">:</span>
+      <span class="name">COLON<br>נקודתיים</span>
+      <span class="code">U+003A</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">^</span>
+      <span class="name">CARET<br>גג / כובע</span>
+      <span class="code">U+005E</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">(</span>
+      <span class="name">OPEN PAREN<br>סוגריים פתח</span>
+      <span class="code">U+0028</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">)</span>
+      <span class="name">CLOSE PAREN<br>סוגריים סגור</span>
+      <span class="code">U+0029</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">_</span>
+      <span class="name">UNDERSCORE<br>קו תחתי</span>
+      <span class="code">U+005F</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">+</span>
+      <span class="name">PLUS<br>פלוס</span>
+      <span class="code">U+002B</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">-</span>
+      <span class="name">HYPHEN<br>מינוס</span>
+      <span class="code">U+002D</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">=</span>
+      <span class="name">EQUALS<br>שווה</span>
+      <span class="code">U+003D</span>
+    </div>
+    <div class="char-tile">
+      <span class="glyph">?</span>
+      <span class="name">QUESTION<br>סימן שאלה</span>
+      <span class="code">U+003F</span>
+    </div>
+  </div>
+</div>
+
+<!-- סעיף 3 — בסיס הסיסמא התקינה -->
+<div class="card">
+  <h2><span class="section-num">3</span> בסיס הסיסמא לבדיקה</h2>
+
+  <p>
+    כדי לבדוק רק את כלל 5, כל שאר הכללים חייבים להתקיים. הסיסמא הבסיסית:
+  </p>
+
+  <div class="code-block"><span class="c-str">Abc1!Defgh</span>   <span class="c-cmt">// 10 תווים תקינים</span>
+
+<span class="c-cmt">// כלל 1 — אות גדולה:    A, D</span>  ✅
+<span class="c-cmt">// כלל 2 — אות קטנה:    b, c, e, f, g, h</span>  ✅
+<span class="c-cmt">// כלל 3 — ספרה:         1</span>  ✅
+<span class="c-cmt">// כלל 4 — תו מיוחד מותר: !</span>  ✅
+<span class="c-cmt">// כלל 5 — אין תו אסור</span>  ✅
+<span class="c-cmt">// אורך:  10 תווים</span>  ✅</div>
+
+  <p>לכל מקרי הבדיקה מוסיפים <strong>תו אסור אחד</strong> במיקום אחד מתוך שלושה:</p>
+
+  <div class="pos-legend">
+    <div class="pos-tag">
+      <span class="badge start">START</span>
+      <span>תו אסור + <code>Abc1!Defgh</code></span>
+    </div>
+    <div class="pos-tag">
+      <span class="badge mid">MID</span>
+      <span><code>Abc1!D</code> + תו אסור + <code>efgh</code></span>
+    </div>
+    <div class="pos-tag">
+      <span class="badge end">END</span>
+      <span><code>Abc1!Defgh</code> + תו אסור</span>
+    </div>
+  </div>
+
+  <div class="info-box ok">
+    <strong>מה צפוי בכל המקרים?</strong>
+    כולם אמורים להחזיר <code>false</code> — כלומר הסיסמא <strong>נדחית</strong>.
+    אם הסקריפט מחזיר <code>true</code> לאחד מהם — זה באג ב-REGEX.
+  </div>
+</div>
+
+<!-- סעיף 4 — הסקריפט -->
+<div class="card">
+  <h2><span class="section-num">4</span> הסקריפט — העתק והדבק ב-DevTools Console</h2>
+
+  <ul class="steps" style="margin-bottom: 16px;">
+    <li><div class="body">פתח DevTools: <kbd>F12</kbd> (Chrome / Edge / Firefox)</div></li>
+    <li><div class="body">לחץ על הלשונית <strong>Console</strong></div></li>
+    <li><div class="body">סמן את כל הסקריפט למטה, העתק (<kbd>Ctrl+C</kbd>), הדבק (<kbd>Ctrl+V</kbd>)</div></li>
+    <li><div class="body">לחץ <kbd>Enter</kbd> — הפלט מופיע מיד בצבעים</div></li>
+  </ul>
+
+  <button class="copy-btn" onclick="copyScript()">&#x1F4CB; העתק סקריפט</button>
+
+  <div class="devtools-header" style="margin-top: 14px;">
+    <div class="dot r"></div>
+    <div class="dot y"></div>
+    <div class="dot g"></div>
+    <span style="margin-right: 8px; opacity:.6;">DevTools</span>
+    <span class="tab">Console</span>
+  </div>
+  <div class="devtools-body">
+    <div class="code-block" id="scriptBlock" style="border-radius: 0 0 10px 10px; margin: 0;"><!-- ============================================================
+  בדיקת תווים אסורים — כלל 5 בלבד
+  39 מקרים: 13 תווים × 3 מיקומים (START / MID / END)
+  צפוי: כל מקרה מחזיר false (סיסמא נדחית)
+============================================================ -->
+
+<span class="c-cmt">// ה-REGEX המלא של אימות הסיסמא</span>
+<span class="c-blue">const</span> <span class="c-orange">REGEX</span> = <span class="c-red">/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%&amp;*,./;&lt;&gt;|{}\[\]"'\\])(?!.*[ ~`':^()_+\-=?]).{10,50}$/</span>;
+
+<span class="c-cmt">// 13 תווים אסורים (כלל 5 — Negative Lookahead)</span>
+<span class="c-blue">const</span> <span class="c-orange">FORBIDDEN</span> = [
+  { <span class="c-green">char</span>: <span class="c-str">' '</span>,  <span class="c-green">name</span>: <span class="c-str">'SPACE      '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'~'</span>,  <span class="c-green">name</span>: <span class="c-str">'TILDE      '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'`'</span>,  <span class="c-green">name</span>: <span class="c-str">'BACKTICK   '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">"'"</span>,  <span class="c-green">name</span>: <span class="c-str">'APOSTROPHE '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">':'</span>,  <span class="c-green">name</span>: <span class="c-str">'COLON      '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'^'</span>,  <span class="c-green">name</span>: <span class="c-str">'CARET      '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'('</span>,  <span class="c-green">name</span>: <span class="c-str">'OPEN_PAREN '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">')'</span>,  <span class="c-green">name</span>: <span class="c-str">'CLOSE_PAREN'</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'_'</span>,  <span class="c-green">name</span>: <span class="c-str">'UNDERSCORE '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'+'</span>,  <span class="c-green">name</span>: <span class="c-str">'PLUS       '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'-'</span>,  <span class="c-green">name</span>: <span class="c-str">'HYPHEN     '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'='</span>,  <span class="c-green">name</span>: <span class="c-str">'EQUALS     '</span> },
+  { <span class="c-green">char</span>: <span class="c-str">'?'</span>,  <span class="c-green">name</span>: <span class="c-str">'QUESTION   '</span> },
+];
+
+<span class="c-cmt">// בסיס סיסמא תקינה (עומד בכל הכללים חוץ מכלל 5)</span>
+<span class="c-blue">const</span> <span class="c-orange">BASE</span>     = <span class="c-str">'Abc1!Defgh'</span>;  <span class="c-cmt">// 10 תווים: אות גדולה, קטנה, ספרה, תו מותר</span>
+<span class="c-blue">const</span> <span class="c-orange">BASE_L</span>   = <span class="c-str">'Abc1!D'</span>;     <span class="c-cmt">// חצי שמאלי (לבדיקות MID)</span>
+<span class="c-blue">const</span> <span class="c-orange">BASE_R</span>   = <span class="c-str">'efgh'</span>;       <span class="c-cmt">// חצי ימני  (לבדיקות MID)</span>
+
+<span class="c-cmt">// בניית 39 מקרי בדיקה: START / MID / END לכל תו אסור</span>
+<span class="c-blue">const</span> <span class="c-orange">cases</span> = [];
+<span class="c-purple">for</span> (<span class="c-blue">const</span> { char, name } <span class="c-purple">of</span> <span class="c-orange">FORBIDDEN</span>) {
+  cases.push({ pos: <span class="c-str">'START'</span>, name, pw: char + <span class="c-orange">BASE</span>            });
+  cases.push({ pos: <span class="c-str">'MID  '</span>, name, pw: <span class="c-orange">BASE_L</span> + char + <span class="c-orange">BASE_R</span> });
+  cases.push({ pos: <span class="c-str">'END  '</span>, name, pw: <span class="c-orange">BASE</span> + char            });
+}
+
+<span class="c-cmt">// הרצה — כל מקרה צפוי להחזיר false</span>
+console.log(<span class="c-str">'%c=== בדיקת תווים אסורים (כלל 5) — 39 מקרים ==='</span>,
+  <span class="c-str">'font-weight:bold; font-size:14px; color:#c0392b'</span>);
+
+<span class="c-blue">let</span> ok = <span class="c-str">0</span>, bug = <span class="c-str">0</span>;
+
+<span class="c-purple">for</span> (<span class="c-blue">const</span> { pos, name, pw } <span class="c-purple">of</span> <span class="c-orange">cases</span>) {
+  <span class="c-blue">const</span> result   = <span class="c-orange">REGEX</span>.test(pw);   <span class="c-cmt">// false = נדחית (צפוי)</span>
+  <span class="c-blue">const</span> correct  = result === <span class="c-purple">false</span>;   <span class="c-cmt">// true אם הבדיקה עברה</span>
+  correct ? ok++ : bug++;
+
+  console.log(
+    <span class="c-str">`%c${correct ? '✅ OK ' : '❌ BUG'} [${pos}] ${name} | "${pw}"`</span>,
+    correct ? <span class="c-str">'color:#27ae60'</span> : <span class="c-str">'color:#e74c3c; font-weight:bold'</span>
+  );
+}
+
+console.log(<span class="c-str">`\n%c📊 ${ok}/39 נכון  |  באגים: ${bug}`</span>,
+  bug === <span class="c-str">0</span>
+    ? <span class="c-str">'color:#27ae60; font-weight:bold; font-size:13px'</span>
+    : <span class="c-str">'color:#e74c3c; font-weight:bold; font-size:13px'</span>
+);</div>
+  </div>
+</div>
+
+<!-- סעיף 5 — טבלת 39 מקרי הבדיקה -->
+<div class="card">
+  <h2><span class="section-num">5</span> 39 מקרי הבדיקה — רשימה מלאה</h2>
+
+  <div class="pos-legend" style="margin-bottom:14px;">
+    <div class="pos-tag"><span class="badge start">START</span><span>תו אסור בתחילת הסיסמא</span></div>
+    <div class="pos-tag"><span class="badge mid">MID</span><span>תו אסור באמצע הסיסמא</span></div>
+    <div class="pos-tag"><span class="badge end">END</span><span>תו אסור בסוף הסיסמא</span></div>
+    <div class="pos-tag"><span class="badge fail">FAIL</span><span>תוצאה צפויה — נדחית</span></div>
+  </div>
+
+  <table class="ex-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>תו</th>
+        <th>שם</th>
+        <th>מיקום</th>
+        <th>סיסמא לבדיקה</th>
+        <th>צפוי</th>
+      </tr>
+    </thead>
+    <tbody id="casesTable"></tbody>
+  </table>
+</div>
+
+<!-- סעיף 6 — איך לקרוא את הפלט -->
+<div class="card">
+  <h2><span class="section-num">6</span> איך לקרוא את פלט ה-Console</h2>
+
+  <div class="code-block"><span class="c-green">✅ OK  [START] SPACE       | " Abc1!Defgh"</span>
+<span class="c-green">✅ OK  [MID  ] SPACE       | "Abc1!D efgh"</span>
+<span class="c-green">✅ OK  [END  ] SPACE       | "Abc1!Defgh "</span>
+<span class="c-green">✅ OK  [START] TILDE       | "~Abc1!Defgh"</span>
+<span class="c-cmt">...</span>
+<span class="c-green">✅ OK  [END  ] QUESTION    | "Abc1!Defgh?"</span>
+
+<span class="c-green">📊 39/39 נכון  |  באגים: 0</span></div>
+
+  <div class="info-box ok">
+    <strong>39/39 ירוק = כלל 5 עובד נכון</strong>
+    כל תו אסור, בכל מיקום, גרם לדחיית הסיסמא — הרגקס מתנהג כמצופה.
+  </div>
+
+  <div class="info-box danger">
+    <strong>אם מופיע ❌ BUG — מה לעשות?</strong>
+    תו מסוים לא נחסם. בדוק:<br>
+    1. האם ה-REGEX בקוד שלך זהה לרגקס בסקריפט?<br>
+    2. האם ה-character class <code>[ ~`':^()_+\-=?]</code> שלם?<br>
+    3. האם <code>-</code> נמצא בין תווים אחרים ומתפרש כ-range?
+  </div>
+</div>
+
+<footer>
+  <p>auth-validation · בדיקת תווים אסורים — כלל 5 · 2026</p>
+</footer>
+
+<script>
+// ---- בניית טבלת 39 מקרים ----
+const FORBIDDEN_DATA = [
+  { char: ' ',  name: 'SPACE',       code: 'U+0020' },
+  { char: '~',  name: 'TILDE',       code: 'U+007E' },
+  { char: '`',  name: 'BACKTICK',    code: 'U+0060' },
+  { char: "'",  name: 'APOSTROPHE',  code: 'U+0027' },
+  { char: ':',  name: 'COLON',       code: 'U+003A' },
+  { char: '^',  name: 'CARET',       code: 'U+005E' },
+  { char: '(',  name: 'OPEN PAREN',  code: 'U+0028' },
+  { char: ')',  name: 'CLOSE PAREN', code: 'U+0029' },
+  { char: '_',  name: 'UNDERSCORE',  code: 'U+005F' },
+  { char: '+',  name: 'PLUS',        code: 'U+002B' },
+  { char: '-',  name: 'HYPHEN',      code: 'U+002D' },
+  { char: '=',  name: 'EQUALS',      code: 'U+003D' },
+  { char: '?',  name: 'QUESTION',    code: 'U+003F' },
+];
+
+const BASE   = 'Abc1!Defgh';
+const BASE_L = 'Abc1!D';
+const BASE_R = 'efgh';
+
+const tbody = document.getElementById('casesTable');
+let idx = 0;
+
+for (const { char, name, code } of FORBIDDEN_DATA) {
+  const positions = [
+    { pos: 'START', cls: 'start', badge: 'start', pw: char + BASE,            hlPos: 0 },
+    { pos: 'MID',   cls: 'mid',   badge: 'mid',   pw: BASE_L + char + BASE_R, hlPos: BASE_L.length },
+    { pos: 'END',   cls: 'end',   badge: 'end',   pw: BASE + char,            hlPos: BASE.length },
+  ];
+
+  for (const { pos, cls, badge, pw, hlPos } of positions) {
+    idx++;
+    // סמן את התו האסור בתוך הסיסמא
+    const display = char === ' '
+      ? pw.slice(0, hlPos) + '<span class="hl">&#x2423;</span>' + pw.slice(hlPos + 1)
+      : pw.slice(0, hlPos) + '<span class="hl">' + escHtml(char) + '</span>' + pw.slice(hlPos + 1);
+
+    const tr = document.createElement('tr');
+    tr.className = cls;
+    tr.innerHTML = `
+      <td>${idx}</td>
+      <td style="font-family:monospace; font-size:1.1rem; color:#c0392b; font-weight:bold;">
+        ${char === ' ' ? '&#x2423;' : escHtml(char)}
+        <span style="font-size:0.65rem; color:#999; display:block;">${code}</span>
+      </td>
+      <td>${name}</td>
+      <td><span class="badge ${badge}">${pos}</span></td>
+      <td class="pw-cell" dir="ltr">${display}</td>
+      <td><span class="badge fail">FAIL</span></td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ---- כפתור העתקה ----
+const SCRIPT_TO_COPY = `// ============================================================
+//  בדיקת תווים אסורים — כלל 5 בלבד
+//  39 מקרים: 13 תווים × 3 מיקומים (START / MID / END)
+//  צפוי: כל מקרה מחזיר false (סיסמא נדחית)
+// ============================================================
+
+// ה-REGEX המלא של אימות הסיסמא
+const REGEX = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%&*,./;<>|{}\\[\\]"'\\\\])(?!.*[ ~\`':^()_+\\-=?]).{10,50}$/;
+
+// 13 תווים אסורים (כלל 5 — Negative Lookahead)
+const FORBIDDEN = [
+  { char: ' ',  name: 'SPACE      ' },
+  { char: '~',  name: 'TILDE      ' },
+  { char: '\`',  name: 'BACKTICK   ' },
+  { char: "'",  name: 'APOSTROPHE ' },
+  { char: ':',  name: 'COLON      ' },
+  { char: '^',  name: 'CARET      ' },
+  { char: '(',  name: 'OPEN_PAREN ' },
+  { char: ')',  name: 'CLOSE_PAREN' },
+  { char: '_',  name: 'UNDERSCORE ' },
+  { char: '+',  name: 'PLUS       ' },
+  { char: '-',  name: 'HYPHEN     ' },
+  { char: '=',  name: 'EQUALS     ' },
+  { char: '?',  name: 'QUESTION   ' },
+];
+
+// בסיס סיסמא תקינה (עומד בכל הכללים חוץ מכלל 5)
+const BASE   = 'Abc1!Defgh';  // 10 תווים: אות גדולה, קטנה, ספרה, תו מותר
+const BASE_L = 'Abc1!D';     // חצי שמאלי (לבדיקות MID)
+const BASE_R = 'efgh';       // חצי ימני  (לבדיקות MID)
+
+// בניית 39 מקרי בדיקה: START / MID / END לכל תו אסור
+const cases = [];
+for (const { char, name } of FORBIDDEN) {
+  cases.push({ pos: 'START', name, pw: char + BASE            });
+  cases.push({ pos: 'MID  ', name, pw: BASE_L + char + BASE_R });
+  cases.push({ pos: 'END  ', name, pw: BASE + char            });
+}
+
+// הרצה — כל מקרה צפוי להחזיר false
+console.log('%c=== בדיקת תווים אסורים (כלל 5) — 39 מקרים ===',
+  'font-weight:bold; font-size:14px; color:#c0392b');
+
+let ok = 0, bug = 0;
+
+for (const { pos, name, pw } of cases) {
+  const result   = REGEX.test(pw);   // false = נדחית (צפוי)
+  const correct  = result === false;  // true אם הבדיקה עברה
+  correct ? ok++ : bug++;
+
+  console.log(
+    \`%c\${correct ? '✅ OK ' : '❌ BUG'} [\${pos}] \${name} | "\${pw}"\`,
+    correct ? 'color:#27ae60' : 'color:#e74c3c; font-weight:bold'
+  );
+}
+
+console.log(\`\\n%c📊 \${ok}/39 נכון  |  באגים: \${bug}\`,
+  bug === 0
+    ? 'color:#27ae60; font-weight:bold; font-size:13px'
+    : 'color:#e74c3c; font-weight:bold; font-size:13px'
+);`;
+
+function copyScript() {
+  navigator.clipboard.writeText(SCRIPT_TO_COPY).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅ הועתק!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 העתק סקריפט';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

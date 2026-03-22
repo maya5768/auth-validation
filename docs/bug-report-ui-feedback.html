@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<!--
+  bug-report-ui-feedback.html
+  ============================
+  דוח ממצא: תווים אסורים ללא חיווי UI למשתמש
+  APOSTROPHE (') ו-HYPHEN (-) — הסיסמא נדחית אך לא מוצגת הודעת שגיאה
+-->
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>דוח ממצא — תווים אסורים ללא חיווי UI</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; padding: 0; }
+      .card { box-shadow: none; }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      padding: 28px 20px 60px;
+      line-height: 1.6;
+    }
+
+    /* ---- Hero ---- */
+    .hero {
+      background: linear-gradient(135deg, #7b2d2d 0%, #c0392b 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 32px 36px;
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .hero h1 { font-size: 1.8rem; margin-bottom: 8px; }
+    .hero .sub { font-size: 0.93rem; opacity: 0.88; }
+    .bug-id-badge {
+      position: absolute;
+      top: 20px;
+      left: 24px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-family: monospace;
+    }
+
+    /* ---- Cards ---- */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 26px 30px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 1.15rem;
+      color: #1a3c6e;
+      border-bottom: 2px solid #e0e7f3;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* ---- Meta grid ---- */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .meta-item {
+      background: #f7f9ff;
+      border: 1px solid #d0daf5;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .meta-item .label {
+      font-size: 0.72rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    .meta-item .value {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #1a3c6e;
+    }
+    .meta-item .value.red  { color: #c0392b; }
+    .meta-item .value.orange { color: #e67e22; }
+    .meta-item .value.green  { color: #27ae60; }
+
+    /* ---- Summary boxes ---- */
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 14px 0;
+    }
+    @media(max-width:600px) { .summary-row { grid-template-columns: 1fr; } }
+    .sum-box {
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: center;
+    }
+    .sum-box.ok   { background: #f0fff4; border: 2px solid #27ae60; }
+    .sum-box.fail { background: #fff5f5; border: 2px solid #e74c3c; }
+    .sum-box .num  { font-size: 2.4rem; font-weight: bold; line-height: 1; }
+    .sum-box .desc { font-size: 0.83rem; color: #555; margin-top: 4px; }
+    .sum-box.ok   .num { color: #27ae60; }
+    .sum-box.fail .num { color: #e74c3c; }
+
+    /* ---- Main findings table ---- */
+    .findings-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .findings-table th {
+      background: #1a3c6e;
+      color: #fff;
+      padding: 9px 12px;
+      text-align: right;
+      font-weight: 600;
+    }
+    .findings-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+    .findings-table tr:last-child td { border-bottom: none; }
+    .findings-table tr.ok-row   td { background: #f0fff4; }
+    .findings-table tr.bug-row  td { background: #fff5f5; }
+    .findings-table tr:hover td { filter: brightness(0.97); }
+
+    .char-display {
+      font-family: monospace;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #c0392b;
+    }
+
+    /* ---- Badges ---- */
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: bold;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .badge.ok      { background: #27ae60; }
+    .badge.bug     { background: #e74c3c; }
+    .badge.warn    { background: #e67e22; }
+    .badge.info    { background: #2563a8; }
+    .badge.sev-med { background: #e67e22; }
+    .badge.sev-low { background: #f1c40f; color: #333; }
+
+    /* ---- Info boxes ---- */
+    .info-box {
+      border-left: 5px solid #2563a8;
+      background: #eef5ff;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 0.9rem;
+    }
+    .info-box.warn   { border-color: #e67e22; background: #fff8ee; }
+    .info-box.danger { border-color: #e74c3c; background: #fff5f5; }
+    .info-box.ok     { border-color: #27ae60; background: #f0fff4; }
+    .info-box strong { display: block; margin-bottom: 5px; }
+
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: #eef2ff;
+      color: #c0392b;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.9em;
+    }
+
+    /* ---- Console output simulation ---- */
+    .console-sim {
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.84rem;
+      direction: ltr;
+      text-align: left;
+      margin: 12px 0;
+      line-height: 1.8;
+    }
+    .con-ok   { color: #4ec9b0; }
+    .con-bug  { color: #f44747; font-weight: bold; }
+    .con-warn { color: #ffa500; }
+    .con-gray { color: #6a9955; }
+    .con-sub  { color: #ce9178; padding-left: 20px; display: block; }
+    .con-sum  { color: #569cd6; font-weight: bold; }
+
+    /* ---- Steps ---- */
+    .steps { list-style: none; counter-reset: s; }
+    .steps li {
+      counter-increment: s;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+    .steps li::before {
+      content: counter(s);
+      min-width: 26px; height: 26px;
+      border-radius: 50%;
+      background: #c0392b;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    /* ---- Section number ---- */
+    .sec-num {
+      display: inline-block;
+      background: #c0392b;
+      color: #fff;
+      border-radius: 50%;
+      width: 26px; height: 26px;
+      text-align: center;
+      line-height: 26px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+
+    /* ---- Action buttons ---- */
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .btn {
+      padding: 9px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn.print { background: #1a3c6e; color: #fff; }
+    .btn.pdf   { background: #c0392b; color: #fff; }
+
+    footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.78rem;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="bug-id-badge no-print">BUG-UI-001</div>
+  <h1>&#x26A0;&#xFE0F; ממצא: תווים אסורים ללא חיווי UI</h1>
+  <p class="sub">
+    שני תווים אסורים גורמים לדחיית הסיסמא — אך המשתמש אינו מקבל הודעת שגיאה ברורה<br>
+    מערכת ההזדהות של משרד הבריאות · הגדרת סיסמא חדשה
+  </p>
+</div>
+
+<!-- כפתורים -->
+<div class="action-bar no-print">
+  <button class="btn print" onclick="window.print()">&#x1F5A8; הדפסה</button>
+  <button class="btn pdf"   onclick="exportPDF()">&#x1F4C4; ייצוא PDF</button>
+</div>
+
+<!-- סעיף 1 — פרטי הממצא -->
+<div class="card">
+  <h2><span class="sec-num">1</span> פרטי הממצא</h2>
+  <div class="meta-grid">
+    <div class="meta-item">
+      <div class="label">מזהה ממצא</div>
+      <div class="value">BUG-UI-001</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">תאריך גילוי</div>
+      <div class="value">18 מרץ 2026</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">חומרה</div>
+      <div class="value orange">Medium</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">סטטוס</div>
+      <div class="value red">פתוח</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">רכיב</div>
+      <div class="value">הגדרת סיסמא חדשה</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">סביבה</div>
+      <div class="value">Production</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">שיטת גילוי</div>
+      <div class="value">DevTools Automation</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">דפדפן</div>
+      <div class="value">Chrome</div>
+    </div>
+  </div>
+</div>
+
+<!-- סעיף 2 — תיאור הממצא -->
+<div class="card">
+  <h2><span class="sec-num">2</span> תיאור הממצא</h2>
+
+  <p style="margin-bottom:14px;">
+    בדף הגדרת הסיסמא, ה-REGEX אוסר שימוש ב-13 תווים מיוחדים (כלל 5 — Negative Lookahead).
+    כאשר משתמש מקליד אחד מהתווים האסורים, הסיסמא נדחית אוטומטית.
+  </p>
+  <p style="margin-bottom:14px;">
+    עבור 11 מתוך 13 התווים — מוצגת הודעת שגיאה ברורה: <strong>"סיסמה לא חוקית"</strong>.<br>
+    עבור <strong>2 תווים בלבד</strong> — הסיסמא נדחית אך <strong>לא מוצגת כל הודעת שגיאה</strong> למשתמש.
+  </p>
+
+  <div class="summary-row">
+    <div class="sum-box ok">
+      <div class="num">11</div>
+      <div class="desc">תווים אסורים שמציגים<br><strong>"סיסמה לא חוקית"</strong></div>
+    </div>
+    <div class="sum-box fail">
+      <div class="num">2</div>
+      <div class="desc">תווים אסורים שדוחים<br><strong>ללא כל הודעה למשתמש</strong></div>
+    </div>
+  </div>
+
+  <div class="info-box danger">
+    <strong>התווים הבעייתיים</strong>
+    <code>'</code> &nbsp;APOSTROPHE (גרש, U+0027)
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <code>-</code> &nbsp;HYPHEN (מינוס, U+002D)
+  </div>
+</div>
+
+<!-- סעיף 3 — טבלה מלאה -->
+<div class="card">
+  <h2><span class="sec-num">3</span> תוצאות בדיקה — כל 13 התווים האסורים</h2>
+
+  <table class="findings-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>תו</th>
+        <th>שם</th>
+        <th>Unicode</th>
+        <th>סיסמא שנבדקה</th>
+        <th>REGEX דחה?</th>
+        <th>הודעת שגיאה?</th>
+        <th>סטטוס</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="ok-row">
+        <td>1</td>
+        <td><span class="char-display">&#x2423;</span></td>
+        <td>SPACE</td>
+        <td>U+0020</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh&nbsp;"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>2</td>
+        <td><span class="char-display">~</span></td>
+        <td>TILDE</td>
+        <td>U+007E</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh~"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>3</td>
+        <td><span class="char-display">`</span></td>
+        <td>BACKTICK</td>
+        <td>U+0060</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh`"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="bug-row">
+        <td>4</td>
+        <td><span class="char-display">'</span></td>
+        <td><strong>APOSTROPHE</strong></td>
+        <td>U+0027</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh'"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge bug">לא</span></td>
+        <td><span class="badge bug">&#x26A0; ממצא</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>5</td>
+        <td><span class="char-display">:</span></td>
+        <td>COLON</td>
+        <td>U+003A</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh:"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>6</td>
+        <td><span class="char-display">^</span></td>
+        <td>CARET</td>
+        <td>U+005E</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh^"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>7</td>
+        <td><span class="char-display">(</span></td>
+        <td>OPEN PAREN</td>
+        <td>U+0028</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh("</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>8</td>
+        <td><span class="char-display">)</span></td>
+        <td>CLOSE PAREN</td>
+        <td>U+0029</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh)"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>9</td>
+        <td><span class="char-display">_</span></td>
+        <td>UNDERSCORE</td>
+        <td>U+005F</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh_"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>10</td>
+        <td><span class="char-display">+</span></td>
+        <td>PLUS</td>
+        <td>U+002B</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh+"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="bug-row">
+        <td>11</td>
+        <td><span class="char-display">-</span></td>
+        <td><strong>HYPHEN</strong></td>
+        <td>U+002D</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh-"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge bug">לא</span></td>
+        <td><span class="badge bug">&#x26A0; ממצא</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>12</td>
+        <td><span class="char-display">=</span></td>
+        <td>EQUALS</td>
+        <td>U+003D</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh="</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+      <tr class="ok-row">
+        <td>13</td>
+        <td><span class="char-display">?</span></td>
+        <td>QUESTION</td>
+        <td>U+003F</td>
+        <td dir="ltr" style="font-family:monospace;">"Abc1!Defgh?"</td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge ok">כן</span></td>
+        <td><span class="badge info">תקין</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- סעיף 4 — השוואת התנהגות -->
+<div class="card">
+  <h2><span class="sec-num">4</span> השוואה: התנהגות צפויה מול בפועל</h2>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:14px 0;">
+    <div style="background:#f0fff4; border:1px solid #a9dfbf; border-radius:8px; padding:16px;">
+      <strong style="color:#1e8449; display:block; margin-bottom:10px;">✅ 11 תווים — התנהגות תקינה</strong>
+      <ol style="padding-right:18px; font-size:0.87rem; line-height:1.9;">
+        <li>משתמש מקליד תו אסור (כגון <code>~</code>)</li>
+        <li>REGEX מחזיר <code>false</code></li>
+        <li>מוצגת: <strong>"סיסמה לא חוקית"</strong></li>
+        <li>משתמש מבין מה הבעיה ומתקן</li>
+      </ol>
+    </div>
+    <div style="background:#fff5f5; border:1px solid #f1948a; border-radius:8px; padding:16px;">
+      <strong style="color:#c0392b; display:block; margin-bottom:10px;">⚠️ 2 תווים — התנהגות בעייתית</strong>
+      <ol style="padding-right:18px; font-size:0.87rem; line-height:1.9;">
+        <li>משתמש מקליד <code>'</code> או <code>-</code></li>
+        <li>REGEX מחזיר <code>false</code></li>
+        <li><strong>אין הודעת שגיאה</strong></li>
+        <li>משתמש לוחץ "שמור" — הפעולה נכשלת ללא הסבר</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="info-box warn">
+    <strong>הבדל מעניין — מדוע דווקא ' ו- - ?</strong>
+    שני התווים האלה שימושיים מאוד בסיסמאות יומיומיות:
+    <code>-</code> (מינוס) — נפוץ מאוד בסיסמאות כגון <code>Pass-2024</code>,
+    <code>'</code> (גרש) — נפוץ בשמות כגון <code>O'Brien1!</code>.
+    סביר שמשתמשים רבים ינסו דווקא תווים אלה.
+  </div>
+</div>
+
+<!-- סעיף 5 — פלט הסקריפט -->
+<div class="card">
+  <h2><span class="sec-num">5</span> פלט סקריפט הבדיקה (DevTools)</h2>
+  <p style="margin-bottom:12px; font-size:0.88rem; color:#555;">הסקריפט <code>ui-feedback-devtools.html</code> הריץ 13 מקרים אוטומטית:</p>
+
+  <div class="console-sim">
+<span class="con-warn">=== בדיקת חיווי UI — תווים אסורים ===</span>
+
+<span class="con-ok">💬 יש הודעה | SPACE       | "Abc1!Defgh "</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | TILDE       | "Abc1!Defgh~"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | BACKTICK    | "Abc1!Defgh`"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-bug">💬 יש הודעה | APOSTROPHE  | "Abc1!Defgh'"  ← false positive</span>
+<span class="con-sub" style="color:#f44747;">↳ "אימות סיסמה חדשה"  ← שם שדה, לא הודעת שגיאה!</span>
+<span class="con-ok">💬 יש הודעה | COLON       | "Abc1!Defgh:"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | CARET       | "Abc1!Defgh^"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | OPEN_PAREN  | "Abc1!Defgh("</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | CLOSE_PAREN | "Abc1!Defgh)"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | UNDERSCORE  | "Abc1!Defgh_"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | PLUS        | "Abc1!Defgh+"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-bug">💬 יש הודעה | HYPHEN      | "Abc1!Defgh-"  ← false positive</span>
+<span class="con-sub" style="color:#f44747;">↳ "אימות סיסמה חדשה"  ← שם שדה, לא הודעת שגיאה!</span>
+<span class="con-ok">💬 יש הודעה | EQUALS      | "Abc1!Defgh="</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+<span class="con-ok">💬 יש הודעה | QUESTION    | "Abc1!Defgh?"</span>
+<span class="con-sub">↳ "סיסמה לא חוקית"</span>
+
+<span class="con-sum">📊 13 תווים עם הודעה | 0 תווים ללא הודעה</span>
+<span class="con-sub" style="color:#6a9955;">↑ הסקריפט ספר 13 כי תפס את שם השדה כ"הודעה" (false positive)</span>
+<span class="con-sub" style="color:#f44747;">↑ בפועל: 11 עם הודעת שגיאה אמיתית, 2 ללא ("אימות סיסמה חדשה" = label)</span>
+  </div>
+
+  <div class="info-box">
+    <strong>הערת False Positive</strong>
+    הסקריפט סיפר 13/13 כי הוא תפס את label השדה "אימות סיסמה חדשה" כהודעה.
+    הניתוח הידני של הפלט חשף שעבור <code>'</code> ו-<code>-</code> — הטקסט שנתפס הוא
+    שם שדה ולא הודעת שגיאה. זהו הממצא האמיתי.
+  </div>
+</div>
+
+<!-- סעיף 6 — השפעה על המשתמש -->
+<div class="card">
+  <h2><span class="sec-num">6</span> השפעה על חוויית המשתמש</h2>
+
+  <div style="font-size:0.9rem; line-height:1.9;">
+    <p style="margin-bottom:10px;">
+      <strong>תרחיש:</strong> משתמש מנסה להגדיר סיסמא כגון <code>MyPass-2024!</code> או <code>It'sSecure1!</code>
+    </p>
+    <ul style="padding-right:20px; margin-bottom:14px;">
+      <li>הסיסמא נדחית על ידי ה-REGEX</li>
+      <li>לא מוצגת כל הודעת שגיאה ספציפית</li>
+      <li>כפתור "שמור" נשאר מושבת ללא הסבר</li>
+      <li>המשתמש אינו יודע מה הבעיה ועלול לנסות שוב ושוב</li>
+    </ul>
+
+    <div class="info-box danger">
+      <strong>השפעה פרקטית</strong>
+      מינוס (<code>-</code>) הוא אחד התווים הנפוצים ביותר בסיסמאות.
+      משתמשים רבים שינסו ליצור סיסמא עם מינוס יתקלו בכשל שקט —
+      ללא כל הסבר מדוע הסיסמא שלהם לא מתקבלת.
+    </div>
+  </div>
+</div>
+
+<!-- סעיף 7 — צעדי שחזור -->
+<div class="card">
+  <h2><span class="sec-num">7</span> שחזור הממצא</h2>
+  <ul class="steps">
+    <li>פתח את דף הגדרת הסיסמא באתר</li>
+    <li>הקלד בשדה "סיסמא חדשה": <code>Abc1!Defgh-</code></li>
+    <li>לחץ Tab (blur) לצאת מהשדה</li>
+    <li>
+      <strong>תוצאה בפועל:</strong> לא מוצגת הודעת "סיסמה לא חוקית"<br>
+      <strong>תוצאה צפויה:</strong> הצגת הודעת שגיאה ברורה
+    </li>
+    <li>חזור על הבדיקה עם: <code>Abc1!Defgh'</code></li>
+  </ul>
+</div>
+
+<!-- סעיף 8 — המלצה לתיקון -->
+<div class="card">
+  <h2><span class="sec-num">8</span> המלצה לתיקון</h2>
+
+  <p style="margin-bottom:14px; font-size:0.9rem;">
+    יש לוודא שה-validation handler בצד הלקוח מפעיל הודעת שגיאה עבור
+    <strong>כל</strong> 13 התווים האסורים, ללא יוצא מן הכלל.
+  </p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+    <div style="background:#fff5f5; border:1px solid #f1948a; border-radius:8px; padding:14px; font-size:0.85rem;">
+      <strong style="color:#c0392b; display:block; margin-bottom:6px;">בעיה אפשרית בקוד</strong>
+      ה-validation message מופעל רק כאשר REGEX מחזיר false
+      <em>וגם</em> התו נמצא ב-character class של הודעת השגיאה —
+      ו-<code>'</code> ו-<code>-</code> חסרים מהרשימה הזו.
+    </div>
+    <div style="background:#f0fff4; border:1px solid #a9dfbf; border-radius:8px; padding:14px; font-size:0.85rem;">
+      <strong style="color:#1e8449; display:block; margin-bottom:6px;">פתרון מומלץ</strong>
+      הפרד את לוגיקת ה-validation message מה-REGEX הראשי:
+      אם <code>REGEX.test(pw) === false</code> → הצג תמיד "סיסמה לא חוקית",
+      ללא תלות בתו הספציפי.
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>auth-validation · BUG-UI-001 · 18 מרץ 2026 · Maya Dorani</p>
+</footer>
+
+<script>
+function exportPDF() {
+  const el = document.body;
+  const opt = {
+    margin:      [10, 10, 10, 10],
+    filename:    'BUG-UI-001-ui-feedback.pdf',
+    image:       { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(el).save();
+}
+</script>
+</body>
+</html>

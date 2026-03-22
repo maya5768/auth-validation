@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<!--
+  ui-feedback-devtools.html
+  ==========================
+  סקריפט DevTools — בדיקת חיווי UI לתווים אסורים.
+  בודק אם הדף מציג הודעת שגיאה כשמוקלד כל אחד מ-13 התווים האסורים.
+  חייב לרוץ מתוך הדף של הגדרת הסיסמא (לא בדף אחר).
+-->
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>בדיקת חיווי UI — תווים אסורים</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      padding: 28px 20px 60px;
+      line-height: 1.6;
+    }
+    .hero {
+      background: linear-gradient(135deg, #7b2d2d 0%, #c0392b 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 32px 36px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .hero h1 { font-size: 1.9rem; margin-bottom: 8px; }
+    .hero .sub { font-size: 0.95rem; opacity: 0.85; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 28px 30px;
+      margin-bottom: 28px;
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      color: #1a3c6e;
+      border-bottom: 2px solid #e0e7f3;
+      padding-bottom: 8px;
+      margin-bottom: 18px;
+    }
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 10px;
+      padding: 18px 22px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.88rem;
+      overflow-x: auto;
+      white-space: pre;
+      direction: ltr;
+      text-align: left;
+      margin: 12px 0;
+      line-height: 1.7;
+    }
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: #eef2ff;
+      color: #c0392b;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.9em;
+    }
+    .c-green  { color: #4ec9b0; }
+    .c-red    { color: #f44747; }
+    .c-yellow { color: #dcdcaa; }
+    .c-blue   { color: #569cd6; }
+    .c-str    { color: #ce9178; }
+    .c-cmt    { color: #6a9955; }
+    .c-orange { color: #ffa500; }
+    .c-purple { color: #c586c0; }
+    .info-box {
+      border-left: 5px solid #2563a8;
+      background: #eef5ff;
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 0.91rem;
+    }
+    .info-box.warn   { border-color: #e67e22; background: #fff8ee; }
+    .info-box.danger { border-color: #e74c3c; background: #fff5f5; }
+    .info-box.ok     { border-color: #27ae60; background: #f0fff4; }
+    .info-box strong { display: block; margin-bottom: 4px; }
+    .devtools-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #23272e;
+      color: #fff;
+      border-radius: 10px 10px 0 0;
+      padding: 10px 18px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82rem;
+    }
+    .devtools-header .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .devtools-header .dot.r { background: #ff5f57; }
+    .devtools-header .dot.y { background: #ffbd2e; }
+    .devtools-header .dot.g { background: #28c840; }
+    .devtools-header .tab {
+      background: #2d3748;
+      border-radius: 4px 4px 0 0;
+      padding: 3px 12px;
+      font-size: 0.78rem;
+      color: #a0aec0;
+    }
+    .steps { counter-reset: step; list-style: none; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+      align-items: flex-start;
+    }
+    .steps li::before {
+      content: counter(step);
+      min-width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #c0392b;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .steps li .body { flex: 1; }
+    .copy-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 20px;
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .copy-btn:hover { background: #922b21; }
+    .copy-btn.copied { background: #27ae60; }
+    .diff-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; margin-top: 14px; }
+    .diff-table th {
+      background: #1a3c6e; color: #fff;
+      padding: 9px 12px; text-align: right; font-weight: 600;
+    }
+    .diff-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+    .diff-table tr.has-msg td  { background: #fff8ee; }
+    .diff-table tr.no-msg  td  { background: #fff5f5; }
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 0.77rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .badge.warn { background: #e67e22; }
+    .badge.no   { background: #e74c3c; }
+    footer { text-align: center; color: #999; font-size: 0.8rem; margin-top: 40px; }
+    .section-num {
+      display: inline-block;
+      background: #c0392b;
+      color: #fff;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      text-align: center;
+      line-height: 28px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    kbd {
+      background: #eee;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: monospace;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>&#x1F4AC; בדיקת חיווי UI — תווים אסורים</h1>
+  <p class="sub">
+    סקריפט DevTools שמדמה הקלדה של כל תו אסור ובודק אם הדף מציג הודעת שגיאה<br>
+    חייב לרוץ <strong>מתוך הדף של הגדרת הסיסמא</strong>
+  </p>
+</div>
+
+<!-- סעיף 1 — מה שונה כאן -->
+<div class="card">
+  <h2><span class="section-num">1</span> מה שונה בסקריפט הזה?</h2>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:14px 0;">
+    <div style="background:#f0fff4; border:1px solid #a9dfbf; border-radius:8px; padding:14px;">
+      <strong style="color:#1e8449;">הסקריפט הקודם</strong><br>
+      <code>forbidden-chars-devtools.html</code><br><br>
+      בדק את <strong>ה-REGEX בלבד</strong><br>
+      ללא UI, ללא DOM<br>
+      יכל לרוץ בכל דף
+    </div>
+    <div style="background:#fff8ee; border:1px solid #f0b27a; border-radius:8px; padding:14px;">
+      <strong style="color:#c0392b;">הסקריפט הנוכחי</strong><br>
+      <code>ui-feedback-devtools.html</code><br><br>
+      בודק את <strong>חיווי ה-UI</strong><br>
+      מתקשר עם ה-DOM של הדף<br>
+      חייב לרוץ מתוך דף הסיסמא
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>איך הסקריפט עובד?</strong>
+    לכל אחד מ-13 התווים האסורים:<br>
+    1. מכניס סיסמא תקינה + תו אסור לשדה הסיסמא<br>
+    2. מדמה אירועי הקלדה (input, change, blur) כדי להפעיל Angular<br>
+    3. ממתין 500ms לעיבוד<br>
+    4. מחפש הודעות שגיאה בכל ה-DOM<br>
+    5. מתעד: האם הופיעה הודעה? מה הטקסט שלה?
+  </div>
+</div>
+
+<!-- סעיף 2 — הוראות הרצה -->
+<div class="card">
+  <h2><span class="section-num">2</span> הוראות הרצה</h2>
+
+  <ul class="steps">
+    <li><div class="body">
+      פתחי את דף <strong>הגדרת הסיסמא</strong> באתר
+      <code>anonidentification.health.gov.il/activation/setNewPassword</code>
+    </div></li>
+    <li><div class="body">פתחי DevTools: <kbd>F12</kbd> ← לשונית <strong>Console</strong></div></li>
+    <li><div class="body">
+      אם מופיע "allow pasting" — הקלידי אותו ולחצי <kbd>Enter</kbd>
+    </div></li>
+    <li><div class="body">העתיקי את הסקריפט למטה, הדביקי ולחצי <kbd>Enter</kbd></div></li>
+    <li><div class="body">
+      <strong>המתיני ~7 שניות</strong> — הסקריפט עובר על 13 תווים, כל אחד לוקח 500ms
+    </div></li>
+  </ul>
+
+  <div class="info-box warn">
+    <strong>חשוב — הסקריפט משנה את שדה הסיסמא בדף</strong>
+    בסוף הבדיקה השדה יתרוקן אוטומטית. אם רוצים להמשיך למלא סיסמא ידנית — יש לעשות זאת אחרי שהסקריפט סיים.
+  </div>
+</div>
+
+<!-- סעיף 3 — הסקריפט -->
+<div class="card">
+  <h2><span class="section-num">3</span> הסקריפט</h2>
+
+  <button class="copy-btn" onclick="copyScript()">&#x1F4CB; העתק סקריפט</button>
+
+  <div class="devtools-header" style="margin-top:14px;">
+    <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+    <span style="margin-right:8px; opacity:.6;">DevTools — דף הסיסמא</span>
+    <span class="tab">Console</span>
+  </div>
+  <div style="background:#1e1e2e; border-radius:0 0 10px 10px; overflow:hidden;">
+    <div class="code-block" id="scriptBlock" style="border-radius:0; margin:0;"><span class="c-cmt">// ============================================================
+//  בדיקת חיווי UI — תווים אסורים (כלל 5)
+//  חייב לרוץ מתוך דף הגדרת הסיסמא!
+//  בודק: האם הדף מציג הודעת שגיאה לכל תו אסור?
+// ============================================================</span>
+
+(<span class="c-purple">async</span> () => {
+
+  <span class="c-cmt">// --- 13 תווים אסורים ---</span>
+  <span class="c-blue">const</span> <span class="c-orange">FORBIDDEN</span> = [
+    { <span class="c-green">char</span>: <span class="c-str">' '</span>,  <span class="c-green">name</span>: <span class="c-str">'SPACE      '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'~'</span>,  <span class="c-green">name</span>: <span class="c-str">'TILDE      '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'`'</span>,  <span class="c-green">name</span>: <span class="c-str">'BACKTICK   '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">"'"</span>,  <span class="c-green">name</span>: <span class="c-str">'APOSTROPHE '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">':'</span>,  <span class="c-green">name</span>: <span class="c-str">'COLON      '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'^'</span>,  <span class="c-green">name</span>: <span class="c-str">'CARET      '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'('</span>,  <span class="c-green">name</span>: <span class="c-str">'OPEN_PAREN '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">')'</span>,  <span class="c-green">name</span>: <span class="c-str">'CLOSE_PAREN'</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'_'</span>,  <span class="c-green">name</span>: <span class="c-str">'UNDERSCORE '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'+'</span>,  <span class="c-green">name</span>: <span class="c-str">'PLUS       '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'-'</span>,  <span class="c-green">name</span>: <span class="c-str">'HYPHEN     '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'='</span>,  <span class="c-green">name</span>: <span class="c-str">'EQUALS     '</span> },
+    { <span class="c-green">char</span>: <span class="c-str">'?'</span>,  <span class="c-green">name</span>: <span class="c-str">'QUESTION   '</span> },
+  ];
+
+  <span class="c-blue">const</span> <span class="c-orange">BASE</span> = <span class="c-str">'Abc1!Defgh'</span>; <span class="c-cmt">// סיסמא בסיסית תקינה</span>
+  <span class="c-blue">const</span> <span class="c-orange">WAIT</span> = <span class="c-str">500</span>;           <span class="c-cmt">// המתנה לאחר כל קלט (ms)</span>
+  <span class="c-blue">const</span> <span class="c-orange">delay</span> = <span class="c-yellow">ms</span> => <span class="c-purple">new</span> Promise(<span class="c-yellow">r</span> => setTimeout(r, ms));
+
+  <span class="c-cmt">// --- מציאת שדה הסיסמא ---</span>
+  <span class="c-blue">const</span> <span class="c-orange">input</span> = document.querySelector(<span class="c-str">'input[type="password"]'</span>);
+  <span class="c-purple">if</span> (!<span class="c-orange">input</span>) {
+    console.error(<span class="c-str">'❌ לא נמצא שדה סיסמא — ודאי שהסקריפט רץ בדף הסיסמא'</span>);
+    <span class="c-purple">return</span>;
+  }
+  console.log(<span class="c-str">'✅ שדה סיסמא נמצא'</span>, <span class="c-orange">input</span>);
+
+  <span class="c-cmt">// --- הזרקת ערך לשדה Angular ---
+  // Angular מחזיק את הערך בנפרד מה-DOM; נעקוף עם native setter</span>
+  <span class="c-blue">function</span> <span class="c-yellow">setVal</span>(<span class="c-orange">el</span>, <span class="c-orange">val</span>) {
+    <span class="c-blue">const</span> <span class="c-orange">setter</span> = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype, <span class="c-str">'value'</span>
+    ).set;
+    <span class="c-orange">setter</span>.call(<span class="c-orange">el</span>, <span class="c-orange">val</span>);
+    <span class="c-orange">el</span>.dispatchEvent(<span class="c-purple">new</span> Event(<span class="c-str">'input'</span>,  { bubbles: <span class="c-purple">true</span> }));
+    <span class="c-orange">el</span>.dispatchEvent(<span class="c-purple">new</span> Event(<span class="c-str">'change'</span>, { bubbles: <span class="c-purple">true</span> }));
+    <span class="c-orange">el</span>.dispatchEvent(<span class="c-purple">new</span> Event(<span class="c-str">'blur'</span>,   { bubbles: <span class="c-purple">true</span> }));
+  }
+
+  <span class="c-cmt">// --- חיפוש הודעות שגיאה בדף ---</span>
+  <span class="c-blue">function</span> <span class="c-yellow">findErrors</span>() {
+    <span class="c-blue">const</span> <span class="c-orange">found</span> = [];
+    <span class="c-blue">const</span> <span class="c-orange">selectors</span> = [
+      <span class="c-str">'mat-error'</span>,           <span class="c-cmt">// Angular Material</span>
+      <span class="c-str">'.mat-error'</span>,
+      <span class="c-str">'[class*="error"]'</span>,    <span class="c-cmt">// כל class שמכיל "error"</span>
+      <span class="c-str">'[class*="invalid"]'</span>,  <span class="c-cmt">// כל class שמכיל "invalid"</span>
+      <span class="c-str">'[class*="warning"]'</span>,
+      <span class="c-str">'small'</span>,               <span class="c-cmt">// שגיאות HTML קלאסיות</span>
+      <span class="c-str">'[role="alert"]'</span>,      <span class="c-cmt">// accessibility</span>
+      <span class="c-str">'[aria-live]'</span>,
+    ];
+    <span class="c-purple">for</span> (<span class="c-blue">const</span> <span class="c-orange">sel</span> <span class="c-purple">of</span> <span class="c-orange">selectors</span>) {
+      <span class="c-purple">for</span> (<span class="c-blue">const</span> <span class="c-orange">el</span> <span class="c-purple">of</span> document.querySelectorAll(<span class="c-orange">sel</span>)) {
+        <span class="c-blue">const</span> <span class="c-orange">txt</span> = <span class="c-orange">el</span>.textContent.trim();
+        <span class="c-purple">if</span> (<span class="c-orange">txt</span> && !<span class="c-orange">found</span>.includes(<span class="c-orange">txt</span>)) <span class="c-orange">found</span>.push(<span class="c-orange">txt</span>);
+      }
+    }
+    <span class="c-purple">return</span> <span class="c-orange">found</span>;
+  }
+
+  <span class="c-cmt">// --- הרצה ---</span>
+  console.log(<span class="c-str">'%c=== בדיקת חיווי UI — תווים אסורים ==='</span>,
+    <span class="c-str">'font-weight:bold; font-size:14px; color:#c0392b'</span>);
+
+  <span class="c-blue">const</span> <span class="c-orange">results</span> = [];
+
+  <span class="c-purple">for</span> (<span class="c-blue">const</span> { char, name } <span class="c-purple">of</span> <span class="c-orange">FORBIDDEN</span>) {
+    <span class="c-blue">const</span> <span class="c-orange">pw</span> = <span class="c-orange">BASE</span> + char;      <span class="c-cmt">// תו אסור בסוף הסיסמא</span>
+    <span class="c-yellow">setVal</span>(<span class="c-orange">input</span>, <span class="c-orange">pw</span>);
+    <span class="c-purple">await</span> <span class="c-yellow">delay</span>(<span class="c-orange">WAIT</span>);           <span class="c-cmt">// המתן לעיבוד Angular</span>
+
+    <span class="c-blue">const</span> <span class="c-orange">msgs</span>    = <span class="c-yellow">findErrors</span>();
+    <span class="c-blue">const</span> <span class="c-orange">hasMsg</span>  = <span class="c-orange">msgs</span>.length > <span class="c-str">0</span>;
+
+    <span class="c-orange">results</span>.push({ name, char, hasMsg, msgs: <span class="c-orange">msgs</span> });
+
+    console.log(
+      <span class="c-str">`%c${hasMsg ? '💬 יש הודעה' : '🔇 אין הודעה'} | ${name} | "${pw}"`</span>,
+      hasMsg ? <span class="c-str">'color:#e67e22; font-weight:bold'</span> : <span class="c-str">'color:#7f8c8d'</span>
+    );
+    <span class="c-purple">if</span> (<span class="c-orange">hasMsg</span>) <span class="c-orange">msgs</span>.<span class="c-yellow">forEach</span>(<span class="c-orange">m</span> =>
+      console.log(<span class="c-str">`   ↳ "${m}"`</span>, <span class="c-str">'color:#e67e22'</span>)
+    );
+  }
+
+  <span class="c-cmt">// --- ניקוי השדה ---</span>
+  <span class="c-yellow">setVal</span>(<span class="c-orange">input</span>, <span class="c-str">''</span>);
+
+  <span class="c-cmt">// --- סיכום ---</span>
+  <span class="c-blue">const</span> <span class="c-orange">withMsg</span> = <span class="c-orange">results</span>.filter(<span class="c-orange">r</span> => <span class="c-orange">r</span>.hasMsg);
+  <span class="c-blue">const</span> <span class="c-orange">noMsg</span>   = <span class="c-orange">results</span>.filter(<span class="c-orange">r</span> => !<span class="c-orange">r</span>.hasMsg);
+
+  console.log(<span class="c-str">`\n%c📊 ${withMsg.length} תווים עם הודעה | ${noMsg.length} תווים ללא הודעה`</span>,
+    <span class="c-str">'font-weight:bold; font-size:13px; color:#2563a8'</span>);
+
+  <span class="c-purple">if</span> (<span class="c-orange">noMsg</span>.length > <span class="c-str">0</span>) {
+    console.log(<span class="c-str">'%c⚠️  תווים ללא חיווי למשתמש (ממצא פוטנציאלי):'</span>,
+      <span class="c-str">'color:#e74c3c; font-weight:bold'</span>);
+    <span class="c-orange">noMsg</span>.<span class="c-yellow">forEach</span>(<span class="c-orange">r</span> =>
+      console.log(<span class="c-str">`   ${r.name} → "${r.char === ' ' ? 'SPACE' : r.char}"`</span>)
+    );
+  }
+
+})();</div>
+  </div>
+</div>
+
+<!-- סעיף 4 — קריאת הפלט -->
+<div class="card">
+  <h2><span class="section-num">4</span> איך לקרוא את הפלט</h2>
+
+  <div class="code-block"><span class="c-cmt">// דוגמא לפלט אפשרי:</span>
+
+<span style="color:#e67e22; font-weight:bold;">💬 יש הודעה | SPACE       | "Abc1!Defgh "</span>
+<span style="color:#e67e22;">   ↳ "הסיסמא מכילה תו לא חוקי"</span>
+<span style="color:#7f8c8d;">🔇 אין הודעה | TILDE       | "Abc1!Defgh~"</span>
+<span style="color:#7f8c8d;">🔇 אין הודעה | UNDERSCORE  | "Abc1!Defgh_"</span>
+<span style="color:#e67e22; font-weight:bold;">💬 יש הודעה | PLUS        | "Abc1!Defgh+"</span>
+<span style="color:#e67e22;">   ↳ "תו לא מורשה"</span>
+
+<span style="color:#2563a8; font-weight:bold;">📊 2 תווים עם הודעה | 11 תווים ללא הודעה</span>
+<span style="color:#e74c3c; font-weight:bold;">⚠️  תווים ללא חיווי למשתמש (ממצא פוטנציאלי):</span>
+   TILDE      → "~"
+   UNDERSCORE → "_"
+   ...</div>
+
+  <div class="info-box warn">
+    <strong>💬 יש הודעה = UX תקין</strong>
+    המשתמש מקבל משוב ברור כשהוא מקליד תו אסור.
+  </div>
+
+  <div class="info-box danger">
+    <strong>🔇 אין הודעה = ממצא!</strong>
+    הסיסמא נדחית על ידי ה-REGEX (כפי שראינו ב-39/39 OK),
+    אבל המשתמש לא מקבל שום הסבר — חוויית משתמש לקויה.
+  </div>
+</div>
+
+<!-- סעיף 5 — אם הסקריפט לא מוצא את השדה -->
+<div class="card">
+  <h2><span class="section-num">5</span> פתרון בעיות</h2>
+
+  <p style="margin-bottom:12px;"><strong>אם מופיע: <code>❌ לא נמצא שדה סיסמא</code></strong></p>
+  <p>ייתכן שלדף יש מספר שדות סיסמא (new + confirm). הרץ קודם בדיקה:</p>
+  <div class="code-block"><span class="c-cmt">// בדיקה: כמה שדות סיסמא קיימים בדף?</span>
+document.querySelectorAll(<span class="c-str">'input[type="password"]'</span>)
+
+<span class="c-cmt">// אם יש שניים — הראשון הוא "סיסמא חדשה" (index 0)</span></div>
+
+  <p style="margin: 12px 0;"><strong>אם הסקריפט לא מזהה הודעות:</strong></p>
+  <div class="code-block"><span class="c-cmt">// הרץ זאת ידנית אחרי הקלדה של תו אסור — מה קיים בדף?</span>
+document.querySelectorAll(<span class="c-str">'[class*="error"], mat-error, [role="alert"]'</span>)</div>
+</div>
+
+<footer>
+  <p>auth-validation · בדיקת חיווי UI — כלל 5 · 2026</p>
+</footer>
+
+<script>
+const SCRIPT_TO_COPY = `// ============================================================
+//  בדיקת חיווי UI — תווים אסורים (כלל 5)
+//  חייב לרוץ מתוך דף הגדרת הסיסמא!
+// ============================================================
+
+(async () => {
+
+  const FORBIDDEN = [
+    { char: ' ',  name: 'SPACE      ' },
+    { char: '~',  name: 'TILDE      ' },
+    { char: '\`',  name: 'BACKTICK   ' },
+    { char: "'",  name: 'APOSTROPHE ' },
+    { char: ':',  name: 'COLON      ' },
+    { char: '^',  name: 'CARET      ' },
+    { char: '(',  name: 'OPEN_PAREN ' },
+    { char: ')',  name: 'CLOSE_PAREN' },
+    { char: '_',  name: 'UNDERSCORE ' },
+    { char: '+',  name: 'PLUS       ' },
+    { char: '-',  name: 'HYPHEN     ' },
+    { char: '=',  name: 'EQUALS     ' },
+    { char: '?',  name: 'QUESTION   ' },
+  ];
+
+  const BASE = 'Abc1!Defgh';
+  const WAIT = 500;
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+
+  // מציאת שדה הסיסמא
+  const input = document.querySelector('input[type="password"]');
+  if (!input) {
+    console.error('❌ לא נמצא שדה סיסמא — ודאי שהסקריפט רץ בדף הסיסמא');
+    return;
+  }
+  console.log('✅ שדה סיסמא נמצא', input);
+
+  // הזרקת ערך לשדה Angular
+  function setVal(el, val) {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    setter.call(el, val);
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('blur',   { bubbles: true }));
+  }
+
+  // חיפוש הודעות שגיאה בדף
+  function findErrors() {
+    const found = [];
+    const selectors = [
+      'mat-error', '.mat-error',
+      '[class*="error"]', '[class*="invalid"]', '[class*="warning"]',
+      'small', '[role="alert"]', '[aria-live]',
+    ];
+    for (const sel of selectors) {
+      for (const el of document.querySelectorAll(sel)) {
+        const txt = el.textContent.trim();
+        if (txt && !found.includes(txt)) found.push(txt);
+      }
+    }
+    return found;
+  }
+
+  console.log('%c=== בדיקת חיווי UI — תווים אסורים ===',
+    'font-weight:bold; font-size:14px; color:#c0392b');
+
+  const results = [];
+
+  for (const { char, name } of FORBIDDEN) {
+    const pw = BASE + char;
+    setVal(input, pw);
+    await delay(WAIT);
+
+    const msgs   = findErrors();
+    const hasMsg = msgs.length > 0;
+
+    results.push({ name, char, hasMsg, msgs });
+
+    console.log(
+      \`%c\${hasMsg ? '💬 יש הודעה' : '🔇 אין הודעה'} | \${name} | "\${pw}"\`,
+      hasMsg ? 'color:#e67e22; font-weight:bold' : 'color:#7f8c8d'
+    );
+    if (hasMsg) msgs.forEach(m => console.log(\`   ↳ "\${m}"\`, 'color:#e67e22'));
+  }
+
+  // ניקוי
+  setVal(input, '');
+
+  // סיכום
+  const withMsg = results.filter(r => r.hasMsg);
+  const noMsg   = results.filter(r => !r.hasMsg);
+
+  console.log(\`\\n%c📊 \${withMsg.length} תווים עם הודעה | \${noMsg.length} תווים ללא הודעה\`,
+    'font-weight:bold; font-size:13px; color:#2563a8');
+
+  if (noMsg.length > 0) {
+    console.log('%c⚠️  תווים ללא חיווי למשתמש (ממצא פוטנציאלי):',
+      'color:#e74c3c; font-weight:bold');
+    noMsg.forEach(r => console.log(\`   \${r.name} → "\${r.char === ' ' ? 'SPACE' : r.char}"\`));
+  }
+
+})();`;
+
+function copyScript() {
+  navigator.clipboard.writeText(SCRIPT_TO_COPY).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅ הועתק!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 העתק סקריפט';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
