@@ -370,7 +370,7 @@
   <div class="hero-badges">
     <span class="hb">📋 3 תחומים נבדקו</span>
     <span class="hb">🐛 1 באג חומרה גבוהה</span>
-    <span class="hb">⚠️ 2 ממצאי UX</span>
+    <span class="hb">⚠️ 1 ממצא UX</span>
     <span class="hb">❌ 1 תחום לא נבדק</span>
     <span class="hb">🗓 מרץ 2026</span>
   </div>
@@ -448,10 +448,9 @@
         </div>
         <div class="tl-connector c-navy"></div>
 
-        <div class="tl-node warn">
+        <div class="tl-node light">
           <div class="tl-circle">3</div>
           <div class="tl-label">בחירת שאלות אבטחה<br><em style="font-style:normal;font-size:.6rem">(הגדרה + תשובות)</em></div>
-          <div class="tl-sub s-warn">ממצא UX</div>
         </div>
         <div class="tl-connector c-dashed"></div>
 
@@ -474,7 +473,7 @@
     <!-- הבדל מרכזי -->
     <div class="tl-diff-note">
       <strong>💡 ההבדל הקריטי בשלב 3 — שורש הבאג הגבוה:</strong><br>
-      ב<strong>איפוס סיסמא</strong> הלקוח <em>בוחר ומגדיר</em> תשובות — תו כגון <code>+</code> מתקבל ללא  חיווי שלילי למשתמש (ממצא UX).<br>
+      ב<strong>איפוס סיסמא</strong> הלקוח <em>בוחר ומגדיר</em> תשובות — תו כגון <code>+</code> מתקבל כנדרש (הוא תו חוקי לפי הרגקס).<br>
       ב<strong>שכחתי סיסמא</strong> הלקוח <em>עונה בלבד</em> על אותן שאלות — ואותה תשובה עם <code>+</code> נדחית, וגישתו חסומה.
     </div>
 
@@ -505,8 +504,8 @@
       <tr>
         <td><strong>איפוס סיסמא — שאלות אבטחה</strong><br><span style="font-size:.82rem;color:#666">שלב הגדרת תשובות לשאלות האבטחה</span></td>
         <td><span class="badge badge-pass">✅ נבדק</span></td>
-        <td>ממצא — תווים מסוימים נכנסים ללא חיווי שגיאה</td>
-        <td><span class="badge badge-medium">בינונית</span></td>
+        <td>הוידוא פועל כנדרש — תווים אסורים נדחים עם הודעת "תשובה לא חוקית"</td>
+        <td><span class="badge badge-pass">✅ עבר</span></td>
       </tr>
       <tr>
         <td><strong>שכחתי סיסמא — שאלות אבטחה</strong><br><span style="font-size:.82rem;color:#666">שלב אימות תשובות האבטחה</span></td>
@@ -533,42 +532,70 @@
   <!-- ══════════════════════════════
        2. הגדרות — שאלות אבטחה
        ══════════════════════════════ -->
-  <div class="section-title">הגדרות — כללי שאלות האבטחה</div>
+  <div class="section-title">הגדרות — כללי שאלות   האבטחה (איפוס סיסמא)</div>
   <div class="card">
     <p>שאלות האבטחה הן שלב מקדים לבחירת סיסמא חדשה — קיים הן בתהליך <strong>איפוס סיסמא</strong> והן בתהליך <strong>שכחתי סיסמא</strong>.<br>
     שדה "תשובה לשאלת אבטחה" מאמת תווים לפי הביטוי הרגולרי הבא:</p>
 
     <div class="regex-box">^[a-zA-Z0-9א-ת_+\-=\?\*,&amp;.;(\)'\" ]*$</div>
 
-    <!-- פירוט הרגקס -->
-    <table style="margin-top:14px;font-size:.86rem;">
-      <tr><th style="width:30%">חלק ברגקס</th><th>משמעות</th></tr>
-      <tr><td><code>^</code></td><td>עוגן התחלה — הרגקס בודק מתחילת השדה</td></tr>
-      <tr><td><code>[...]</code></td><td>רשימת תווים מותרים בלבד (Whitelist) — כל תו שאינו ברשימה — נדחה</td></tr>
-      <tr><td><code>a-zA-Z</code></td><td>אותיות לטיניות, גדולות וקטנות</td></tr>
-      <tr><td><code>0-9</code></td><td>ספרות 0 עד 9</td></tr>
-      <tr><td><code>א-ת</code></td><td>אותיות עבריות — כל האלפבית העברי</td></tr>
-      <tr><td><code>_</code></td><td>קו תחתון (Underscore)</td></tr>
-      <tr><td><code>+</code></td><td>סימן פלוס</td></tr>
-      <tr><td><code>\-</code></td><td>מקף / מינוס (escaped — כדי לא להתבלבל עם טווח)</td></tr>
-      <tr><td><code>=</code></td><td>סימן שווה</td></tr>
-      <tr><td><code>\?</code></td><td>סימן שאלה (escaped)</td></tr>
-      <tr><td><code>\*</code></td><td>כוכבית (escaped)</td></tr>
-      <tr><td><code>,</code></td><td>פסיק</td></tr>
-      <tr><td><code>&amp;</code></td><td>אמפרסנד (&amp;)</td></tr>
-      <tr><td><code>.</code></td><td>נקודה (literal בתוך מחלקת תווים)</td></tr>
-      <tr><td><code>;</code></td><td>נקודה-פסיק</td></tr>
-      <tr><td><code>( \)</code></td><td>סוגריים עגולים</td></tr>
-      <tr><td><code>'</code></td><td>גרש בודד (Apostrophe)</td></tr>
-      <tr><td><code>\"</code></td><td>מרכאות כפולות (escaped)</td></tr>
-      <tr><td><code style="background:#fff3cd;color:#856404">&#32;</code> <span style="font-size:.8rem;color:#856404">(רווח)</span></td><td><strong>רווח מותר במפורש</strong> — ניתן להזין תשובות עם מרווחים בין מילים</td></tr>
-      <tr><td><code>]*</code></td><td>אפס תווים ומעלה — מאפשר גם שדה ריק</td></tr>
-      <tr><td><code>$</code></td><td>עוגן סוף — הרגקס בודק עד סוף השדה</td></tr>
-    </table>
-
     <div class="info-blue" style="margin-top:16px;">
-      <strong>הרגקס הוא Whitelist — גישת האפשר:</strong> הוא מאפשר רק תווים שמפורטים במפורש, וכל תו שאינו ברשימה — נדחה אוטומטית. זו הגישה הבטוחה יותר.
+      <strong>הרגקס הוא Whitelist — גישת האפשר:</strong> מותרים <em>רק</em> התווים המפורטים במפורש. כל תו שאינו ברשימה — נדחה אוטומטית עם הודעת "תשובה לא חוקית".
     </div>
+
+    <!-- סיכום ויזואלי: מותר / אסור -->
+    <div class="two-col" style="margin-top:16px;">
+      <div class="col-card col-allowed">
+        <h4>✅ תווים מותרים — יתקבלו</h4>
+        <table style="margin-top:8px;font-size:.84rem;width:100%;">
+          <tr><th style="background:#c8e6c9;color:#1b5e20;padding:5px 8px;">קטגוריה</th><th style="background:#c8e6c9;color:#1b5e20;padding:5px 8px;">תווים</th></tr>
+          <tr><td style="padding:5px 8px;">אותיות לטיניות</td><td style="padding:5px 8px;font-family:monospace">a–z, A–Z</td></tr>
+          <tr><td style="padding:5px 8px;">אותיות עבריות</td><td style="padding:5px 8px;font-family:monospace">א–ת</td></tr>
+          <tr><td style="padding:5px 8px;">ספרות</td><td style="padding:5px 8px;font-family:monospace">0–9</td></tr>
+          <tr><td style="padding:5px 8px;">רווח</td><td style="padding:5px 8px;font-family:monospace">␣ (space)</td></tr>
+          <tr><td style="padding:5px 8px;">תווים מיוחדים</td><td style="padding:5px 8px;font-family:monospace">_ + - = ? * , &amp; . ; ( ) ' "</td></tr>
+        </table>
+      </div>
+      <div class="col-card col-forbidden">
+        <h4>❌ תווים אסורים — יגרמו ל"תשובה לא חוקית"</h4>
+        <table style="margin-top:8px;font-size:.84rem;width:100%;">
+          <tr><th style="background:#ffcdd2;color:#b71c1c;padding:5px 8px;">קטגוריה</th><th style="background:#ffcdd2;color:#b71c1c;padding:5px 8px;">תווים</th></tr>
+          <tr><td style="padding:5px 8px;">סמלים נפוצים</td><td style="padding:5px 8px;font-family:monospace">@ # $ % ^ ~ ` |</td></tr>
+          <tr><td style="padding:5px 8px;">סוגריים מיוחדים</td><td style="padding:5px 8px;font-family:monospace">[ ] { } &lt; &gt;</td></tr>
+          <tr><td style="padding:5px 8px;">תווי שליטה</td><td style="padding:5px 8px;font-family:monospace">\ : !</td></tr>
+          <tr><td colspan="2" style="padding:5px 8px;font-size:.8rem;color:#c62828;">וכל תו אחר שאינו ברשימת המותרים</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- פירוט טכני לפיתוח -->
+    <details style="margin-top:16px;">
+      <summary style="cursor:pointer;font-size:.88rem;font-weight:700;color:var(--navy);padding:8px 0;">פירוט טכני — פירוק הרגקס לחלקיו (לפיתוח)</summary>
+      <table style="margin-top:10px;font-size:.86rem;">
+        <tr><th style="width:30%">חלק ברגקס</th><th>משמעות</th></tr>
+        <tr><td><code>^</code></td><td>עוגן התחלה — הרגקס בודק מתחילת השדה</td></tr>
+        <tr><td><code>[...]</code></td><td>רשימת תווים מותרים בלבד (Whitelist) — כל תו שאינו ברשימה — נדחה</td></tr>
+        <tr><td><code>a-zA-Z</code></td><td>אותיות לטיניות, גדולות וקטנות</td></tr>
+        <tr><td><code>0-9</code></td><td>ספרות 0 עד 9</td></tr>
+        <tr><td><code>א-ת</code></td><td>אותיות עבריות — כל האלפבית העברי</td></tr>
+        <tr><td><code>_</code></td><td>קו תחתון (Underscore)</td></tr>
+        <tr><td><code>+</code></td><td>סימן פלוס</td></tr>
+        <tr><td><code>\-</code></td><td>מקף / מינוס (escaped — כדי לא להתבלבל עם טווח)</td></tr>
+        <tr><td><code>=</code></td><td>סימן שווה</td></tr>
+        <tr><td><code>\?</code></td><td>סימן שאלה (escaped)</td></tr>
+        <tr><td><code>\*</code></td><td>כוכבית (escaped)</td></tr>
+        <tr><td><code>,</code></td><td>פסיק</td></tr>
+        <tr><td><code>&amp;</code></td><td>אמפרסנד (&amp;)</td></tr>
+        <tr><td><code>.</code></td><td>נקודה (literal בתוך מחלקת תווים)</td></tr>
+        <tr><td><code>;</code></td><td>נקודה-פסיק</td></tr>
+        <tr><td><code>( )</code></td><td>סוגריים עגולים</td></tr>
+        <tr><td><code>'</code></td><td>גרש בודד (Apostrophe)</td></tr>
+        <tr><td><code>\"</code></td><td>מרכאות כפולות (escaped)</td></tr>
+        <tr><td><code style="background:#fff3cd;color:#856404">&#32;</code> <span style="font-size:.8rem;color:#856404">(רווח)</span></td><td><strong>רווח מותר במפורש</strong> — ניתן להזין תשובות עם מרווחים בין מילים</td></tr>
+        <tr><td><code>]*</code></td><td>אפס תווים ומעלה — מאפשר גם שדה ריק</td></tr>
+        <tr><td><code>$</code></td><td>עוגן סוף — הרגקס בודק עד סוף השדה</td></tr>
+      </table>
+    </details>
 
     <div class="two-col" style="margin-top:16px;">
       <div class="col-card col-allowed">
@@ -592,50 +619,8 @@
       </div>
     </div>
 
-    <hr style="margin:20px 0;" />
-
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-      <span class="badge badge-medium" style="font-size:.82rem;padding:3px 10px;">ממצא UX — חומרה בינונית</span>
-      <span style="font-weight:700;color:var(--orange)">7 תווים נדחים ללא הודעת שגיאה ברורה</span>
-    </div>
-
-    <div class="two-col">
-      <div class="col-card col-allowed">
-        <h4>✅ תווים אסורים עם חיווי תקין</h4>
-        <p style="margin-bottom:8px;font-size:.85rem;">מוצגת הודעה: <strong>"תשובה לא חוקית"</strong></p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1)">!</span>
-          <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1)">[ ]</span>
-          <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1)">{ }</span>
-          <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1)">&lt; &gt;</span>
-        </div>
-      </div>
-      <div class="col-card col-forbidden">
-        <h4>❌ תווים ללא חיווי — ממצא BUG</h4>
-        <div style="margin-bottom:10px;">
-          <p style="font-size:.83rem;color:#c62828;margin-bottom:6px;"><strong>השדה מתאפס בשקט (ללא הסבר):</strong></p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#c62828">@</span>
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#c62828">$</span>
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#c62828">#</span>
-          </div>
-        </div>
-        <div>
-          <p style="font-size:.83rem;color:#e65100;margin-bottom:6px;"><strong>תו מוצג, שמירה נכשלת עם "משהו השתבש":</strong></p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#e65100">%</span>
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#e65100">^</span>
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#e65100">~</span>
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#e65100">`</span>
-            <span style="font-family:monospace;background:#fff;border-radius:6px;padding:4px 10px;box-shadow:0 1px 3px rgba(0,0,0,.1);color:#e65100">|</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="info-orange" style="margin-top:14px;">
-      <strong>⚠️ השפעה:</strong> משתמש המנסה להזין תווים אלו בתשובה לשאלת אבטחה — אינו מקבל כל הנחייה מובנת. הפעולה נכשלת בשקט או עם הודעה גנרית שאינה מסבירה את הבעיה.<br>
-      <strong>נדרש:</strong> לכל תו שנדחה — יש להציג הודעת שגיאה ברורה, בדומה להודעה "תשובה לא חוקית".
+    <div class="info-green" style="margin-top:16px;">
+      <strong>✅ תוצאת הבדיקה:</strong> הוידוא פועל כנדרש — כל תו שאינו ברשימת המותרים (כגון <code>@</code>, <code>#</code>, <code>$</code>, <code>%</code>, <code>^</code>, <code>~</code>, <code>`</code>, <code>|</code>, <code>!</code>, <code>[ ]</code>, <code>{ }</code>, <code>&lt; &gt;</code>) נדחה עם הודעת <strong>"תשובה לא חוקית"</strong>. ראה סיכום "תווים מותרים / אסורים" בבלוק למעלה.
     </div>
   </div>
 
@@ -879,6 +864,20 @@
     <div class="info-red" style="margin-top:16px;">
       <strong>המלצה קריטית:</strong> יש לתקן את חוסר העקביות בין שני התהליכים — תשובה שנשמרה כתקינה באיפוס סיסמא חייבת להתקבל גם בשכחתי סיסמא.
       כל עוד הבאג לא תוקן — <strong>יש להימנע משימוש בתווים</strong> <code>+ = - _ ( ) ^ ~ : ;</code> <strong>בעת הגדרת תשובות לשאלות אבטחה.</strong>
+    </div>
+  </div>
+
+  <!-- 6c: הגבלת אורך סיסמא -->
+  <div class="card">
+    <p style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:12px;">
+      📌 הגבלת אורך מקסימלי לסיסמא
+    </p>
+    <p>כיום המערכת אינה מגבילה את מספר התווים המותרים בסיסמא בצורה מחמירה מספיק.
+    סיסמאות ארוכות מאוד עלולות לגרום לבעיות ביצועים (hash DoS) ולפגיעה בחוויית המשתמש.</p>
+
+    <div class="info-red" style="margin-top:16px;">
+      <strong>המלצה:</strong> יש להגביל את אורך הסיסמא ל־<strong>12 תווים לכל היותר</strong>.
+      יש לאכוף את ההגבלה הן בצד הלקוח (UI) והן בצד השרת, ולהציג למשתמש הודעה ברורה בעת חריגה מהמגבלה.
     </div>
   </div>
 
